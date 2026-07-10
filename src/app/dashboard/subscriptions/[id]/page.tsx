@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { calculateCashBalance, calculateMakeUpCreditsOwed } from "@/lib/ledger";
 import { RecordPaymentForm } from "./record-payment-form";
+import { RequestPaymentForm } from "./request-payment-form";
 
 export default async function SubscriptionDetailPage({
   params,
@@ -13,14 +14,17 @@ export default async function SubscriptionDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  const subscription = await prisma.subscription.findFirst({
-    where: { id, student: { teacherId: session!.user.id } },
-    include: {
-      student: true,
-      payer: true,
-      ledgerEntries: { orderBy: { date: "desc" } },
-    },
-  });
+  const [subscription, teacher] = await Promise.all([
+    prisma.subscription.findFirst({
+      where: { id, student: { teacherId: session!.user.id } },
+      include: {
+        student: true,
+        payer: true,
+        ledgerEntries: { orderBy: { date: "desc" } },
+      },
+    }),
+    prisma.teacher.findUniqueOrThrow({ where: { id: session!.user.id } }),
+  ]);
 
   if (!subscription) notFound();
 
@@ -71,7 +75,21 @@ export default async function SubscriptionDetailPage({
       )}
 
       <section>
-        <h2 className="mb-3 text-lg font-medium text-neutral-900">Record a payment</h2>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Request a payment from the parent</h2>
+        {teacher.stripeConnectOnboarded ? (
+          <RequestPaymentForm subscriptionId={subscription.id} />
+        ) : (
+          <p className="rounded-xl bg-white p-4 text-sm text-neutral-500 shadow-sm">
+            <Link href="/dashboard/payments" className="text-neutral-900 underline">
+              Connect Stripe
+            </Link>{" "}
+            first so payments can land with you.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Record a payment manually</h2>
         <RecordPaymentForm subscriptionId={subscription.id} />
       </section>
 

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { mapStripeSubscriptionStatus } from "@/lib/billing";
 import { prisma } from "@/lib/db";
+import { postPayment } from "@/lib/ledger";
 
 /**
  * Single webhook endpoint for both Learnio's own platform billing (this teacher paying us) and
@@ -46,8 +47,14 @@ export async function POST(request: Request) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  if (session.mode !== "subscription") return;
+  if (session.mode === "subscription") {
+    await handlePlatformCheckoutCompleted(session);
+  } else if (session.mode === "payment") {
+    await handleParentPaymentCheckoutCompleted(session);
+  }
+}
 
+async function handlePlatformCheckoutCompleted(session: Stripe.Checkout.Session) {
   const teacherId = session.metadata?.teacherId;
   if (!teacherId || typeof session.subscription !== "string") return;
 
@@ -60,6 +67,30 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       platformStatus: mapStripeSubscriptionStatus(subscription.status),
     },
   });
+}
+
+/** A parent paying a Subscription's ledger — creates the Payment row and posts a ledger credit. */
+async function handleParentPaymentCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const subscriptionId = session.metadata?.subscriptionId;
+  if (!subscriptionId || typeof session.payment_intent !== "string") return;
+
+  const existing = await prisma.payment.findUnique({
+    where: { stripePaymentId: session.payment_intent },
+  });
+  if (existing) return; // webhook retry — already recorded
+
+  const amount = (session.amount_total ?? 0) / 100;
+
+  await prisma.payment.create({
+    data: {
+      subscriptionId,
+      stripePaymentId: session.payment_intent,
+      amount,
+      status: "SUCCEEDED",
+    },
+  });
+
+  await postPayment(subscriptionId, amount, "Parent payment via Stripe Checkout");
 }
 
 async function handlePlatformSubscriptionChange(subscription: Stripe.Subscription) {

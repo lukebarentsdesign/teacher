@@ -58,7 +58,7 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 2. [x] Teacher/School/Student/Subscription CRUD + auth
 3. [x] Ledger engine (sanity-check hardest — running balance + cancellation payout + make-up credits) — [src/lib/ledger.ts](src/lib/ledger.ts), unit-tested in [__tests__/ledger.test.ts](__tests__/ledger.test.ts)
 4. [x] Timetable generator (fixed/fluid, protected blocks) — [src/lib/scheduling.ts](src/lib/scheduling.ts) (pure, unit-tested) + [src/lib/timetable.ts](src/lib/timetable.ts) (Prisma/conflict-detection). **Not yet done: the lesson-history ghost overlay visual** (spec section 3) — the generator itself, conflict detection, and manual-confirm-before-creating flow are built; the calendar-view "ghost past slots onto this week" rendering is still open.
-5. [ ] Stripe integration + webhook → LedgerEntry
+5. [x] Stripe integration + webhook → LedgerEntry — split into three pieces once "teachers pay Learnio" and "parents pay teachers" turned out to need different Stripe products: platform billing ([src/lib/billing.ts](src/lib/billing.ts)), Connect Express onboarding ([src/lib/connect.ts](src/lib/connect.ts)), and parent payment links ([src/lib/payments.ts](src/lib/payments.ts)), all landing in one webhook ([src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts)). No parent microsite/login yet, so payment links are teacher-generated and shared manually — see below.
 6. [ ] Contract generation (uses the `document-generation-pdf` skill)
 7. [ ] Parent microsite (6-digit per-family access code, read-only calendar + ledger)
 8. [ ] Room booking, GroupClass, Assessment, LoanableItem/Loan modules
@@ -90,6 +90,14 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **FLUID mode algorithm:** round-robins one lesson per term-week through the teacher's chosen candidate slots (`slot[weekIndex % N]`). This guarantees each slot is used `floor(weeks/N)` or `ceil(weeks/N)` times — off by at most one lesson — which is how "equal total teaching time" is satisfied. It's a defensible interpretation of a deliberately loose spec requirement, not the only possible one; revisit if it doesn't match what a real term looks like in practice.
 - **Conflict detection compares exact `scheduledAt` timestamps** for the same teacher, not overlapping time ranges — fine while lesson durations are short and slots are hand-picked from already-protected-block-filtered availability, but revisit if two different-length lessons could overlap without sharing a start time.
 - **Not yet built:** the lesson-history "ghost overlay" calendar visual, and Room-aware conflict checking (Room CRUD is deferred to build step 9 per the spec's own ordering).
+
+## Stripe Decisions
+
+- **No platform fee on parent payments** — destination charges (`payment_intent_data.transfer_data.destination`) send the full amount to the teacher's connected account minus Stripe's own processing fees. Revisit `src/lib/payments.ts` if a take-rate gets added later (`application_fee_amount` on the same call).
+- **Payment links are teacher-generated, not emailed automatically.** There's no parent login yet (that's build step 7, the microsite), so a teacher clicks "Create payment link" on a Subscription and copies/sends the URL themselves. `/pay/[subscriptionId]` is a public, unauthenticated, deliberately generic confirmation page — it must never render any ledger/balance data since it has no auth check.
+- **Stripe client is a lazy Proxy** ([src/lib/stripe.ts](src/lib/stripe.ts)) — the SDK throws in its constructor on an empty API key, which broke `next build` before real keys existed. Don't change this back to a plain `new Stripe(...)` export.
+- **One webhook endpoint for three concerns**: platform billing events, Connect `account.updated`, and parent-payment `checkout.session.completed` all land in [src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts), dispatched by `session.mode` / event type. Payment webhook handling is idempotent via `stripePaymentId` uniqueness (checked before creating a `Payment` row) since Stripe retries webhooks.
+- **Still needs real Stripe test keys to actually verify end-to-end** — everything here is typechecked/built but never hit a live Stripe account.
 
 ## Conventions
 
