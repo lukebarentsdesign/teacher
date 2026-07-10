@@ -65,6 +65,8 @@ Core jobs to be done:
 - `source`: enum `HOME` | `SCHOOL_INQUIRY` | `COLLEGE`
 - linked schoolId (nullable — null for home students)
 - `igCardId` (nullable) — links to the student's or guardian's existing IG Card wallet pass, used for sign-in/out scanning rather than full account linking
+- `hasIndependentAccess`: boolean, default false — only settable true if the student is 16+ (derived from DOB, checked at the moment it's set, not continuously enforced). Grants the student their own microsite login via a second 6-digit access code, using the same mechanism already built for guardians. **Additive, never a replacement**: the guardian retains full visibility into everything the student's login can see, plus the financial ledger regardless of the toggle below. Under-16 students have no independent login at all, no exceptions — access stays fully guardian-mediated.
+- `shareBalanceWithStudent`: boolean, default false — the financial ledger/running balance is hidden from the student's own microsite view unless the guardian explicitly toggles this on. Does not affect the guardian's own visibility, which is always full.
 
 ### CheckIn — card-based sign-in/out, built on existing IG Card wallet pass infrastructure
 - id, lessonId (or groupClassId), studentId
@@ -91,6 +93,11 @@ Core jobs to be done:
 - scheduled datetime, duration
 - `status`: HELD | CANCELLED_BY_STUDENT | CANCELLED_BY_TEACHER | RESCHEDULED
 - `hoursCounted`: boolean — mirrors ELVIS's are_hours_counted, so a cover lesson or make-up doesn't double-bill
+
+### LessonNote
+- id, lessonId (one note per lesson), content, createdAt/updatedAt
+- Freetext: what was covered, what to work on next
+- Visible to guardian always, and to the student too if they have independent microsite access (`Student.hasIndependentAccess`) — not gated by `shareBalanceWithStudent`, since that toggle is specifically about the financial ledger, not lesson content
 
 ### GroupClass
 - id, teacherId, schoolId, roomId (nullable)
@@ -141,6 +148,22 @@ Core jobs to be done:
 - checkedOutDate, dueBackDate, returnedDate (nullable)
 - conditionNotes on return
 
+### MaintenanceReminder
+- id, teacherId, loanableItemId (nullable — optionally linked to an existing LoanableItem), itemDescription, dueDate, `completed` flag
+- Upkeep reminder on equipment, owned or loaned — e.g. "restring in 6 weeks," "service pedal mechanism"
+- Not every reminder needs a formal LoanableItem behind it (`itemDescription` covers ad hoc equipment), but when it *is* linked to one, and that item is currently out on loan to a student, the reminder surfaces in that student's microsite (parents should know their child's borrowed instrument is due for upkeep) — reminders with no active loan link stay teacher-only
+
+### Resource
+- id, teacherId (owner — a shared library, not per-student unless attached), type: enum DOCUMENT | AUDIO | VIDEO, title, url, description (nullable)
+- studentId (nullable) and lessonId (nullable) — attachable to a Student generally (library item for that student), to a specific Lesson, or left unattached in the teacher's general library until referenced by an Assignment
+- A single Resource can also be the one attached to an Assignment (see below) — that's a reference from Assignment, not a separate field here
+
+### Assignment
+- id, studentId, teacherId, title, instructions, target, assignedDate, reviewDate
+- resourceId (nullable) — optional attached Resource (backing track, sheet music, video demo, etc.)
+- `status`: enum ASSIGNED | REVIEWED_DONE | REVIEWED_NOT_DONE
+- Personal routine/exercise a teacher assigns one student between lessons, reviewed at the next one
+
 ---
 
 ## 3. Core Business Rules
@@ -161,7 +184,7 @@ Balance = Σ(payments received) − Σ(lessons delivered × per-lesson value) at
 
 **Lesson history overlay (UI requirement, validated against SOCS Music):** When scheduling a student in FLUID mode, the teacher's calendar view should ghost/overlay that student's past lesson slots from previous weeks onto the current week. This turns "avoid repeating the same missed lesson" from a backend-only calculation into something the teacher can see and manually confirm — important because fluid scheduling still needs a human sanity check, not just an algorithm.
 
-**Role-based permissions (validated against SOCS Music):** v1 only needs Teacher (full access) and Guardian/Parent (read-only microsite view), but design the permission model so an Admin/Assistant role and a read-only "cover teacher" role can be added later without restructuring — relevant once THEIG scales this to multi-teacher studios.
+**Role-based permissions (validated against SOCS Music):** v1 only needs Teacher (full access), Guardian/Parent (read-only microsite view), and — additively, for 16+ students only — the student's own read-only microsite view, narrower than the guardian's (see Student.hasIndependentAccess/shareBalanceWithStudent above). Design the permission model so an Admin/Assistant role and a read-only "cover teacher" role can be added later without restructuring — relevant once THEIG scales this to multi-teacher studios.
 
 ---
 
@@ -188,6 +211,10 @@ Balance = Σ(payments received) − Σ(lessons delivered × per-lesson value) at
 - Proportionate security for the access level: this is read-only visibility into schedule/ledger, not a payment-execution account, so a 6-digit code is appropriate — validated against ClassDojo's parent-code pattern, though note ClassDojo uses 7-9 digits per child specifically because they treat a single shared/class-wide code as their least secure option. Keep the code unique per family for the same reason.
 - Built on the same wallet-pass infrastructure as The IG Card (theig.uk) — the access code and the CheckIn scan (Section on Student/CheckIn above) both draw on the same underlying card/pass identifier system, so a family only needs the one physical/digital card plus their code, not a separate login for every tool.
 
+**Student (independent microsite access, 16+ only):** additive to the guardian's access, never a replacement — the guardian always retains full visibility into everything the student's login can see. Gated on `Student.hasIndependentAccess`, itself only settable when the student's DOB shows 16+ (checked at the moment it's toggled on). Issued as its own separate 6-digit code (`Student.studentAccessCode`), drawn from the *same* code namespace as Guardian/Payer codes — one flat login screen accepts either kind of code, so the code space must stay globally unique across both, not just unique within each. Under-16 students have no independent login at all, no exceptions.
+
+- The student's view is narrower than the guardian's: the financial ledger/running balance is hidden by default (`Student.shareBalanceWithStudent`, default false) and only shown if the guardian explicitly turns it on. Lesson notes, assignments, resources, and the calendar are visible to the student regardless of that toggle — it's specifically a financial-visibility switch, not a general access switch.
+
 ---
 
 ## 6. Suggested Build Order
@@ -197,6 +224,6 @@ Balance = Σ(payments received) − Σ(lessons delivered × per-lesson value) at
 4. Timetable generator (fixed/fluid toggle — also a Fable 5 candidate if Sonnet struggles)
 5. Stripe integration + webhook → LedgerEntry creation
 6. Contract generation — in-app clickwrap acceptance (see ContractAcceptance above), not PDF/e-signature. Requires a minimal parent-facing login (access code → signed session) ahead of the full microsite in step 7, since acceptance needs to know which Payer is agreeing.
-7. Parent microsite (read-only calendar + ledger view)
+7. Parent/student microsite — read-only calendar + ledger view (ledger gated by `shareBalanceWithStudent` for student viewers, always visible to guardians), plus Resource library, this student's Assignments (with review status), MaintenanceReminders (for items currently on loan to them), and LessonNotes history. Guardian gets a student-picker if they have more than one linked student; a 16+ student with independent access goes straight to their own single-student view.
 8. Room booking, GroupClass, Assessment, LoanableItem/Loan modules
 9. Teacher income forecasting dashboard — include a simple expense-tracking line (validated against My Music Staff's payroll/expense module) so the teacher has a tax-ready income vs. expense view, not just incoming revenue
