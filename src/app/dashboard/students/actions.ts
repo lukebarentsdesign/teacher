@@ -3,12 +3,16 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { studentSchema } from "@/lib/validations";
 
 export async function createStudentAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
   const parsed = studentSchema.safeParse({
     name: formData.get("name"),
     dob: formData.get("dob") || undefined,
@@ -27,6 +31,7 @@ export async function createStudentAction(
   await prisma.student.create({
     data: {
       ...rest,
+      teacherId: session.user.id,
       dob: dob ? new Date(dob) : undefined,
     },
   });

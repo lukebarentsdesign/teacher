@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { calculateCashBalance, calculateMakeUpCreditsOwed } from "@/lib/ledger";
 import { RecordPaymentForm } from "./record-payment-form";
 
@@ -10,9 +11,10 @@ export default async function SubscriptionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { id },
+  const subscription = await prisma.subscription.findFirst({
+    where: { id, student: { teacherId: session!.user.id } },
     include: {
       student: true,
       payer: true,

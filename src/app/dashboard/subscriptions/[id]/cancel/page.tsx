@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { previewCancellationPayout } from "@/lib/ledger";
 import { ConfirmCancellationButton } from "./confirm-cancellation-button";
 
@@ -10,9 +11,10 @@ export default async function CancelSubscriptionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { id },
+  const subscription = await prisma.subscription.findFirst({
+    where: { id, student: { teacherId: session!.user.id } },
     include: { student: true, payer: true },
   });
 

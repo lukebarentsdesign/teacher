@@ -8,7 +8,7 @@ export default async function NewTimetablePage() {
   const session = await auth();
 
   const [students, links] = await Promise.all([
-    prisma.student.findMany({ orderBy: { name: "asc" } }),
+    prisma.student.findMany({ where: { teacherId: session?.user?.id }, orderBy: { name: "asc" } }),
     prisma.teacherSchoolLink.findMany({
       where: { teacherId: session?.user?.id },
       include: { school: true },

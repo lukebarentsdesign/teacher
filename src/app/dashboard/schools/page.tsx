@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 
 export default async function SchoolsPage() {
-  const schools = await prisma.school.findMany({ orderBy: { name: "asc" } });
+  const session = await auth();
+  const links = await prisma.teacherSchoolLink.findMany({
+    where: { teacherId: session!.user.id },
+    include: { school: true },
+    orderBy: { school: { name: "asc" } },
+  });
+  const schools = links.map((link) => link.school);
 
   return (
     <div>

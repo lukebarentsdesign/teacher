@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { payerSchema } from "@/lib/validations";
 import { generateUniqueAccessCode } from "@/lib/access-code";
 
@@ -10,6 +11,9 @@ export async function createPayerAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
   const parsed = payerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email") || undefined,
@@ -23,7 +27,7 @@ export async function createPayerAction(
   const accessCode = await generateUniqueAccessCode();
 
   await prisma.payer.create({
-    data: { ...parsed.data, accessCode },
+    data: { ...parsed.data, teacherId: session.user.id, accessCode },
   });
 
   revalidatePath("/dashboard/payers");
@@ -31,9 +35,12 @@ export async function createPayerAction(
 }
 
 export async function regenerateAccessCodeAction(payerId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
   const accessCode = await generateUniqueAccessCode();
-  await prisma.payer.update({
-    where: { id: payerId },
+  await prisma.payer.updateMany({
+    where: { id: payerId, teacherId: session.user.id },
     data: { accessCode, accessCodeUpdatedAt: new Date() },
   });
   revalidatePath("/dashboard/payers");

@@ -4,14 +4,12 @@ import { confirmTimetableAction } from "./actions";
 
 export function ConfirmTimetableForm({
   studentId,
-  teacherId,
   schoolId,
   linkId,
   slots,
   disabled,
 }: {
   studentId: string;
-  teacherId: string;
   schoolId: string;
   linkId: string;
   slots: string;
@@ -20,7 +18,6 @@ export function ConfirmTimetableForm({
   return (
     <form action={confirmTimetableAction}>
       <input type="hidden" name="studentId" value={studentId} />
-      <input type="hidden" name="teacherId" value={teacherId} />
       <input type="hidden" name="schoolId" value={schoolId} />
       <input type="hidden" name="linkId" value={linkId} />
       <input type="hidden" name="slots" value={slots} />

@@ -23,7 +23,7 @@ export async function createSchoolAction(
 
   const { termStart, termEnd, ...rest } = parsed.data;
 
-  await prisma.school.create({
+  const school = await prisma.school.create({
     data: {
       ...rest,
       termStart: termStart ? new Date(termStart) : undefined,
@@ -32,5 +32,7 @@ export async function createSchoolAction(
   });
 
   revalidatePath("/dashboard/schools");
-  redirect("/dashboard/schools");
+  // Straight to the detail page — a school with no TeacherSchoolLink yet is invisible to the
+  // teacher-scoped schools list, so they need to set up their engagement here right away.
+  redirect(`/dashboard/schools/${school.id}`);
 }

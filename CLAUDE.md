@@ -22,13 +22,31 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 
 | Layer | Choice |
 |---|---|
-| Framework | Next.js 14 (App Router), TypeScript |
+| Framework | Next.js 15 (App Router), React 19, TypeScript |
 | Database | PostgreSQL via Supabase, Prisma ORM 7.x (driver adapter: `@prisma/adapter-pg`) |
 | Auth | NextAuth v5 (Credentials provider, JWT session — no OAuth adapter tables) |
-| Payments | Stripe |
+| Payments | Stripe (platform billing + Connect Express, see below) |
 | Email | Resend |
 | Styling | Tailwind CSS |
 | Hosting | TBD (not yet deployed — local dev only) |
+
+**Multi-tenant, not single-teacher:** originally scoped as one solo teacher's private tool, but
+Stripe requiring per-teacher payment collection (parents pay the teacher directly, not Learnio)
+made this a real multi-tenant SaaS product instead — any teacher can register (`/register`) and
+gets isolated data. `Student.teacherId` and `Payer.teacherId` are the tenancy boundary; `School` is
+shared reference data, scoped per-teacher via `TeacherSchoolLink`. Every list/detail query and
+server action must filter by `session.user.id` — see the retrofit commit for the full pattern.
+
+**Next.js 15 / React 19, not 14/18:** started on Next 14 + React 18 (matching YourBarber), but
+`useActionState` (used in every form) is a React 19 API — Next 14.2's internally vendored React
+runtime doesn't have it even if you bump the `react` package yourself, so the mismatch only
+surfaces at build/static-generation time, not typecheck time. Upgraded both together rather than
+downgrading the forms to the old `useFormState` API.
+
+**`src/auth.config.ts` vs `src/auth.ts`:** middleware runs on the Edge runtime, which can't load
+`bcryptjs` (Node-only). `auth.config.ts` holds the edge-safe callbacks/pages config with no
+providers, used directly by `middleware.ts`; `auth.ts` adds the Credentials provider (which needs
+bcrypt) on top, used by API routes and server actions. Don't merge these back into one file.
 
 Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.prisma`'s `datasource` block. Runtime `PrismaClient` requires a driver adapter — see [src/lib/db.ts](src/lib/db.ts).
 

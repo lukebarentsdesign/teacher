@@ -18,8 +18,11 @@ export default async function TimetablePreviewPage({
   if (!studentId || !linkId || !slots || !session?.user?.id) notFound();
 
   const [student, link] = await Promise.all([
-    prisma.student.findUnique({ where: { id: studentId } }),
-    prisma.teacherSchoolLink.findUnique({ where: { id: linkId }, include: { school: true } }),
+    prisma.student.findFirst({ where: { id: studentId, teacherId: session.user.id } }),
+    prisma.teacherSchoolLink.findFirst({
+      where: { id: linkId, teacherId: session.user.id },
+      include: { school: true },
+    }),
   ]);
 
   if (!student || !link || !link.school.termStart || !link.school.termEnd) notFound();
@@ -85,7 +88,6 @@ export default async function TimetablePreviewPage({
 
       <ConfirmTimetableForm
         studentId={studentId}
-        teacherId={session.user.id}
         schoolId={link.schoolId}
         linkId={linkId}
         slots={slots}

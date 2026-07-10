@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { RegenerateCodeButton } from "./regenerate-code-button";
 
 export default async function PayersPage() {
+  const session = await auth();
   const payers = await prisma.payer.findMany({
+    where: { teacherId: session!.user.id },
     orderBy: { name: "asc" },
     include: { studentLinks: { include: { student: true } } },
   });

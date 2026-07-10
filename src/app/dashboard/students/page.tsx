@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 
 export default async function StudentsPage() {
+  const session = await auth();
   const students = await prisma.student.findMany({
+    where: { teacherId: session!.user.id },
     orderBy: { name: "asc" },
     include: { school: true },
   });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 import { LinkPayerForm } from "./link-payer-form";
 import { NewSubscriptionForm } from "./new-subscription-form";
 
@@ -10,9 +11,10 @@ export default async function StudentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
 
-  const student = await prisma.student.findUnique({
-    where: { id },
+  const student = await prisma.student.findFirst({
+    where: { id, teacherId: session!.user.id },
     include: {
       school: true,
       payerLinks: { include: { payer: true } },
@@ -22,7 +24,10 @@ export default async function StudentDetailPage({
 
   if (!student) notFound();
 
-  const allPayers = await prisma.payer.findMany({ orderBy: { name: "asc" } });
+  const allPayers = await prisma.payer.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { name: "asc" },
+  });
   const linkedPayerIds = new Set(student.payerLinks.map((link) => link.payerId));
   const unlinkedPayers = allPayers.filter((payer) => !linkedPayerIds.has(payer.id));
 

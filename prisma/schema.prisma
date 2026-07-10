@@ -86,6 +86,14 @@ enum PaymentStatus {
   REFUNDED
 }
 
+/// Teacher's own platform (SaaS) subscription status — Learnio billing them, not lesson billing.
+enum PlatformSubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
 // ---------------------------------------------------------------------------
 // Teacher / School / scheduling
 // ---------------------------------------------------------------------------
@@ -99,6 +107,15 @@ model Teacher {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  /// Learnio's own SaaS billing of the teacher — separate from lesson/ledger billing.
+  stripeCustomerId     String?                    @unique
+  platformSubscriptionId String?                  @unique
+  platformStatus       PlatformSubscriptionStatus @default(TRIALING)
+
+  /// Stripe Connect Express account so parent payments land with the teacher, not Learnio.
+  stripeConnectAccountId  String?  @unique
+  stripeConnectOnboarded  Boolean  @default(false)
+
   schoolLinks    TeacherSchoolLink[]
   unavailability Unavailability[]
   lessons        Lesson[]
@@ -106,6 +123,8 @@ model Teacher {
   assessments    Assessment[]
   packages       Package[]
   loanableItems  LoanableItem[]
+  students       Student[]
+  payers         Payer[]
 }
 
 model School {
@@ -195,6 +214,8 @@ model Room {
 
 model Student {
   id          String        @id @default(cuid())
+  /// Owning teacher — the core multi-tenant boundary. A Student belongs to exactly one teacher.
+  teacherId   String
   name        String
   dob         DateTime?
   discipline  String // instrument / class / discipline
@@ -204,6 +225,7 @@ model Student {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  teacher           Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   school            School?            @relation(fields: [schoolId], references: [id])
   payerLinks        StudentPayerLink[]
   subscriptions     Subscription[]
@@ -213,10 +235,15 @@ model Student {
   checkIns          CheckIn[]
   assessments       Assessment[]
   loans             Loan[]
+
+  @@index([teacherId])
 }
 
 model Payer {
   id        String   @id @default(cuid())
+  /// Owning teacher — same tenancy boundary as Student. A family with two Learnio teachers
+  /// (e.g. piano + yoga) gets one Payer record per teacher relationship, not one shared globally.
+  teacherId String
   name      String
   email     String?
   phone     String?
@@ -227,8 +254,11 @@ model Payer {
   accessCode          String    @unique
   accessCodeUpdatedAt DateTime  @default(now())
 
+  teacher       Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   studentLinks  StudentPayerLink[]
   subscriptions Subscription[]
+
+  @@index([teacherId])
 }
 
 model StudentPayerLink {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -14,6 +15,12 @@ export default async function LoginPage({
           Teacher login
         </h1>
         <LoginForm callbackUrl={callbackUrl} />
+        <p className="mt-4 text-center text-sm text-neutral-500">
+          New to Learnio?{" "}
+          <Link href="/register" className="text-neutral-900 underline">
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   );

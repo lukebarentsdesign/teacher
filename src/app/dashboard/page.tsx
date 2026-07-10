@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 
 export default async function DashboardHomePage() {
+  const session = await auth();
+  const teacherId = session!.user.id;
+
   const [schoolCount, studentCount, activeSubscriptionCount] = await Promise.all([
-    prisma.school.count(),
-    prisma.student.count(),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    prisma.teacherSchoolLink.count({ where: { teacherId } }),
+    prisma.student.count({ where: { teacherId } }),
+    prisma.subscription.count({ where: { status: "ACTIVE", student: { teacherId } } }),
   ]);
 
   return (
