@@ -46,6 +46,34 @@ export function NewSchoolForm() {
         </select>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="termStart" className="block text-sm font-medium text-neutral-700">
+            Term start (optional)
+          </label>
+          <input
+            id="termStart"
+            name="termStart"
+            type="date"
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="termEnd" className="block text-sm font-medium text-neutral-700">
+            Term end (optional)
+          </label>
+          <input
+            id="termEnd"
+            name="termEnd"
+            type="date"
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-neutral-500">
+        Needed later for the timetable generator to know how many weeks to schedule.
+      </p>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button

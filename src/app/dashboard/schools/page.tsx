@@ -31,7 +31,11 @@ export default async function SchoolsPage() {
             <tbody>
               {schools.map((school) => (
                 <tr key={school.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="px-4 py-3 text-neutral-900">{school.name}</td>
+                  <td className="px-4 py-3 text-neutral-900">
+                    <Link href={`/dashboard/schools/${school.id}`} className="hover:underline">
+                      {school.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-neutral-500">{school.address ?? "—"}</td>
                   <td className="px-4 py-3 text-neutral-500">{school.invoicingTarget}</td>
                 </tr>

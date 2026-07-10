@@ -4,6 +4,8 @@ export const schoolSchema = z.object({
   name: z.string().min(1, "Name is required"),
   address: z.string().optional(),
   invoicingTarget: z.enum(["SCHOOL", "PARENT"]),
+  termStart: z.string().optional(),
+  termEnd: z.string().optional(),
 });
 
 export const studentSchema = z.object({

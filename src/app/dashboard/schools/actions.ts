@@ -13,13 +13,23 @@ export async function createSchoolAction(
     name: formData.get("name"),
     address: formData.get("address") || undefined,
     invoicingTarget: formData.get("invoicingTarget"),
+    termStart: formData.get("termStart") || undefined,
+    termEnd: formData.get("termEnd") || undefined,
   });
 
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Invalid input";
   }
 
-  await prisma.school.create({ data: parsed.data });
+  const { termStart, termEnd, ...rest } = parsed.data;
+
+  await prisma.school.create({
+    data: {
+      ...rest,
+      termStart: termStart ? new Date(termStart) : undefined,
+      termEnd: termEnd ? new Date(termEnd) : undefined,
+    },
+  });
 
   revalidatePath("/dashboard/schools");
   redirect("/dashboard/schools");
