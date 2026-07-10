@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getParentSession } from "@/lib/parent-session";
+import { getMicrositeSession } from "@/lib/microsite-session";
 import { renderContractSnapshotPdf } from "@/lib/contract-pdf";
 
 export async function GET() {
-  const session = await getParentSession();
-  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = await getMicrositeSession();
+  if (!session || session.type !== "guardian") {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
 
   const acceptance = await prisma.contractAcceptance.findFirst({
     where: { payerId: session.payerId },

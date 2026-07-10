@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getParentSession } from "@/lib/parent-session";
+import { getMicrositeSession } from "@/lib/microsite-session";
 import { getCurrentContract, getAcceptanceForContract } from "@/lib/contracts";
 import { AcceptContractForm } from "./accept-contract-form";
 
 export default async function ParentContractPage() {
-  const session = await getParentSession();
+  const session = await getMicrositeSession();
   if (!session) redirect("/parent/login");
+
+  // Contract acceptance is the billing party's responsibility — Payer, not Student.
+  if (session.type !== "guardian") redirect("/parent");
 
   const payer = await prisma.payer.findUnique({ where: { id: session.payerId } });
   if (!payer) redirect("/parent/login");

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { getParentSession } from "@/lib/parent-session";
+import { getMicrositeSession } from "@/lib/microsite-session";
 import { getCurrentContract } from "@/lib/contracts";
 
 const acceptSchema = z.object({
@@ -22,8 +22,9 @@ export async function acceptContractAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const session = await getParentSession();
+  const session = await getMicrositeSession();
   if (!session) redirect("/parent/login");
+  if (session.type !== "guardian") return "Only the account holder (guardian) can accept the contract.";
 
   const parsed = acceptSchema.safeParse({
     typedName: formData.get("typedName"),
