@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/dashboard/students", label: "Students" },
   { href: "/dashboard/payers", label: "Payers" },
   { href: "/dashboard/timetable/new", label: "Generate timetable" },
+  { href: "/dashboard/billing", label: "Billing" },
 ];
 
 export default async function DashboardLayout({
