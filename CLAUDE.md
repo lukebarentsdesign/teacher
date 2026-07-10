@@ -28,6 +28,8 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 | Payments | Stripe (platform billing + Connect Express, see below) |
 | Email | Resend |
 | Styling | Tailwind CSS |
+| Calendar UI | FullCalendar (`@fullcalendar/react`) — MIT, see docs/spec.md section 3a |
+| Timetable solver | Google OR-Tools CP-SAT, separate Python service at [timetable-service/](timetable-service/) — not yet wired into the app, see its README |
 | Hosting | TBD (not yet deployed — local dev only) |
 
 **Multi-tenant, not single-teacher:** originally scoped as one solo teacher's private tool, but
@@ -60,7 +62,7 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 4. [x] Timetable generator (fixed/fluid, protected blocks) — [src/lib/scheduling.ts](src/lib/scheduling.ts) (pure, unit-tested) + [src/lib/timetable.ts](src/lib/timetable.ts) (Prisma/conflict-detection). **Not yet done: the lesson-history ghost overlay visual** (spec section 3) — the generator itself, conflict detection, and manual-confirm-before-creating flow are built; the calendar-view "ghost past slots onto this week" rendering is still open.
 5. [x] Stripe integration + webhook → LedgerEntry — split into three pieces once "teachers pay Learnio" and "parents pay teachers" turned out to need different Stripe products: platform billing ([src/lib/billing.ts](src/lib/billing.ts)), Connect Express onboarding ([src/lib/connect.ts](src/lib/connect.ts)), and parent payment links ([src/lib/payments.ts](src/lib/payments.ts)), all landing in one webhook ([src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts)). No parent microsite/login yet, so payment links are teacher-generated and shared manually — see below.
 6. [x] Contract generation — **in-app clickwrap acceptance, not PDF/e-signature** (spec updated; see docs/spec.md and "Contract Acceptance Decisions" below). PDF is now only an optional post-acceptance download.
-7. [ ] Parent microsite (6-digit per-family access code, read-only calendar + ledger) — the login itself (`src/lib/parent-session.ts`, `/parent/login`) already exists as a prerequisite for contract acceptance; this step is the full calendar/ledger view on top of it.
+7. [x] Parent/student microsite — 6-digit code login (guardian and 16+ student, same namespace), student-picker (`/parent`) for guardians with multiple students, and per-student pages under `/parent/students/[studentId]/`: overview, FullCalendar-based calendar, ledger (gated by `shareBalanceWithStudent` for student viewers), resources, assignments, maintenance reminders (for items on active loan), lesson notes. Access control centralized in `src/lib/microsite-access.ts`.
 8. [ ] Room booking, GroupClass, Assessment, LoanableItem/Loan modules
 9. [ ] Teacher income forecasting dashboard + expense tracking
 
