@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { LinkPayerForm } from "./link-payer-form";
@@ -70,7 +71,14 @@ export default async function StudentDetailPage({
               <tbody>
                 {student.subscriptions.map((sub) => (
                   <tr key={sub.id} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-3 text-neutral-900">{sub.payer.name}</td>
+                    <td className="px-4 py-3 text-neutral-900">
+                      <Link
+                        href={`/dashboard/subscriptions/${sub.id}`}
+                        className="hover:underline"
+                      >
+                        {sub.payer.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-neutral-500">{sub.billingModel}</td>
                     <td className="px-4 py-3 text-neutral-500">£{sub.annualFee.toString()}</td>
                     <td className="px-4 py-3 text-neutral-500">{sub.status}</td>
