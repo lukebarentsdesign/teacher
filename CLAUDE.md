@@ -112,6 +112,31 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **Parent auth (`src/lib/parent-session.ts`) is a separate, lightweight signed-cookie session** — not NextAuth, not shared with the Teacher login. Reuses `AUTH_SECRET` to sign rather than adding a second secret. This is only the login piece of the full parent microsite (build step 7); there's no calendar/ledger view behind it yet, just the contract acceptance screen.
 - **PDF download (`src/lib/contract-pdf.ts`, `pdf-lib`) is unsigned and optional**, generated only after a `ContractAcceptance` exists, rendering that row's `contractSnapshot` — it has zero bearing on whether the acceptance is legally valid.
 
+## Dev Server / Tailwind cwd Bug (fixed, but know why)
+
+The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH
+lookup — see the earlier `node.exe` + direct-bin-script workaround. That workaround runs Next
+with an explicit project-directory *argument*, but the process's actual `cwd` stayed whatever the
+harness's own default is (a *different* directory entirely) — Next.js itself doesn't care, but
+**Tailwind's PostCSS plugin does its own config auto-discovery relative to `cwd`**, silently fell
+back to an empty config (`content: []`) when it couldn't find `tailwind.config.ts` there, and
+produced zero utility classes. Base/reset styles still rendered fine, which made this look like
+"some Tailwind classes are missing" rather than "Tailwind found none of my files" — everything
+was actually just unstyled black-text-on-white the whole time this was broken.
+
+Fixed two ways, both worth keeping:
+1. **`scripts/run-next-dev.js`** — a wrapper that `chdir()`s to the project root before requiring
+   Next's CLI, so `.claude/launch.json` runs `node scripts/run-next-dev.js` instead of `node
+   .../next/dist/bin/next dev <dir>`. Fixes `cwd` for *every* cwd-dependent tool, not just Tailwind.
+2. **`postcss.config.mjs`** explicitly passes an absolute `config` path to the `tailwindcss`
+   plugin, and **`tailwind.config.ts`**'s own `content` globs are anchored to `__dirname` rather
+   than relative paths — belt-and-suspenders in case cwd breaks again some other way.
+
+If styling ever silently disappears again (blank/unstyled pages that otherwise render and
+function correctly), check the compiled CSS for utility classes before assuming a code bug —
+`fetch('/_next/static/css/app/layout.css').then(r=>r.text())` in the browser console, looking for
+`.rounded-lg` or similar. If it's missing, this cwd issue is the first suspect.
+
 ## Conventions
 
 - Server components by default; `'use client'` only for interactivity.

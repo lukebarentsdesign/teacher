@@ -7,7 +7,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: 'ts-node --compiler-options "{\\"module\\":\\"CommonJS\\"}" prisma/seed.ts',
+    seed: "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts",
   },
   datasource: {
     // Use the Supabase *direct* (non-pooled, port 5432) connection string here —
