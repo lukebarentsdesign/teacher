@@ -188,6 +188,18 @@ Balance = Σ(payments received) − Σ(lessons delivered × per-lesson value) at
 
 ---
 
+## 3a. Approved Technical References
+
+Three external references are approved for direct use in this build — all permissively licensed, so code may be adapted or copied from them, **unlike the GPLv3-licensed ELVIS reference used for the data model (see the header of this document), which must never be copied verbatim, only used for schema/logic inspiration.**
+
+**Calendar/scheduling UI:** [FullCalendar](https://github.com/fullcalendar/fullcalendar) (MIT license), via `@fullcalendar/react`. Use for both the teacher's unified multi-school calendar and the parent/student microsite calendar view. Supports resource/timeline views (good fit for multiple schools/rooms) and has built-in Google Calendar/iCal sync, which lines up with the later Google Calendar integration (section 4).
+
+**Timetable generation engine:** [Google OR-Tools](https://github.com/google/or-tools) CP-SAT solver (Apache 2.0 license), run as a **separate Python microservice** that the Next.js app calls over HTTP — not embedded in the TypeScript codebase. CP-SAT is a deterministic constraint solver: it *guarantees* hard constraints (teacher clashes, room clashes, protected blocks, availability windows) are never violated, and optimizes soft constraints (even time distribution, fluid-mode rotation) on top of that guarantee. **Do not use a genetic-algorithm-based approach** — those only get statistically close to satisfying hard constraints rather than guaranteeing them, which is unacceptable here (a "mostly doesn't double-book the room" scheduler is not good enough).
+
+**Portal/dashboard UI patterns:** [Kiranism/next-shadcn-dashboard-starter](https://github.com/Kiranism/next-shadcn-dashboard-starter) (MIT license) as a layout/component reference for the parent/student microsite — specifically its auth-flow layout, table, and form patterns, not the whole template wholesale. Our own auth (the 6-digit access-code system, section 5) replaces its Clerk-based auth entirely — **do not import Clerk or any of its auth scaffolding.**
+
+---
+
 ## 4. Deferred / Out of Scope for v1
 - The IG Card integration (card as lesson/status pointer) — build entities so a `cardId` foreign key can be added later without migration pain
 - WhatsApp messaging — start with email; add WhatsApp Business API once core is stable
