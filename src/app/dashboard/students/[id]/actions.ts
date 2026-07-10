@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { subscriptionSchema } from "@/lib/validations";
+import { generateUniqueAccessCode } from "@/lib/access-code";
+import { isAtLeast16 } from "@/lib/age";
 import { z } from "zod";
+
+async function findOwnStudent(studentId: string, teacherId: string) {
+  return prisma.student.findFirst({ where: { id: studentId, teacherId } });
+}
 
 const linkPayerSchema = z.object({
   studentId: z.string().min(1),
@@ -83,4 +89,76 @@ export async function createSubscriptionAction(
   });
 
   revalidatePath(`/dashboard/students/${parsed.data.studentId}`);
+}
+
+export async function grantIndependentAccessAction(
+  studentId: string
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const student = await findOwnStudent(studentId, session.user.id);
+  if (!student) return "Student not found";
+
+  if (!student.dob) return "Add a date of birth before granting independent access.";
+  if (!isAtLeast16(student.dob)) return "This student isn't 16 yet.";
+
+  const code = await generateUniqueAccessCode();
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { hasIndependentAccess: true, studentAccessCode: code, studentAccessCodeUpdatedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+}
+
+export async function revokeIndependentAccessAction(studentId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const student = await findOwnStudent(studentId, session.user.id);
+  if (!student) return;
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { hasIndependentAccess: false, studentAccessCode: null, studentAccessCodeUpdatedAt: null },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+}
+
+export async function regenerateStudentAccessCodeAction(studentId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const student = await findOwnStudent(studentId, session.user.id);
+  if (!student || !student.hasIndependentAccess) return;
+
+  const code = await generateUniqueAccessCode();
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { studentAccessCode: code, studentAccessCodeUpdatedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+}
+
+export async function toggleShareBalanceAction(
+  studentId: string,
+  shareBalanceWithStudent: boolean
+): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const student = await findOwnStudent(studentId, session.user.id);
+  if (!student) return;
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { shareBalanceWithStudent },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
 }

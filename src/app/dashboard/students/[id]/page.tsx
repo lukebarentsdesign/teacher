@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { LinkPayerForm } from "./link-payer-form";
 import { NewSubscriptionForm } from "./new-subscription-form";
+import { AccessSettings } from "./access-settings";
 
 export default async function StudentDetailPage({
   params,
@@ -96,6 +97,17 @@ export default async function StudentDetailPage({
         {student.payerLinks.length > 0 && (
           <NewSubscriptionForm studentId={student.id} payers={student.payerLinks.map((l) => l.payer)} />
         )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Microsite access</h2>
+        <AccessSettings
+          studentId={student.id}
+          dob={student.dob ? student.dob.toISOString() : null}
+          hasIndependentAccess={student.hasIndependentAccess}
+          studentAccessCode={student.studentAccessCode}
+          shareBalanceWithStudent={student.shareBalanceWithStudent}
+        />
       </section>
     </div>
   );
