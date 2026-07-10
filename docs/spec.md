@@ -113,9 +113,18 @@ Core jobs to be done:
 - Creates a corresponding `+` LedgerEntry on success
 
 ### Contract
-- id, subscriptionId (or studentId)
-- generated document explaining the subscription/ledger model in plain terms
-- versioned so changes to terms don't retroactively alter old contracts
+- id, teacherId, version (int, incrementing per teacher), content, createdAt
+- plain-terms document explaining the subscription/ledger model — one evolving document per teacher, not per subscription, since a teacher's standard terms apply across all their students
+- versioned so changes to terms don't retroactively alter what a past acceptance recorded
+
+### ContractAcceptance — the actual mechanism of agreement (replaces PDF/e-signature round-trip)
+- id, payerId, contractId, contractVersion (denormalized), contractSnapshot, typedName, acceptedAt, ipAddress
+- Acceptance happens on a single microsite screen: full contract text displayed, a text input for the parent's typed full name, a checkbox ("I have read and agree to these terms"), and an Accept button — no PDF download, no e-signature vendor, no email round-trip
+- `contractSnapshot` stores the exact text shown at the moment of acceptance as an independent copy, not a reference to the (mutable) `Contract.content` — so a later edit to the live contract can never retroactively change what a past acceptance says was agreed to
+- `contractVersion` is stored redundantly on the acceptance row (not just inferred via `contractId`) specifically so "has this payer accepted the *current* version" is a cheap direct comparison, not a join-and-compare
+- **Gating:** a Subscription's lesson booking (timetable generation) and payment collection (parent Checkout links) are both blocked until the Subscription's designated payer (`Subscription.payerId`) has a `ContractAcceptance` row matching the teacher's current `Contract.version`. Manually recording a payment (the teacher's own bookkeeping correction tool) is not blocked, but the subscription view surfaces acceptance status so the teacher isn't blind to it.
+- **Re-acceptance on contract update:** when a teacher edits their contract, a new `Contract.version` is created (never edits an existing version's `content` in place). Every payer's most recent acceptance now points at a stale version, so gating naturally requires re-acceptance before their next lesson booking or payment — no separate "needs re-acceptance" flag or reminder job needed, since it falls out of the version-comparison check.
+- **PDF is optional and downstream of acceptance, never the mechanism of it.** After accepting, a parent can download a PDF copy of their `contractSnapshot` for their own records. This uses a simple in-app PDF renderer, not an e-signature service — it is not signed, not required, and generating or skipping it has no bearing on whether the acceptance is valid.
 
 ### Assessment
 - id, studentId, teacherId
@@ -187,7 +196,7 @@ Balance = Σ(payments received) − Σ(lessons delivered × per-lesson value) at
 3. Ledger engine (this is the piece to sanity-check hardest — consider Fable 5 here if Sonnet's output looks shaky under test cases)
 4. Timetable generator (fixed/fluid toggle — also a Fable 5 candidate if Sonnet struggles)
 5. Stripe integration + webhook → LedgerEntry creation
-6. Contract generation
+6. Contract generation — in-app clickwrap acceptance (see ContractAcceptance above), not PDF/e-signature. Requires a minimal parent-facing login (access code → signed session) ahead of the full microsite in step 7, since acceptance needs to know which Payer is agreeing.
 7. Parent microsite (read-only calendar + ledger view)
 8. Room booking, GroupClass, Assessment, LoanableItem/Loan modules
 9. Teacher income forecasting dashboard — include a simple expense-tracking line (validated against My Music Staff's payroll/expense module) so the teacher has a tax-ready income vs. expense view, not just incoming revenue

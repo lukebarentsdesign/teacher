@@ -59,8 +59,8 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 3. [x] Ledger engine (sanity-check hardest — running balance + cancellation payout + make-up credits) — [src/lib/ledger.ts](src/lib/ledger.ts), unit-tested in [__tests__/ledger.test.ts](__tests__/ledger.test.ts)
 4. [x] Timetable generator (fixed/fluid, protected blocks) — [src/lib/scheduling.ts](src/lib/scheduling.ts) (pure, unit-tested) + [src/lib/timetable.ts](src/lib/timetable.ts) (Prisma/conflict-detection). **Not yet done: the lesson-history ghost overlay visual** (spec section 3) — the generator itself, conflict detection, and manual-confirm-before-creating flow are built; the calendar-view "ghost past slots onto this week" rendering is still open.
 5. [x] Stripe integration + webhook → LedgerEntry — split into three pieces once "teachers pay Learnio" and "parents pay teachers" turned out to need different Stripe products: platform billing ([src/lib/billing.ts](src/lib/billing.ts)), Connect Express onboarding ([src/lib/connect.ts](src/lib/connect.ts)), and parent payment links ([src/lib/payments.ts](src/lib/payments.ts)), all landing in one webhook ([src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts)). No parent microsite/login yet, so payment links are teacher-generated and shared manually — see below.
-6. [ ] Contract generation (uses the `document-generation-pdf` skill)
-7. [ ] Parent microsite (6-digit per-family access code, read-only calendar + ledger)
+6. [x] Contract generation — **in-app clickwrap acceptance, not PDF/e-signature** (spec updated; see docs/spec.md and "Contract Acceptance Decisions" below). PDF is now only an optional post-acceptance download.
+7. [ ] Parent microsite (6-digit per-family access code, read-only calendar + ledger) — the login itself (`src/lib/parent-session.ts`, `/parent/login`) already exists as a prerequisite for contract acceptance; this step is the full calendar/ledger view on top of it.
 8. [ ] Room booking, GroupClass, Assessment, LoanableItem/Loan modules
 9. [ ] Teacher income forecasting dashboard + expense tracking
 
@@ -98,6 +98,17 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **Stripe client is a lazy Proxy** ([src/lib/stripe.ts](src/lib/stripe.ts)) — the SDK throws in its constructor on an empty API key, which broke `next build` before real keys existed. Don't change this back to a plain `new Stripe(...)` export.
 - **One webhook endpoint for three concerns**: platform billing events, Connect `account.updated`, and parent-payment `checkout.session.completed` all land in [src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts), dispatched by `session.mode` / event type. Payment webhook handling is idempotent via `stripePaymentId` uniqueness (checked before creating a `Payment` row) since Stripe retries webhooks.
 - **Still needs real Stripe test keys to actually verify end-to-end** — everything here is typechecked/built but never hit a live Stripe account.
+
+## Contract Acceptance Decisions
+
+- **Contract is per-teacher, not per-subscription.** Originally modeled as `Contract.subscriptionId`; redesigned to `Contract.teacherId` + incrementing `version` because gating is phrased as "the payer has accepted the *current* contract version" — a single evolving document per teacher, not a copy per subscription. No DB migration existed yet when this changed, so the schema was edited directly rather than migrated.
+- **`ContractAcceptance.contractSnapshot` is a real independent copy of the text**, not just a foreign key to `Contract.content` — deliberate, so a later edit to the live contract can never retroactively change what a past acceptance recorded. Don't "simplify" this into a join later.
+- **`contractVersion` is denormalized onto the acceptance row** specifically so `hasAcceptedCurrentContract` (`src/lib/contracts.ts`) is a direct equality check against the payer's own acceptance, not a join-and-compare.
+- **Re-acceptance on a new version is not a separate flagged/reminder flow** — it falls out naturally: `getCurrentContract` always returns the highest version, and `hasAcceptedCurrentContract` checks the acceptance table for that specific version. A stale acceptance (matching an old version) simply doesn't match, so gating blocks by itself.
+- **Gating covers lesson booking (timetable confirm) and parent Checkout links, not manual "record a payment."** The teacher's own bookkeeping correction isn't blocked, but the subscription page always shows acceptance status so they're not blind to it. Checked both client-visibly (preview page disables the submit button) and server-side (confirm actions re-check — defense in depth against a replayed/modified request).
+- **If a teacher hasn't set up a contract at all, nothing is gated** (`getCurrentContract` returns null → `hasAcceptedCurrentContract` returns `true`). Don't change this without considering existing teachers who haven't configured one yet.
+- **Parent auth (`src/lib/parent-session.ts`) is a separate, lightweight signed-cookie session** — not NextAuth, not shared with the Teacher login. Reuses `AUTH_SECRET` to sign rather than adding a second secret. This is only the login piece of the full parent microsite (build step 7); there's no calendar/ledger view behind it yet, just the contract acceptance screen.
+- **PDF download (`src/lib/contract-pdf.ts`, `pdf-lib`) is unsigned and optional**, generated only after a `ContractAcceptance` exists, rendering that row's `contractSnapshot` — it has zero bearing on whether the acceptance is legally valid.
 
 ## Conventions
 

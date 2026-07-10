@@ -1,13 +1,16 @@
 import { prisma } from "@/lib/db";
 import { stripe, getAppUrl } from "@/lib/stripe";
+import { hasAcceptedCurrentContract } from "@/lib/contracts";
 
 /**
  * Creates a Checkout Session for a parent to pay a Subscription directly, using a destination
  * charge so the money lands with the teacher's connected account (minus Stripe's processing
  * fees) rather than Learnio's platform account. No application fee is taken — see CLAUDE.md.
  *
- * There's no parent login yet (that's the microsite build step), so this returns a shareable
- * URL for the teacher to send the parent themselves, rather than emailing it automatically.
+ * There's no full parent microsite yet (calendar/ledger view is a later build step), so this
+ * returns a shareable URL for the teacher to send the parent themselves, rather than emailing it
+ * automatically. Parent contract acceptance (src/app/parent) is the one piece of parent-facing
+ * auth that already exists, and this function gates on it.
  */
 export async function createParentPaymentCheckoutSession(
   subscriptionId: string,
@@ -21,6 +24,12 @@ export async function createParentPaymentCheckoutSession(
   const teacher = subscription.student.teacher;
   if (!teacher.stripeConnectAccountId || !teacher.stripeConnectOnboarded) {
     throw new Error("Teacher hasn't finished connecting Stripe yet");
+  }
+
+  if (!(await hasAcceptedCurrentContract(subscription.payerId, teacher.id))) {
+    throw new Error(
+      "This payer hasn't accepted the current contract yet — ask them to log in and accept it before paying."
+    );
   }
 
   const appUrl = getAppUrl();

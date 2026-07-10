@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { previewFixedTimetable, previewFluidTimetable } from "@/lib/timetable";
 import { availabilityArraySchema } from "@/lib/schedule-json";
+import { hasAcceptedCurrentContract } from "@/lib/contracts";
 import { ConfirmTimetableForm } from "./confirm-timetable-form";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -33,6 +34,15 @@ export default async function TimetablePreviewPage({
     link.schedulingMode === "FIXED"
       ? await previewFixedTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots[0])
       : await previewFluidTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots);
+
+  // Gate on the student's active subscription's payer having accepted the current contract.
+  const activeSubscription = await prisma.subscription.findFirst({
+    where: { studentId: student.id, status: "ACTIVE" },
+    include: { payer: true },
+  });
+  const contractBlocked = activeSubscription
+    ? !(await hasAcceptedCurrentContract(activeSubscription.payerId, session.user.id))
+    : false;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -86,12 +96,23 @@ export default async function TimetablePreviewPage({
         </table>
       </div>
 
+      {contractBlocked && activeSubscription && (
+        <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+          {activeSubscription.payer.name} hasn&apos;t accepted the current contract yet — lessons
+          can&apos;t be booked until they do. Their microsite access code is on the{" "}
+          <a href="/dashboard/payers" className="underline">
+            payers page
+          </a>
+          .
+        </div>
+      )}
+
       <ConfirmTimetableForm
         studentId={studentId}
         schoolId={link.schoolId}
         linkId={linkId}
         slots={slots}
-        disabled={result.clean.length === 0}
+        disabled={result.clean.length === 0 || contractBlocked}
       />
     </div>
   );

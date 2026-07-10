@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { calculateCashBalance, calculateMakeUpCreditsOwed } from "@/lib/ledger";
+import { getCurrentContract, getAcceptanceForContract } from "@/lib/contracts";
 import { RecordPaymentForm } from "./record-payment-form";
 import { RequestPaymentForm } from "./request-payment-form";
 
@@ -30,6 +31,11 @@ export default async function SubscriptionDetailPage({
 
   const cashBalance = calculateCashBalance(subscription.ledgerEntries);
   const makeUpCreditsOwed = calculateMakeUpCreditsOwed(subscription.ledgerEntries);
+
+  const currentContract = await getCurrentContract(session!.user.id);
+  const acceptance = currentContract
+    ? await getAcceptanceForContract(subscription.payerId, currentContract.version)
+    : null;
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -61,6 +67,27 @@ export default async function SubscriptionDetailPage({
           <p className="mt-2 text-3xl font-semibold text-neutral-900">{makeUpCreditsOwed}</p>
         </div>
       </div>
+
+      {currentContract && (
+        <div
+          className={`rounded-xl p-4 text-sm shadow-sm ${
+            acceptance ? "bg-white text-neutral-600" : "bg-amber-50 text-amber-800"
+          }`}
+        >
+          {acceptance ? (
+            <>
+              {subscription.payer.name} accepted contract v{acceptance.contractVersion} on{" "}
+              {acceptance.acceptedAt.toLocaleDateString("en-GB")}.
+            </>
+          ) : (
+            <>
+              {subscription.payer.name} hasn&apos;t accepted the current contract (v
+              {currentContract.version}) yet — lesson booking and payment collection are blocked
+              until they do.
+            </>
+          )}
+        </div>
+      )}
 
       {subscription.status === "ACTIVE" && (
         <div className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm">

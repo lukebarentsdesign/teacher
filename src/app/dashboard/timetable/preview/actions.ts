@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { previewFixedTimetable, previewFluidTimetable, createLessonsFromSchedule } from "@/lib/timetable";
 import { availabilityArraySchema } from "@/lib/schedule-json";
+import { hasAcceptedCurrentContract } from "@/lib/contracts";
 
 const confirmSchema = z.object({
   studentId: z.string().min(1),
@@ -37,6 +38,14 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
   if (!student || !link) throw new Error("Student or school engagement not found");
   if (!link.school.termStart || !link.school.termEnd) {
     throw new Error("School has no term dates set");
+  }
+
+  // Defense in depth — the preview page already disables the submit button for this case.
+  const activeSubscription = await prisma.subscription.findFirst({
+    where: { studentId: parsed.studentId, status: "ACTIVE" },
+  });
+  if (activeSubscription && !(await hasAcceptedCurrentContract(activeSubscription.payerId, teacherId))) {
+    throw new Error("This payer hasn't accepted the current contract yet");
   }
 
   const chosenSlots = availabilityArraySchema.parse(JSON.parse(parsed.slots));

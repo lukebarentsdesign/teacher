@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/dashboard/students", label: "Students" },
   { href: "/dashboard/payers", label: "Payers" },
   { href: "/dashboard/timetable/new", label: "Generate timetable" },
+  { href: "/dashboard/contract", label: "Contract" },
   { href: "/dashboard/payments", label: "Get paid" },
   { href: "/dashboard/billing", label: "Billing" },
 ];

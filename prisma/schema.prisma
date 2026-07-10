@@ -125,6 +125,7 @@ model Teacher {
   loanableItems  LoanableItem[]
   students       Student[]
   payers         Payer[]
+  contracts      Contract[]
 }
 
 model School {
@@ -254,9 +255,10 @@ model Payer {
   accessCode          String    @unique
   accessCodeUpdatedAt DateTime  @default(now())
 
-  teacher       Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  studentLinks  StudentPayerLink[]
-  subscriptions Subscription[]
+  teacher             Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  studentLinks        StudentPayerLink[]
+  subscriptions       Subscription[]
+  contractAcceptances ContractAcceptance[]
 
   @@index([teacherId])
 }
@@ -299,7 +301,6 @@ model Subscription {
   payer        Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
   ledgerEntries LedgerEntry[]
   payments     Payment[]
-  contracts    Contract[]
   lessons      Lesson[]
 }
 
@@ -348,17 +349,47 @@ model Payment {
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 }
 
-/// Versioned generated contract document — old versions are never mutated.
+/// One evolving document per teacher (not per subscription) — a teacher's standard terms apply
+/// across all their students. Editing the contract creates a new version; content is never
+/// mutated in place, since ContractAcceptance snapshots must stay meaningful against history.
 model Contract {
-  id             String   @id @default(cuid())
-  subscriptionId String
-  version        Int      @default(1)
-  content        String // rendered plain-text/HTML contract body
-  generatedAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  teacherId String
+  version   Int
+  content   String // plain-terms explanation of the subscription/ledger model
+  createdAt DateTime @default(now())
 
-  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  teacher     Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  acceptances ContractAcceptance[]
 
-  @@unique([subscriptionId, version])
+  @@unique([teacherId, version])
+}
+
+/// The actual mechanism of legal agreement — an in-app clickwrap acceptance, not a PDF/e-signature
+/// round-trip. Gates lesson booking and payment collection on a Subscription until the
+/// Subscription's payer has accepted the teacher's *current* Contract version.
+model ContractAcceptance {
+  id      String @id @default(cuid())
+  payerId String
+
+  contractId String
+  /// Denormalized so "did they accept the current version" is a direct comparison, not a join.
+  contractVersion Int
+
+  /// Independent copy of the exact text shown at acceptance time — deliberately not just a
+  /// foreign key to Contract.content, so a later edit to the live contract can never retroactively
+  /// change what a past acceptance recorded as having been agreed to.
+  contractSnapshot String
+
+  typedName  String
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+
+  payer    Payer    @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@unique([payerId, contractVersion])
+  @@index([payerId])
 }
 
 // ---------------------------------------------------------------------------
