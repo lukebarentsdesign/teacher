@@ -1,0 +1,507 @@
+// Peripatetic Teacher App — Prisma schema
+// Reference: peripatetic-teacher-app-spec.md sections 2-3
+// NextAuth uses Credentials + JWT sessions (no OAuth), so no Account/Session/VerificationToken tables are needed.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum TaxHandling {
+  SELF_EMPLOYED
+  PAYE_VIA_SCHOOL
+}
+
+enum InvoicingTarget {
+  SCHOOL
+  PARENT
+}
+
+enum SchedulingMode {
+  FIXED
+  FLUID
+}
+
+enum ChargeUnit {
+  PER_BOOKING
+  PER_HOUR
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum StudentSource {
+  HOME
+  SCHOOL_INQUIRY
+  COLLEGE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAUSED
+}
+
+enum BillingModel {
+  SMOOTHED_SUBSCRIPTION
+  PER_LESSON
+  HOURLY
+  TERMLY
+}
+
+enum LessonStatus {
+  HELD
+  CANCELLED_BY_STUDENT
+  CANCELLED_BY_TEACHER
+  RESCHEDULED
+}
+
+enum LedgerReason {
+  PAYMENT
+  LESSON_DELIVERED
+  CANCELLATION_ADJUSTMENT
+  MANUAL_CORRECTION
+  MAKE_UP_CREDIT_ISSUED
+  MAKE_UP_CREDIT_REDEEMED
+}
+
+enum LedgerOperation {
+  CREDIT // + payment received / make-up credit issued
+  DEBIT // - lesson consumed / refund / credit redeemed
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// ---------------------------------------------------------------------------
+// Teacher / School / scheduling
+// ---------------------------------------------------------------------------
+
+model Teacher {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  schoolLinks    TeacherSchoolLink[]
+  unavailability Unavailability[]
+  lessons        Lesson[]
+  groupClasses   GroupClass[]
+  assessments    Assessment[]
+  packages       Package[]
+  loanableItems  LoanableItem[]
+}
+
+model School {
+  id              String          @id @default(cuid())
+  name            String
+  address         String?
+  invoicingTarget InvoicingTarget
+  termStart       DateTime?
+  termEnd         DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  teacherLinks   TeacherSchoolLink[]
+  rooms          Room[]
+  students       Student[]
+  unavailability Unavailability[]
+  lessons        Lesson[]
+  groupClasses   GroupClass[]
+  loanableItems  LoanableItem[]
+}
+
+/// A Teacher's engagement with one School/Venue: scheduling mode, availability,
+/// tax handling and protected blocks all vary per link, not globally.
+model TeacherSchoolLink {
+  id             String         @id @default(cuid())
+  teacherId      String
+  schoolId       String
+  schedulingMode SchedulingMode
+  taxHandling    TaxHandling
+
+  /// Array of { dayOfWeek, startTime, endTime }
+  availability Json
+
+  /// Array of { dayOfWeek, startTime, endTime, label } — periods that must never be scheduled
+  protectedBlocks Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, schoolId])
+}
+
+/// Teacher-declared unavailability window. On confirmation, affected Lessons/GroupClasses
+/// are auto-cancelled, guardians are emailed, and ledger credits are posted.
+model Unavailability {
+  id            String    @id @default(cuid())
+  teacherId     String
+  schoolId      String? // null = spans all schools
+  startDatetime DateTime
+  endDatetime   DateTime
+  reason        String?
+  confirmedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  school  School? @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, startDatetime, endDatetime])
+}
+
+model Room {
+  id       String  @id @default(cuid())
+  schoolId String
+  label    String
+
+  /// e.g. { hasPiano: true, hasMirrors: false, floor: "1st" }
+  features Json @default("{}")
+
+  /// Weekly open/closed days + time windows: array of { dayOfWeek, openTime, closeTime }
+  openHours Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  groupClasses GroupClass[]
+  assessments Assessment[]
+}
+
+// ---------------------------------------------------------------------------
+// Students / Guardians / Payers
+// ---------------------------------------------------------------------------
+
+model Student {
+  id          String        @id @default(cuid())
+  name        String
+  dob         DateTime?
+  discipline  String // instrument / class / discipline
+  source      StudentSource
+  schoolId    String? // null for home students
+  igCardId    String? // links to existing IG Card wallet pass, for CheckIn scanning only
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  school            School?            @relation(fields: [schoolId], references: [id])
+  payerLinks        StudentPayerLink[]
+  subscriptions     Subscription[]
+  packages          Package[]
+  lessons           Lesson[]
+  groupClassMembers GroupClassMember[]
+  checkIns          CheckIn[]
+  assessments       Assessment[]
+  loans             Loan[]
+}
+
+model Payer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Persistent unique 6-digit microsite access code (unique per family, not shared globally)
+  accessCode          String    @unique
+  accessCodeUpdatedAt DateTime  @default(now())
+
+  studentLinks  StudentPayerLink[]
+  subscriptions Subscription[]
+}
+
+model StudentPayerLink {
+  id             String   @id @default(cuid())
+  studentId      String
+  payerId        String
+  isPrimary      Boolean  @default(true)
+  splitPercent   Decimal? @db.Decimal(5, 2) // used when more than one payer splits a student's bill
+  createdAt      DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  payer   Payer   @relation(fields: [payerId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, payerId])
+}
+
+// ---------------------------------------------------------------------------
+// Billing: Subscription / Package / Ledger / Payment
+// ---------------------------------------------------------------------------
+
+model Subscription {
+  id           String             @id @default(cuid())
+  studentId    String
+  payerId      String
+  annualFee    Decimal            @db.Decimal(10, 2)
+  billingModel BillingModel
+  status       SubscriptionStatus @default(ACTIVE)
+  startDate    DateTime
+  endDate      DateTime?
+
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  payer        Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+  payments     Payment[]
+  contracts    Contract[]
+  lessons      Lesson[]
+}
+
+/// Prepaid block of N lessons at a discounted bundle rate. Distinct from Subscription —
+/// no monthly smoothing, no running balance across the year.
+model Package {
+  id              String   @id @default(cuid())
+  studentId       String
+  teacherId       String
+  totalLessons    Int
+  lessonsRemaining Int
+  price           Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+}
+
+/// Running-balance ledger. Balance for a Subscription = sum of CREDIT entries minus DEBIT entries.
+model LedgerEntry {
+  id             String          @id @default(cuid())
+  subscriptionId String
+  amount         Decimal         @db.Decimal(10, 2)
+  operation      LedgerOperation
+  reason         LedgerReason
+  date           DateTime        @default(now())
+  note           String?
+  createdAt      DateTime        @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, date])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  subscriptionId  String
+  stripePaymentId String        @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus
+  date            DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+/// Versioned generated contract document — old versions are never mutated.
+model Contract {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  version        Int      @default(1)
+  content        String // rendered plain-text/HTML contract body
+  generatedAt    DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, version])
+}
+
+// ---------------------------------------------------------------------------
+// Lessons / GroupClasses / CheckIn
+// ---------------------------------------------------------------------------
+
+model Lesson {
+  id            String       @id @default(cuid())
+  studentId     String
+  teacherId     String
+  schoolId      String
+  roomId        String?
+  subscriptionId String?
+  packageId     String?
+  scheduledAt   DateTime
+  durationMins  Int
+  status        LessonStatus @default(HELD)
+
+  /// Mirrors ELVIS's are_hours_counted — false for a cover/make-up lesson so it doesn't double-bill
+  hoursCounted Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  room         Room?         @relation(fields: [roomId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  package      Package?      @relation(fields: [packageId], references: [id])
+  addOnBookings AddOnBooking[]
+  checkIn      CheckIn?
+
+  @@index([teacherId, scheduledAt])
+  @@index([studentId, scheduledAt])
+}
+
+model GroupClass {
+  id         String @id @default(cuid())
+  teacherId  String
+  schoolId   String
+  roomId     String?
+  name       String
+  discipline String
+
+  dayOfWeek Int // 0-6, recurs weekly
+  startTime String // "HH:mm"
+  endTime   String // "HH:mm"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher      Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  room         Room?              @relation(fields: [roomId], references: [id])
+  members      GroupClassMember[]
+  checkIns     CheckIn[]
+  addOnBookings AddOnBooking[]
+}
+
+/// Each member keeps their own independent Subscription/Ledger even though they share a timeslot.
+model GroupClassMember {
+  id           String    @id @default(cuid())
+  groupClassId String
+  studentId    String
+  joinedAt     DateTime  @default(now())
+  leftAt       DateTime?
+
+  groupClass GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupClassId, studentId])
+}
+
+/// Card-based sign-in/out. Scanning on sign-in auto-fires the LESSON_DELIVERED ledger entry.
+model CheckIn {
+  id           String    @id @default(cuid())
+  lessonId     String?   @unique
+  groupClassId String?
+  studentId    String
+  signedInAt   DateTime?
+  signedOutAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  lesson     Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  groupClass GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+  student    Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([groupClassId, studentId])
+}
+
+// ---------------------------------------------------------------------------
+// Add-ons
+// ---------------------------------------------------------------------------
+
+model AddOn {
+  id         String     @id @default(cuid())
+  name       String
+  price      Decimal    @db.Decimal(10, 2)
+  chargeUnit ChargeUnit
+  visibility Visibility @default(PUBLIC)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  bookings AddOnBooking[]
+}
+
+/// Attaches an AddOn to a Lesson or GroupClass booking without touching the core billing model.
+model AddOnBooking {
+  id           String   @id @default(cuid())
+  addOnId      String
+  lessonId     String?
+  groupClassId String?
+  quantity     Int      @default(1)
+  priceAtTime  Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+
+  addOn      AddOn       @relation(fields: [addOnId], references: [id])
+  lesson     Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  groupClass GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Assessments / Loans
+// ---------------------------------------------------------------------------
+
+model Assessment {
+  id          String    @id @default(cuid())
+  studentId   String
+  teacherId   String
+  level       String // grade/level achieved
+  date        DateTime
+  canContinue Boolean   @default(true)
+
+  /// Set when this is a formal sit-down evaluation rather than an informal note
+  appointmentAt DateTime?
+  roomId        String?
+
+  examBoard String? // e.g. Trinity, ABRSM
+  examFee   Decimal? @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  room    Room?   @relation(fields: [roomId], references: [id])
+}
+
+model LoanableItem {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // instrument / book / CD / etc.
+  condition String?
+  value     Decimal? @db.Decimal(10, 2)
+  teacherId String? // owned by Teacher or School (exactly one should be set)
+  schoolId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher? @relation(fields: [teacherId], references: [id])
+  school  School?  @relation(fields: [schoolId], references: [id])
+  loans   Loan[]
+}
+
+model Loan {
+  id             String    @id @default(cuid())
+  itemId         String
+  studentId      String
+  checkedOutDate DateTime  @default(now())
+  dueBackDate    DateTime
+  returnedDate   DateTime?
+  conditionNotes String?
+
+  item    LoanableItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  student Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
