@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { createPlatformCheckoutSession, createBillingPortalSession } from "@/lib/billing";
 import { teacherBrandSchema } from "@/lib/validations";
+import { disconnectGmailAccount } from "@/lib/gmail";
 
 export async function startCheckoutAction() {
   const session = await auth();
@@ -43,5 +44,13 @@ export async function updateBrandSettingsAction(
     },
   });
 
+  revalidatePath("/dashboard/billing");
+}
+
+export async function disconnectGmailAction() {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  await disconnectGmailAccount(session.user.id);
   revalidatePath("/dashboard/billing");
 }

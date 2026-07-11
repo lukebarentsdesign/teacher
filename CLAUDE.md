@@ -26,7 +26,7 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 | Database | PostgreSQL via Supabase, Prisma ORM 7.x (driver adapter: `@prisma/adapter-pg`) |
 | Auth | NextAuth v5 (Credentials provider, JWT session — no OAuth adapter tables) |
 | Payments | Stripe (platform billing + Connect Express, see below) |
-| Email | Resend |
+| Email | Teacher's own Gmail, via a separate OAuth grant ([src/lib/gmail.ts](src/lib/gmail.ts)) — see below. `Resend` is listed in `package.json`/`.env.example` but has no wrapper or call site anywhere; not actually wired up. |
 | Styling | Tailwind CSS |
 | Calendar UI | FullCalendar (`@fullcalendar/react`) — MIT, see docs/spec.md section 3a |
 | Timetable solver | Google OR-Tools CP-SAT, separate Python service at [timetable-service/](timetable-service/) — not yet wired into the app, see its README |
@@ -103,6 +103,16 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **Stripe client is a lazy Proxy** ([src/lib/stripe.ts](src/lib/stripe.ts)) — the SDK throws in its constructor on an empty API key, which broke `next build` before real keys existed. Don't change this back to a plain `new Stripe(...)` export.
 - **One webhook endpoint for three concerns**: platform billing events, Connect `account.updated`, and parent-payment `checkout.session.completed` all land in [src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts), dispatched by `session.mode` / event type. Payment webhook handling is idempotent via `stripePaymentId` uniqueness (checked before creating a `Payment` row) since Stripe retries webhooks.
 - **Still needs real Stripe test keys to actually verify end-to-end** — everything here is typechecked/built but never hit a live Stripe account.
+
+## Gmail Connection Decisions
+
+- **Not a NextAuth login provider.** Teacher login stays Credentials-only (deliberate — see Auth row above). Connecting Gmail is a separate OAuth grant stored on the already-authenticated `Teacher` record, architecturally mirroring Stripe Connect (`src/lib/connect.ts`): connect → external consent → callback stores a credential → later actions gate on a "connected" flag (`payments.ts`'s `stripeConnectOnboarded` check ↔ `gmail.ts`'s `GmailNotConnectedError`).
+- **`gmailRefreshTokenEncrypted` is encrypted at rest** ([src/lib/encryption.ts](src/lib/encryption.ts), AES-256-GCM, keyed by `ENCRYPTION_KEY`) — unlike the Stripe fields on `Teacher`, which are non-secret account IDs (the real Stripe key lives only in `.env`), a Gmail refresh token is directly usable on its own. Don't store it plain.
+- **Plain `fetch` against Google's REST endpoints, no `googleapis` dependency** — consistent with this project's dependency-light style. `src/lib/gmail.ts` hand-builds the OAuth URL, token exchange/refresh, and a base64url MIME message for `gmail.send`.
+- **Access tokens are never cached** — `getValidAccessToken` always exchanges the stored refresh token for a fresh access token at send-time rather than tracking expiry. Simpler, and Gmail sends aren't frequent enough for the extra round-trip to matter.
+- **`gmail.send` is a sensitive OAuth scope.** In Google's default "Testing" publishing status, only up to 100 test-user emails (added under Audience in Google Cloud Console) can connect — fine for development/a single teacher, but production use by arbitrary teachers needs Google's app-verification review first.
+- **First real usage is the Payer card's "Send an email"** ([src/app/dashboard/payers/[id]/send-email-form.tsx](src/app/dashboard/payers/[id]/send-email-form.tsx)) — deliberately generic (subject + body), not tied to any specific trigger. There is otherwise **no email infrastructure in this app at all** — Resend was never wired up, and the `Unavailability` model (schema-only, `prisma/schema.prisma`) has no code using it yet; when that gets built, it should call `sendEmailAsTeacher` too rather than introducing a second send path.
+- **Still needs a real Google OAuth Client ID/Secret to verify end-to-end** — same category as Stripe/Resend: typechecked/built, never hit a live Google account.
 
 ## Contract Acceptance Decisions
 

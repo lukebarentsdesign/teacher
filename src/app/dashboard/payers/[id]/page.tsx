@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { ageInYears } from "@/lib/age";
 import { RegenerateCodeButton } from "../regenerate-code-button";
+import { SendEmailForm } from "./send-email-form";
 
 const CONTACT_PREF_LABEL: Record<string, string> = {
   WHATSAPP: "WhatsApp",
@@ -15,21 +16,24 @@ export default async function PayerDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const session = await auth();
 
-  const payer = await prisma.payer.findFirst({
-    where: { id, teacherId: session!.user.id },
-    include: {
-      studentLinks: {
-        include: {
-          student: {
-            include: {
-              school: true,
-              subscriptions: { orderBy: { startDate: "desc" }, take: 1 },
+  const [payer, teacher] = await Promise.all([
+    prisma.payer.findFirst({
+      where: { id, teacherId: session!.user.id },
+      include: {
+        studentLinks: {
+          include: {
+            student: {
+              include: {
+                school: true,
+                subscriptions: { orderBy: { startDate: "desc" }, take: 1 },
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.teacher.findUniqueOrThrow({ where: { id: session!.user.id } }),
+  ]);
 
   if (!payer) notFound();
 
@@ -66,6 +70,22 @@ export default async function PayerDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Send an email</h2>
+        {!payer.email ? (
+          <p className="text-sm text-neutral-500">This payer has no email address on file.</p>
+        ) : !teacher.gmailConnected ? (
+          <p className="rounded-xl bg-white p-4 text-sm text-neutral-500 shadow-sm">
+            <Link href="/dashboard/billing" className="text-neutral-900 underline">
+              Connect Gmail
+            </Link>{" "}
+            first so you can email guardians from here.
+          </p>
+        ) : (
+          <SendEmailForm payerId={payer.id} />
+        )}
       </section>
 
       <section id="pupils" className="scroll-mt-20">

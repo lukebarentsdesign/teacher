@@ -149,6 +149,15 @@ model Teacher {
   /// account for themselves. See "Credit application" in the no-show/make-up-credit build notes.
   autoApplyCreditToNextPayment Boolean @default(true)
 
+  /// Teacher's own Gmail, connected via a separate OAuth grant (NOT the NextAuth login provider —
+  /// login stays Credentials-only). Lets guardian emails be sent from the teacher's real address
+  /// instead of a generic sender. gmailRefreshTokenEncrypted is a real bearer secret (unlike the
+  /// Stripe fields above, which are non-secret account IDs) — encrypted at rest, see src/lib/encryption.ts.
+  gmailConnected             Boolean   @default(false)
+  gmailConnectedEmail        String?
+  gmailRefreshTokenEncrypted String?
+  gmailTokenUpdatedAt        DateTime?
+
   schoolLinks           TeacherSchoolLink[]
   unavailability        Unavailability[]
   lessons               Lesson[]
