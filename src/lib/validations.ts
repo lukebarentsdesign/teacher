@@ -22,15 +22,6 @@ export const teacherBrandSchema = z.object({
   personalBrandColor: hexColorSchema,
 });
 
-export const studentSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  dob: z.string().optional(),
-  discipline: z.string().min(1, "Discipline is required"),
-  source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
-  schoolId: z.string().optional(),
-  igCardId: z.string().optional(),
-});
-
 export const payerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email().optional().or(z.literal("")),
