@@ -8,6 +8,11 @@ import type { NextAuthConfig } from "next-auth";
 export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  // Needed once `next build && next start` is used (e.g. local production testing, or a host
+  // without a fixed public URL known in advance) — without it Auth.js rejects the callback host
+  // even when it matches NEXTAUTH_URL. Safe here: NEXTAUTH_URL is still what Stripe/Connect return
+  // URLs are built from (see CLAUDE.md), this only affects Auth.js's own host-trust check.
+  trustHost: true,
   providers: [],
   callbacks: {
     jwt({ token, user }) {

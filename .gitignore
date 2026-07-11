@@ -13,6 +13,11 @@
 /.next/
 /out/
 
+# serwist-generated service worker (rebuilt by `next build`, see next.config.mjs)
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker*.js
+
 # production
 /build
 

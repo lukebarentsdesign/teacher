@@ -1,0 +1,13 @@
+{
+  "name": "Learnio",
+  "short_name": "Learnio",
+  "description": "Scheduling, billing and student management for peripatetic teachers.",
+  "start_url": "/dashboard/today",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#4f46e5",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

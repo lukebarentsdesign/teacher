@@ -4,6 +4,7 @@ import { Menu } from "@base-ui/react/menu";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { signOutAction } from "@/app/dashboard/actions";
+import { clearOfflineCache } from "@/lib/offline-cache";
 
 function initials(name: string) {
   return name
@@ -37,6 +38,7 @@ export function UserMenu({ name }: { name: string }) {
             <form action={signOutAction}>
               <button
                 type="submit"
+                onClick={() => void clearOfflineCache()}
                 className="block w-full cursor-pointer rounded-md px-2.5 py-2 text-left text-sm text-neutral-700 outline-none hover:bg-neutral-100"
               >
                 Sign out
