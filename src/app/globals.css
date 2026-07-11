@@ -3,25 +3,73 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f7; /* warm paper */
+  --foreground: #1c1917; /* warm near-black ink */
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --brand-ring: rgba(79, 70, 229, 0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* No dark-mode override: every surface in this app is hardcoded to a light palette, so a
+ * body-level dark flip left form inputs with invisible white-on-white text. */
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.011em;
+  }
+
+  /* One calm, consistent brand focus ring across every input/select/textarea/button in the app,
+   * applied globally so the 40+ hand-rolled forms all pick it up without being edited. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-ring);
+  }
+
+  ::selection {
+    background: #e0e7ff;
+    color: #1c1917;
+  }
+}
+
+@layer components {
+  /* Opt-in helpers for surfaces redesigned directly (chrome, auth screens). The token remap in
+   * tailwind.config.ts handles the rest of the app implicitly. */
+  .surface-card {
+    background: #ffffff;
+    border: 1px solid theme("colors.neutral.200");
+    border-radius: 0.875rem;
+    box-shadow: theme("boxShadow.card");
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Primary action buttons everywhere in the app use `bg-neutral-900` / `hover:bg-neutral-700`
+   * (verified: that background utility is used ONLY on primary buttons). Remap those two to the
+   * brand accent here so every primary button becomes indigo without editing 40+ forms. Text
+   * color `text-neutral-900` is a different utility and stays as warm ink. */
+  .bg-neutral-900 {
+    background-color: var(--brand) !important;
+  }
+  .hover\:bg-neutral-700:hover {
+    background-color: var(--brand-hover) !important;
   }
 }

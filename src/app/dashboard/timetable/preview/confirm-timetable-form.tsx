@@ -7,12 +7,14 @@ export function ConfirmTimetableForm({
   schoolId,
   linkId,
   slots,
+  roomId,
   disabled,
 }: {
   studentId: string;
   schoolId: string;
   linkId: string;
   slots: string;
+  roomId?: string;
   disabled: boolean;
 }) {
   return (
@@ -21,6 +23,7 @@ export function ConfirmTimetableForm({
       <input type="hidden" name="schoolId" value={schoolId} />
       <input type="hidden" name="linkId" value={linkId} />
       <input type="hidden" name="slots" value={slots} />
+      {roomId && <input type="hidden" name="roomId" value={roomId} />}
       <button
         type="submit"
         disabled={disabled}

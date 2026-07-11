@@ -15,6 +15,10 @@ export default async function NewTimetablePage() {
     }),
   ]);
 
+  const schoolIds = [...new Set(links.map((link) => link.schoolId))];
+  const rooms = await prisma.room.findMany({ where: { schoolId: { in: schoolIds } } });
+  const roomsBySchool = new Map(schoolIds.map((id) => [id, rooms.filter((r) => r.schoolId === id)]));
+
   const linksWithSlots = links.map((link) => ({
     id: link.id,
     schoolId: link.schoolId,
@@ -26,6 +30,7 @@ export default async function NewTimetablePage() {
       parseAvailability(link.availability),
       parseProtectedBlocks(link.protectedBlocks)
     ),
+    rooms: (roomsBySchool.get(link.schoolId) ?? []).map((r) => ({ id: r.id, label: r.label })),
   }));
 
   return (

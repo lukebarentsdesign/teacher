@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { LessonNoteForm } from "./lesson-note-form";
+import { AttendanceButtons } from "./attendance-buttons";
 
 export default async function LessonDetailPage({
   params,
@@ -28,6 +29,15 @@ export default async function LessonDetailPage({
           {lesson.status}
         </p>
       </div>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Attendance</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          &quot;Present&quot; posts a billed lesson entry; &quot;Absent, make-up owed&quot; banks a
+          make-up credit with no cash impact.
+        </p>
+        <AttendanceButtons lessonId={lesson.id} />
+      </section>
 
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Lesson note</h2>

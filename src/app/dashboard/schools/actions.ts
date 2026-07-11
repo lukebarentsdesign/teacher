@@ -15,6 +15,9 @@ export async function createSchoolAction(
     invoicingTarget: formData.get("invoicingTarget"),
     termStart: formData.get("termStart") || undefined,
     termEnd: formData.get("termEnd") || undefined,
+    logoUrl: formData.get("logoUrl") || undefined,
+    primaryColor: formData.get("primaryColor") || undefined,
+    secondaryColor: formData.get("secondaryColor") || undefined,
   });
 
   if (!parsed.success) {

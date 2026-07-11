@@ -6,6 +6,9 @@ import {
   generateFluidSchedule,
   countLessonsBySlot,
   slotDurationMins,
+  lessonsOverlap,
+  deriveGhostSlots,
+  projectSlotOntoWeek,
   type TimeSlot,
   type ProtectedBlock,
 } from "@/lib/scheduling";
@@ -120,5 +123,66 @@ describe("generateFluidSchedule", () => {
       expect(lesson.scheduledAt.getTime()).toBeGreaterThanOrEqual(termStart.getTime());
       expect(lesson.scheduledAt.getTime()).toBeLessThanOrEqual(termEnd.getTime() + 24 * 60 * 60 * 1000);
     });
+  });
+});
+
+describe("lessonsOverlap", () => {
+  it("flags an exact match", () => {
+    const a = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 30 };
+    const b = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 30 };
+    expect(lessonsOverlap(a, b)).toBe(true);
+  });
+
+  it("flags a partial overlap even with different durations and start times", () => {
+    const a = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 60 };
+    const b = { scheduledAt: new Date("2026-01-05T16:30:00"), durationMins: 30 };
+    expect(lessonsOverlap(a, b)).toBe(true);
+  });
+
+  it("does not flag adjacent, non-overlapping lessons", () => {
+    const a = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 30 };
+    const b = { scheduledAt: new Date("2026-01-05T16:30:00"), durationMins: 30 };
+    expect(lessonsOverlap(a, b)).toBe(false);
+  });
+
+  it("flags one lesson fully containing another", () => {
+    const a = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 120 };
+    const b = { scheduledAt: new Date("2026-01-05T16:30:00"), durationMins: 15 };
+    expect(lessonsOverlap(a, b)).toBe(true);
+  });
+
+  it("does not flag the same time-of-day on different calendar dates", () => {
+    const a = { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 30 };
+    const b = { scheduledAt: new Date("2026-01-12T16:00:00"), durationMins: 30 };
+    expect(lessonsOverlap(a, b)).toBe(false);
+  });
+});
+
+describe("deriveGhostSlots", () => {
+  it("de-duplicates repeated historical slots into one distinct entry", () => {
+    const pastLessons = [
+      { scheduledAt: new Date("2026-01-05T16:00:00"), durationMins: 30 }, // Monday
+      { scheduledAt: new Date("2026-01-12T16:00:00"), durationMins: 30 }, // Monday, same slot
+      { scheduledAt: new Date("2026-01-07T10:00:00"), durationMins: 45 }, // Wednesday
+    ];
+    const slots = deriveGhostSlots(pastLessons);
+    expect(slots).toHaveLength(2);
+    expect(slots.some((s) => s.dayOfWeek === 1 && s.startTime === "16:00")).toBe(true);
+    expect(slots.some((s) => s.dayOfWeek === 3 && s.startTime === "10:00")).toBe(true);
+  });
+
+  it("returns an empty array for no history", () => {
+    expect(deriveGhostSlots([])).toHaveLength(0);
+  });
+});
+
+describe("projectSlotOntoWeek", () => {
+  it("projects a slot onto the correct day of the target week", () => {
+    const slot: TimeSlot = { dayOfWeek: 3, startTime: "10:00", endTime: "10:45" };
+    const weekOf = new Date("2026-02-10T00:00:00"); // a Tuesday
+    const projected = projectSlotOntoWeek(slot, weekOf);
+    expect(projected.getDay()).toBe(3);
+    expect(projected.getHours()).toBe(10);
+    expect(projected.getMinutes()).toBe(0);
   });
 });

@@ -103,8 +103,20 @@ export default async function SubscriptionDetailPage({
 
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Request a payment from the parent</h2>
+        {Number(subscription.creditAppliedNextPeriod) > 0 && (
+          <p className="mb-2 text-sm text-neutral-500">
+            Credit available: £{Number(subscription.creditAppliedNextPeriod).toFixed(2)}
+            {teacher.autoApplyCreditToNextPayment
+              ? " — already subtracted from the suggested amount below."
+              : " — not auto-applied (see Billing settings); account for it manually if needed."}
+          </p>
+        )}
         {teacher.stripeConnectOnboarded ? (
-          <RequestPaymentForm subscriptionId={subscription.id} />
+          <RequestPaymentForm
+            subscriptionId={subscription.id}
+            creditAppliedNextPeriod={Number(subscription.creditAppliedNextPeriod)}
+            autoApplyCredit={teacher.autoApplyCreditToNextPayment}
+          />
         ) : (
           <p className="rounded-xl bg-white p-4 text-sm text-neutral-500 shadow-sm">
             <Link href="/dashboard/payments" className="text-neutral-900 underline">

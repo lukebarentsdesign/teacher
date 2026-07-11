@@ -15,6 +15,7 @@ type LinkOption = {
   termStart: string | null;
   termEnd: string | null;
   availableSlots: TimeSlot[];
+  rooms: { id: string; label: string }[];
 };
 
 function slotKey(slot: TimeSlot) {
@@ -26,6 +27,7 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
   const [studentId, setStudentId] = useState(students[0]?.id ?? "");
   const [linkId, setLinkId] = useState(links[0]?.id ?? "");
   const [selectedSlotKeys, setSelectedSlotKeys] = useState<Set<string>>(new Set());
+  const [roomId, setRoomId] = useState<string>("");
   const [error, setError] = useState<string | undefined>();
 
   const link = links.find((l) => l.id === linkId);
@@ -68,6 +70,7 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
       studentId,
       linkId: link.id,
       slots: JSON.stringify(chosenSlots),
+      ...(roomId ? { roomId } : {}),
     });
     router.push(`/dashboard/timetable/preview?${query.toString()}`);
   }
@@ -102,6 +105,7 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
           onChange={(e) => {
             setLinkId(e.target.value);
             setSelectedSlotKeys(new Set());
+            setRoomId("");
           }}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
@@ -142,6 +146,30 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {link && link.rooms.length > 0 && (
+        <div>
+          <label htmlFor="roomId" className="block text-sm font-medium text-neutral-700">
+            Room (optional)
+          </label>
+          <select
+            id="roomId"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          >
+            <option value="">No specific room</option>
+            {link.rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-neutral-500">
+            Picking a room checks for clashes with other lessons or group classes in that room.
+          </p>
         </div>
       )}
 

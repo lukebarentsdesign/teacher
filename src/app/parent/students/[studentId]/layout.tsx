@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedStudentView } from "@/lib/microsite-access";
 import { prisma } from "@/lib/db";
 import { micrositeSignOutAction } from "@/app/parent/actions";
+import { MicrositeTabs } from "./microsite-tabs";
 
 const TAB_LABELS: { segment: string; label: string }[] = [
   { segment: "", label: "Overview" },
@@ -29,8 +29,8 @@ export default async function StudentMicrositeLayout({
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+      <header className="sticky top-0 z-20 border-b border-neutral-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
           <div>
             <p className="font-semibold text-neutral-900">{student.name}</p>
             <p className="text-xs text-neutral-500">
@@ -43,17 +43,7 @@ export default async function StudentMicrositeLayout({
             </button>
           </form>
         </div>
-        <nav className="mx-auto flex max-w-3xl gap-4 overflow-x-auto px-6 pb-3">
-          {TAB_LABELS.map((tab) => (
-            <Link
-              key={tab.segment}
-              href={`/parent/students/${studentId}${tab.segment ? `/${tab.segment}` : ""}`}
-              className="whitespace-nowrap text-sm text-neutral-600 transition-colors duration-150 hover:text-neutral-900"
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
+        <MicrositeTabs studentId={studentId} tabs={TAB_LABELS} />
       </header>
       <main className="mx-auto max-w-3xl px-6 py-8">{children}</main>
     </div>

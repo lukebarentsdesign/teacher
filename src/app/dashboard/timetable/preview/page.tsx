@@ -3,17 +3,19 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { previewFixedTimetable, previewFluidTimetable } from "@/lib/timetable";
 import { availabilityArraySchema } from "@/lib/schedule-json";
+import { deriveGhostSlots, projectSlotOntoWeek, slotDurationMins } from "@/lib/scheduling";
 import { hasAcceptedCurrentContract } from "@/lib/contracts";
 import { ConfirmTimetableForm } from "./confirm-timetable-form";
+import { GhostCalendar } from "./ghost-calendar";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function TimetablePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ studentId?: string; linkId?: string; slots?: string }>;
+  searchParams: Promise<{ studentId?: string; linkId?: string; slots?: string; roomId?: string }>;
 }) {
-  const { studentId, linkId, slots } = await searchParams;
+  const { studentId, linkId, slots, roomId } = await searchParams;
   const session = await auth();
 
   if (!studentId || !linkId || !slots || !session?.user?.id) notFound();
@@ -28,12 +30,42 @@ export default async function TimetablePreviewPage({
 
   if (!student || !link || !link.school.termStart || !link.school.termEnd) notFound();
 
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session.user.id } });
+  const proposedColor = link.school.primaryColor ?? teacher.personalBrandColor ?? "#171717";
+
   const chosenSlots = availabilityArraySchema.parse(JSON.parse(slots));
 
   const result =
     link.schedulingMode === "FIXED"
-      ? await previewFixedTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots[0])
-      : await previewFluidTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots);
+      ? await previewFixedTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots[0], roomId)
+      : await previewFluidTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots, roomId);
+
+  const pastLessons = await prisma.lesson.findMany({
+    where: { studentId: student.id, status: "HELD" },
+    orderBy: { scheduledAt: "desc" },
+    take: 200,
+    select: { scheduledAt: true, durationMins: true },
+  });
+  const ghostSlots = deriveGhostSlots(pastLessons);
+  const weekOf = result.clean[0]?.scheduledAt ?? new Date();
+  const ghostEvents = ghostSlots.map((slot, i) => {
+    const start = projectSlotOntoWeek(slot, weekOf);
+    const end = new Date(start.getTime() + (slotDurationMins(slot) || 30) * 60_000);
+    return { id: `ghost-${i}`, title: "Past slot", start: start.toISOString(), end: end.toISOString() };
+  });
+  const proposedEvents = result.clean.map((lesson, i) => ({
+    id: `proposed-${i}`,
+    title: student.name,
+    start: lesson.scheduledAt.toISOString(),
+    end: new Date(lesson.scheduledAt.getTime() + lesson.durationMins * 60_000).toISOString(),
+    color: proposedColor,
+  }));
+  const conflictEvents = result.conflicts.map((lesson, i) => ({
+    id: `conflict-${i}`,
+    title: lesson.reason === "ROOM" ? "Room conflict" : "Clashes with your lesson",
+    start: lesson.scheduledAt.toISOString(),
+    end: new Date(lesson.scheduledAt.getTime() + lesson.durationMins * 60_000).toISOString(),
+  }));
 
   // Gate on the student's active subscription's payer having accepted the current contract.
   const activeSubscription = await prisma.subscription.findFirst({
@@ -59,15 +91,25 @@ export default async function TimetablePreviewPage({
 
       {result.conflicts.length > 0 && (
         <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
-          These clash with an existing lesson for you and will be skipped:
+          These clash and will be skipped:
           <ul className="mt-2 list-inside list-disc">
             {result.conflicts.map((lesson, i) => (
               <li key={i}>
                 {lesson.scheduledAt.toLocaleDateString("en-GB")}{" "}
-                {lesson.scheduledAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                {lesson.scheduledAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} —{" "}
+                {lesson.reason === "ROOM" ? "room already booked" : "clashes with your own lesson"}
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {ghostSlots.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-neutral-700">
+            {student.name}&apos;s past lesson slots, ghosted onto this week
+          </p>
+          <GhostCalendar ghostEvents={ghostEvents} proposedEvents={proposedEvents} conflictEvents={conflictEvents} />
         </div>
       )}
 
@@ -112,6 +154,7 @@ export default async function TimetablePreviewPage({
         schoolId={link.schoolId}
         linkId={linkId}
         slots={slots}
+        roomId={roomId}
         disabled={result.clean.length === 0 || contractBlocked}
       />
     </div>

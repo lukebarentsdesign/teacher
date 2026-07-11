@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { subscriptionSchema } from "@/lib/validations";
+import { subscriptionSchema, assessmentSchema } from "@/lib/validations";
 import { generateUniqueAccessCode } from "@/lib/access-code";
 import { isAtLeast16 } from "@/lib/age";
 import { z } from "zod";
@@ -140,6 +140,67 @@ export async function regenerateStudentAccessCodeAction(studentId: string): Prom
   await prisma.student.update({
     where: { id: studentId },
     data: { studentAccessCode: code, studentAccessCodeUpdatedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+}
+
+export async function declinePrivateTuitionRequestAction(requestId: string, studentId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  await prisma.privateTuitionRequest.updateMany({
+    where: { id: requestId, teacherId: session.user.id, status: "PENDING" },
+    data: { status: "DECLINED" },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+}
+
+export async function createAssessmentAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const studentId = formData.get("studentId") as string;
+  const student = await findOwnStudent(studentId, session.user.id);
+  if (!student) return "Student not found";
+
+  const roomId = (formData.get("roomId") as string) || undefined;
+  if (roomId) {
+    const room = await prisma.room.findFirst({ where: { id: roomId, schoolId: student.schoolId ?? undefined } });
+    if (!room) return "Room not found";
+  }
+
+  const parsed = assessmentSchema.safeParse({
+    studentId,
+    level: formData.get("level"),
+    date: formData.get("date"),
+    canContinue: formData.get("canContinue") === "true",
+    appointmentAt: formData.get("appointmentAt") || undefined,
+    roomId,
+    examBoard: formData.get("examBoard") || undefined,
+    examFee: formData.get("examFee") || undefined,
+  });
+
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Invalid input";
+  }
+
+  await prisma.assessment.create({
+    data: {
+      studentId,
+      teacherId: session.user.id,
+      level: parsed.data.level,
+      date: new Date(parsed.data.date),
+      canContinue: parsed.data.canContinue ?? true,
+      appointmentAt: parsed.data.appointmentAt ? new Date(parsed.data.appointmentAt) : null,
+      roomId: parsed.data.roomId,
+      examBoard: parsed.data.examBoard,
+      examFee: parsed.data.examFee,
+    },
   });
 
   revalidatePath(`/dashboard/students/${studentId}`);

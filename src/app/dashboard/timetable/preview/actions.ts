@@ -13,6 +13,7 @@ const confirmSchema = z.object({
   schoolId: z.string().min(1),
   linkId: z.string().min(1),
   slots: z.string().min(1),
+  roomId: z.string().optional(),
 });
 
 export async function confirmTimetableAction(formData: FormData): Promise<void> {
@@ -25,6 +26,7 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
     schoolId: formData.get("schoolId"),
     linkId: formData.get("linkId"),
     slots: formData.get("slots"),
+    roomId: formData.get("roomId") || undefined,
   });
 
   const [student, link] = await Promise.all([
@@ -52,13 +54,26 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
 
   const result =
     link.schedulingMode === "FIXED"
-      ? await previewFixedTimetable(teacherId, link.school.termStart, link.school.termEnd, chosenSlots[0])
-      : await previewFluidTimetable(teacherId, link.school.termStart, link.school.termEnd, chosenSlots);
+      ? await previewFixedTimetable(
+          teacherId,
+          link.school.termStart,
+          link.school.termEnd,
+          chosenSlots[0],
+          parsed.roomId
+        )
+      : await previewFluidTimetable(
+          teacherId,
+          link.school.termStart,
+          link.school.termEnd,
+          chosenSlots,
+          parsed.roomId
+        );
 
   await createLessonsFromSchedule({
     studentId: parsed.studentId,
     teacherId,
     schoolId: parsed.schoolId,
+    roomId: parsed.roomId,
     lessons: result.clean,
   });
 

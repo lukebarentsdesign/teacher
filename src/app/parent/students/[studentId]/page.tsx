@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAuthorizedStudentView } from "@/lib/microsite-access";
+import { RequestPrivateTuitionButton } from "./request-private-tuition-button";
 
 export default async function StudentOverviewPage({
   params,
@@ -14,8 +15,13 @@ export default async function StudentOverviewPage({
 
   const student = await prisma.student.findUniqueOrThrow({
     where: { id: studentId },
-    include: { school: true },
+    include: { school: true, teacher: true },
   });
+
+  const pendingPrivateTuitionRequest =
+    context.viewerType === "guardian" && student.schoolId
+      ? await prisma.privateTuitionRequest.findFirst({ where: { studentId, status: "PENDING" } })
+      : null;
 
   const [upcomingLessonCount, openAssignmentCount] = await Promise.all([
     prisma.lesson.count({
@@ -48,6 +54,18 @@ export default async function StudentOverviewPage({
         <p className="rounded-lg bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
           Your guardian hasn&apos;t shared the financial ledger with you.
         </p>
+      )}
+
+      {context.viewerType === "guardian" && student.schoolId && (
+        <div className="rounded-xl bg-white p-4 shadow-sm">
+          {pendingPrivateTuitionRequest ? (
+            <p className="text-sm text-neutral-500">
+              Your request for private lessons with {student.teacher.name} is pending.
+            </p>
+          ) : (
+            <RequestPrivateTuitionButton studentId={studentId} teacherName={student.teacher.name} />
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

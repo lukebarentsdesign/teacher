@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewLinkForm } from "./new-link-form";
+import { NewRoomForm } from "./new-room-form";
+import { NewGroupClassForm } from "./new-group-class-form";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -19,6 +22,14 @@ export default async function SchoolDetailPage({
   const links = await prisma.teacherSchoolLink.findMany({
     where: { schoolId: id, teacherId: session?.user?.id },
     include: { teacher: true },
+  });
+
+  const rooms = await prisma.room.findMany({ where: { schoolId: id }, orderBy: { label: "asc" } });
+
+  const groupClasses = await prisma.groupClass.findMany({
+    where: { schoolId: id, teacherId: session?.user?.id },
+    include: { room: true, members: { where: { leftAt: null } } },
+    orderBy: { name: "asc" },
   });
 
   return (
@@ -60,6 +71,72 @@ export default async function SchoolDetailPage({
           </div>
         )}
         <NewLinkForm schoolId={school.id} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Rooms</h2>
+        {rooms.length === 0 ? (
+          <p className="mb-4 text-sm text-neutral-500">No rooms yet.</p>
+        ) : (
+          <div className="mb-6 space-y-2">
+            {rooms.map((room) => {
+              const features = room.features as { hasPiano?: boolean; hasMirrors?: boolean; floor?: string | null };
+              return (
+                <div key={room.id} className="rounded-xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-medium text-neutral-900">{room.label}</p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {[
+                      features.floor ? `Floor: ${features.floor}` : null,
+                      features.hasPiano ? "Piano" : null,
+                      features.hasMirrors ? "Mirrors" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "No features noted"}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <NewRoomForm schoolId={school.id} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Group classes</h2>
+        {groupClasses.length === 0 ? (
+          <p className="mb-4 text-sm text-neutral-500">No group classes yet.</p>
+        ) : (
+          <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 text-left text-neutral-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Class</th>
+                  <th className="px-4 py-2 font-medium">Slot</th>
+                  <th className="px-4 py-2 font-medium">Room</th>
+                  <th className="px-4 py-2 font-medium">Members</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupClasses.map((gc) => (
+                  <tr key={gc.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="px-4 py-2">
+                      <Link href={`/dashboard/group-classes/${gc.id}`} className="text-neutral-900 hover:underline">
+                        {gc.name}
+                      </Link>
+                      <span className="ml-2 text-xs text-neutral-500">{gc.discipline}</span>
+                    </td>
+                    <td className="px-4 py-2 text-neutral-600">
+                      {DAY_LABELS[gc.dayOfWeek]} {gc.startTime}–{gc.endTime}
+                    </td>
+                    <td className="px-4 py-2 text-neutral-600">{gc.room?.label ?? "—"}</td>
+                    <td className="px-4 py-2 text-neutral-600">{gc.members.length}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <NewGroupClassForm schoolId={school.id} rooms={rooms} />
       </section>
     </div>
   );

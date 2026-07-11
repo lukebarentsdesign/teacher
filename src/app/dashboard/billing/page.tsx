@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { startCheckoutAction, openBillingPortalAction } from "./actions";
+import { BrandSettingsForm } from "./brand-settings-form";
 
 const STATUS_COPY: Record<string, string> = {
   TRIALING: "You're on a trial — full access, nothing charged yet.",
@@ -58,6 +59,14 @@ export default async function BillingPage({
             </form>
           )}
         </div>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Your brand &amp; settings</h2>
+        <BrandSettingsForm
+          personalBrandColor={teacher.personalBrandColor}
+          autoApplyCreditToNextPayment={teacher.autoApplyCreditToNextPayment}
+        />
       </div>
     </div>
   );

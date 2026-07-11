@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { LinkPayerForm } from "./link-payer-form";
 import { NewSubscriptionForm } from "./new-subscription-form";
 import { AccessSettings } from "./access-settings";
+import { NewAssessmentForm } from "./new-assessment-form";
+import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
 
 export default async function StudentDetailPage({
   params,
@@ -20,6 +22,7 @@ export default async function StudentDetailPage({
       school: true,
       payerLinks: { include: { payer: true } },
       subscriptions: { include: { payer: true }, orderBy: { startDate: "desc" } },
+      assessments: { orderBy: { date: "desc" } },
     },
   });
 
@@ -32,6 +35,14 @@ export default async function StudentDetailPage({
   const linkedPayerIds = new Set(student.payerLinks.map((link) => link.payerId));
   const unlinkedPayers = allPayers.filter((payer) => !linkedPayerIds.has(payer.id));
 
+  const assessmentRooms = student.schoolId
+    ? await prisma.room.findMany({ where: { schoolId: student.schoolId }, orderBy: { label: "asc" } })
+    : [];
+
+  const pendingPrivateTuitionRequest = student.schoolId
+    ? await prisma.privateTuitionRequest.findFirst({ where: { studentId: student.id, status: "PENDING" } })
+    : null;
+
   return (
     <div className="max-w-2xl space-y-8">
       <div>
@@ -40,6 +51,23 @@ export default async function StudentDetailPage({
           {student.discipline} · {student.source} · {student.school?.name ?? "Home student"}
         </p>
       </div>
+
+      {pendingPrivateTuitionRequest && (
+        <section className="rounded-xl bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-900">
+            {student.name}&apos;s guardian has requested to convert this to a private-tuition relationship.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Link
+              href={`/dashboard/students/${student.id}/private-tuition-request`}
+              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700"
+            >
+              Review &amp; accept
+            </Link>
+            <DeclinePrivateTuitionRequestButton requestId={pendingPrivateTuitionRequest.id} studentId={student.id} />
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Payers</h2>
@@ -97,6 +125,37 @@ export default async function StudentDetailPage({
         {student.payerLinks.length > 0 && (
           <NewSubscriptionForm studentId={student.id} payers={student.payerLinks.map((l) => l.payer)} />
         )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Assessments</h2>
+        {student.assessments.length === 0 ? (
+          <p className="mb-4 text-sm text-neutral-500">No assessments yet.</p>
+        ) : (
+          <div className="mb-4 overflow-hidden rounded-xl bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 text-left text-neutral-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Level</th>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Exam board</th>
+                  <th className="px-4 py-3 font-medium">Can continue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {student.assessments.map((a) => (
+                  <tr key={a.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="px-4 py-3 text-neutral-900">{a.level}</td>
+                    <td className="px-4 py-3 text-neutral-500">{a.date.toLocaleDateString("en-GB")}</td>
+                    <td className="px-4 py-3 text-neutral-500">{a.examBoard ?? "—"}</td>
+                    <td className="px-4 py-3 text-neutral-500">{a.canContinue ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <NewAssessmentForm studentId={student.id} rooms={assessmentRooms} />
       </section>
 
       <section>

@@ -19,6 +19,40 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        // Warm "paper" neutral scale (Tailwind stone), remapping the default cool `neutral`
+        // that every page already references — so the whole app warms up without touching
+        // 40+ files. Headings/buttons stay near-black, just warmer and less clinical.
+        neutral: {
+          50: "#faf9f7",
+          100: "#f5f4f1",
+          200: "#e8e6e1",
+          300: "#d6d3cc",
+          400: "#a8a39a",
+          500: "#78746b",
+          600: "#57534e",
+          700: "#44403c",
+          800: "#292524",
+          900: "#1c1917",
+          950: "#0c0a09",
+        },
+        // Single deliberate accent — a calm, trustworthy indigo. Used for focus rings, links,
+        // and active navigation, not slathered everywhere.
+        brand: {
+          50: "#eef2ff",
+          100: "#e0e7ff",
+          200: "#c7d2fe",
+          500: "#6366f1",
+          600: "#4f46e5",
+          700: "#4338ca",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "monospace"],
+      },
+      boxShadow: {
+        sm: "0 1px 2px 0 rgba(28, 25, 23, 0.05)",
+        card: "0 1px 3px 0 rgba(28, 25, 23, 0.06), 0 1px 2px -1px rgba(28, 25, 23, 0.04)",
       },
     },
   },

@@ -1,11 +1,25 @@
 import { z } from "zod";
 
+const hexColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #2a78d6")
+  .optional()
+  .or(z.literal(""));
+
 export const schoolSchema = z.object({
   name: z.string().min(1, "Name is required"),
   address: z.string().optional(),
   invoicingTarget: z.enum(["SCHOOL", "PARENT"]),
   termStart: z.string().optional(),
   termEnd: z.string().optional(),
+  logoUrl: z.string().url().optional().or(z.literal("")),
+  primaryColor: hexColorSchema,
+  secondaryColor: hexColorSchema,
+});
+
+export const teacherBrandSchema = z.object({
+  personalBrandLogoUrl: z.string().url().optional().or(z.literal("")),
+  personalBrandColor: hexColorSchema,
 });
 
 export const studentSchema = z.object({
@@ -29,4 +43,60 @@ export const subscriptionSchema = z.object({
   annualFee: z.coerce.number().positive("Annual fee must be greater than 0"),
   billingModel: z.enum(["SMOOTHED_SUBSCRIPTION", "PER_LESSON", "HOURLY", "TERMLY"]),
   startDate: z.string().min(1, "Start date is required"),
+});
+
+export const roomOpenHoursRowSchema = z.object({
+  dayOfWeek: z.number().min(0).max(6),
+  openTime: z.string().min(1),
+  closeTime: z.string().min(1),
+});
+
+export const roomSchema = z.object({
+  schoolId: z.string().min(1),
+  label: z.string().min(1, "Label is required"),
+  hasPiano: z.boolean().optional(),
+  hasMirrors: z.boolean().optional(),
+  floor: z.string().optional(),
+  openHours: z.array(roomOpenHoursRowSchema).optional(),
+});
+
+export const groupClassSchema = z.object({
+  schoolId: z.string().min(1),
+  name: z.string().min(1, "Name is required"),
+  discipline: z.string().min(1, "Discipline is required"),
+  roomId: z.string().optional(),
+  dayOfWeek: z.coerce.number().min(0).max(6),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm"),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm"),
+});
+
+export const assessmentSchema = z.object({
+  studentId: z.string().min(1),
+  level: z.string().min(1, "Level/grade is required"),
+  date: z.string().min(1, "Date is required"),
+  canContinue: z.boolean().optional(),
+  appointmentAt: z.string().optional(),
+  roomId: z.string().optional(),
+  examBoard: z.string().optional(),
+  examFee: z.coerce.number().optional(),
+});
+
+export const loanableItemSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.string().min(1, "Type is required"),
+  condition: z.string().optional(),
+  value: z.coerce.number().optional(),
+});
+
+export const checkOutLoanSchema = z.object({
+  itemId: z.string().min(1),
+  studentId: z.string().min(1),
+  dueBackDate: z.string().min(1, "Due-back date is required"),
+});
+
+export const expenseSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  category: z.string().min(1, "Category is required"),
+  date: z.string().min(1, "Date is required"),
+  note: z.string().optional(),
 });

@@ -74,6 +74,22 @@ export function NewSchoolForm() {
         Needed later for the timetable generator to know how many weeks to schedule.
       </p>
 
+      <div>
+        <label htmlFor="primaryColor" className="block text-sm font-medium text-neutral-700">
+          Brand color (optional)
+        </label>
+        <p className="mb-1 text-xs text-neutral-500">
+          Colors this school&apos;s lessons on your calendar views.
+        </p>
+        <input
+          id="primaryColor"
+          name="primaryColor"
+          type="color"
+          defaultValue="#2a78d6"
+          className="h-10 w-16 rounded-lg border border-neutral-300"
+        />
+      </div>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button

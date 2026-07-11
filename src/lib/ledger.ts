@@ -85,6 +85,59 @@ export async function postLessonDelivered(subscriptionId: string, lessonValue: n
   });
 }
 
+async function countHeldLessonsInRange(subscriptionId: string, start: Date, end: Date): Promise<number> {
+  return prisma.lesson.count({
+    where: { subscriptionId, status: "HELD", scheduledAt: { gte: start, lte: end } },
+  });
+}
+
+/**
+ * Derives the value of one delivered lesson for a Subscription, resolving the open question left
+ * by postLessonDelivered's caller-supplied lessonValue — now that the timetable generator (build
+ * step 4) makes lesson counts knowable. The schema has one Decimal field (`annualFee`) reused with
+ * different meaning per billingModel (there's no separate perLessonRate/hourlyRate column):
+ *
+ * - SMOOTHED_SUBSCRIPTION: annualFee spread across however many HELD lessons actually fall in the
+ *   subscription's year (startDate to endDate, or +1 year if no endDate) — the spec's "smoothing"
+ *   is about monthly billing cadence, not lesson value, so this is a separate division.
+ * - TERMLY: same idea, but the denominator is HELD lessons within the lesson's school's current
+ *   term (termStart/termEnd) rather than a full year.
+ * - PER_LESSON: annualFee is entered as the flat per-lesson rate directly, no division.
+ * - HOURLY: annualFee is entered as the hourly rate, scaled by the lesson's actual duration.
+ *
+ * Falls back to the raw annualFee if a denominator can't be computed (e.g. zero lessons found
+ * yet) rather than dividing by zero — better to slightly overcharge once than post a NaN/zero.
+ */
+export async function deriveLessonValue(
+  subscriptionId: string,
+  lesson: { durationMins: number; schoolId: string }
+): Promise<number> {
+  const subscription = await prisma.subscription.findUniqueOrThrow({ where: { id: subscriptionId } });
+  const rate = Number(subscription.annualFee);
+
+  switch (subscription.billingModel) {
+    case "PER_LESSON":
+      return rate;
+
+    case "HOURLY":
+      return rate * (lesson.durationMins / 60);
+
+    case "TERMLY": {
+      const school = await prisma.school.findUnique({ where: { id: lesson.schoolId } });
+      if (!school?.termStart || !school?.termEnd) return rate;
+      const count = await countHeldLessonsInRange(subscriptionId, school.termStart, school.termEnd);
+      return count > 0 ? rate / count : rate;
+    }
+
+    case "SMOOTHED_SUBSCRIPTION":
+    default: {
+      const yearEnd = subscription.endDate ?? new Date(subscription.startDate.getFullYear() + 1, subscription.startDate.getMonth(), subscription.startDate.getDate());
+      const count = await countHeldLessonsInRange(subscriptionId, subscription.startDate, yearEnd);
+      return count > 0 ? rate / count : rate;
+    }
+  }
+}
+
 /** "Absent, make-up owed" attendance path — banks a make-up lesson, no cash impact. */
 export async function postMakeUpCreditIssued(subscriptionId: string, note?: string) {
   return prisma.ledgerEntry.create({

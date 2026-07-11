@@ -106,6 +106,12 @@ enum AssignmentStatus {
   REVIEWED_NOT_DONE
 }
 
+enum PrivateTuitionRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 // ---------------------------------------------------------------------------
 // Teacher / School / scheduling
 // ---------------------------------------------------------------------------
@@ -128,19 +134,30 @@ model Teacher {
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)
 
-  schoolLinks          TeacherSchoolLink[]
-  unavailability       Unavailability[]
-  lessons              Lesson[]
-  groupClasses         GroupClass[]
-  assessments          Assessment[]
-  packages             Package[]
-  loanableItems        LoanableItem[]
-  students             Student[]
-  payers               Payer[]
-  contracts            Contract[]
-  resources            Resource[]
-  assignments          Assignment[]
-  maintenanceReminders MaintenanceReminder[]
+  /// Used for home-sourced students' calendar events, when no School.primaryColor applies.
+  personalBrandLogoUrl String?
+  personalBrandColor   String?
+
+  /// Whether a Subscription's banked creditAppliedNextPeriod auto-reduces the suggested amount
+  /// on the next manually-generated payment request, or is only displayed for the teacher to
+  /// account for themselves. See "Credit application" in the no-show/make-up-credit build notes.
+  autoApplyCreditToNextPayment Boolean @default(true)
+
+  schoolLinks           TeacherSchoolLink[]
+  unavailability        Unavailability[]
+  lessons               Lesson[]
+  groupClasses          GroupClass[]
+  assessments           Assessment[]
+  packages              Package[]
+  loanableItems         LoanableItem[]
+  students              Student[]
+  payers                Payer[]
+  contracts             Contract[]
+  resources             Resource[]
+  assignments           Assignment[]
+  maintenanceReminders  MaintenanceReminder[]
+  expenses              Expense[]
+  privateTuitionRequests PrivateTuitionRequest[]
 }
 
 model School {
@@ -153,6 +170,11 @@ model School {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  /// Optional branding, used to color this school's lessons on the teacher's calendar views.
+  logoUrl       String?
+  primaryColor  String?
+  secondaryColor String?
+
   teacherLinks   TeacherSchoolLink[]
   rooms          Room[]
   students       Student[]
@@ -160,6 +182,7 @@ model School {
   lessons        Lesson[]
   groupClasses   GroupClass[]
   loanableItems  LoanableItem[]
+  privateTuitionRequestsAsSource PrivateTuitionRequest[]
 }
 
 /// A Teacher's engagement with one School/Venue: scheduling mode, availability,
@@ -267,8 +290,31 @@ model Student {
   loans             Loan[]
   resources         Resource[]
   assignments       Assignment[]
+  privateTuitionRequests PrivateTuitionRequest[]
+  makeUpLessons     MakeUpLesson[]
 
   @@index([teacherId])
+}
+
+/// A guardian/student microsite request to convert a school-sourced Student into a private
+/// (HOME-sourced) relationship. Acceptance is additive — creates a NEW Student row rather than
+/// mutating the existing school-linked one, since school and private are separate billing
+/// relationships that may coexist (e.g. still enrolled at the school, now also private).
+model PrivateTuitionRequest {
+  id               String                      @id @default(cuid())
+  studentId        String
+  teacherId        String
+  sourceSchoolId   String
+  status           PrivateTuitionRequestStatus @default(PENDING)
+  requestedAt      DateTime                    @default(now())
+  /// Set on acceptance — the new HOME-sourced Student created as a result, for traceability.
+  resultingStudentId String?
+
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher      Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sourceSchool School  @relation(fields: [sourceSchoolId], references: [id])
+
+  @@index([studentId, status])
 }
 
 model Payer {
@@ -325,6 +371,11 @@ model Subscription {
   stripeSubscriptionId String? @unique
   stripeCustomerId     String?
 
+  /// Banked from resolved no-shows via the "Review term absences" screen — see
+  /// src/lib/ledger.ts and the payment-request flow for how this reduces (or is displayed
+  /// alongside, per Teacher.autoApplyCreditToNextPayment) the next manually-generated payment.
+  creditAppliedNextPeriod Decimal @default(0) @db.Decimal(10, 2)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -378,6 +429,21 @@ model Payment {
   createdAt       DateTime      @default(now())
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+/// Teacher-tracked business expense, for the income forecasting dashboard's expense-tracking line.
+model Expense {
+  id        String   @id @default(cuid())
+  teacherId String
+  amount    Decimal  @db.Decimal(10, 2)
+  category  String
+  date      DateTime @default(now())
+  note      String?
+  createdAt DateTime @default(now())
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, date])
 }
 
 /// One evolving document per teacher (not per subscription) — a teacher's standard terms apply
@@ -442,22 +508,50 @@ model Lesson {
   /// Mirrors ELVIS's are_hours_counted — false for a cover/make-up lesson so it doesn't double-bill
   hoursCounted Boolean @default(true)
 
+  /// Set via the "Absent, make-up owed" attendance action — a confirmed no-show, distinct from
+  /// simply never having marked attendance at all. Feeds the MakeUpLesson tracking row created
+  /// alongside it and the "Review term absences" screen.
+  noShowReason    String?
+  noShowConfirmed Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student       Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher       Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  room          Room?          @relation(fields: [roomId], references: [id])
-  subscription  Subscription?  @relation(fields: [subscriptionId], references: [id])
-  package       Package?       @relation(fields: [packageId], references: [id])
-  addOnBookings AddOnBooking[]
-  checkIn       CheckIn?
-  note          LessonNote?
-  resources     Resource[]
+  student            Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher            Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  school             School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  room               Room?          @relation(fields: [roomId], references: [id])
+  subscription       Subscription?  @relation(fields: [subscriptionId], references: [id])
+  package            Package?       @relation(fields: [packageId], references: [id])
+  addOnBookings      AddOnBooking[]
+  checkIn            CheckIn?
+  note               LessonNote?
+  resources          Resource[]
+  makeUpLessonAsOriginal MakeUpLesson? @relation("OriginalLesson")
+  makeUpLessonAsMakeUp   MakeUpLesson? @relation("MakeUpLessonSlot")
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])
+}
+
+/// Tracks a confirmed no-show from marking-it through to resolution — either a rescheduled
+/// make-up lesson, or (via the "Review term absences" screen) converted into a next-period
+/// billing credit. Created alongside the MAKE_UP_CREDIT_ISSUED ledger entry when a lesson is
+/// marked "Absent, make-up owed", so the credit isn't just a floating ledger row.
+model MakeUpLesson {
+  id              String    @id @default(cuid())
+  originalLessonId String   @unique
+  makeUpLessonId  String?   @unique
+  studentId       String
+  requestedAt     DateTime  @default(now())
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+
+  originalLesson Lesson  @relation("OriginalLesson", fields: [originalLessonId], references: [id], onDelete: Cascade)
+  makeUpLesson   Lesson? @relation("MakeUpLessonSlot", fields: [makeUpLessonId], references: [id])
+  student        Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, completedAt])
 }
 
 /// Freetext note per lesson — what was covered, what to work on next. Visible to the guardian
