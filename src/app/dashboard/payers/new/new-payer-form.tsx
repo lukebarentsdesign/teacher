@@ -43,6 +43,35 @@ export function NewPayerForm() {
         />
       </div>
 
+      <div>
+        <label htmlFor="contactPref" className="block text-sm font-medium text-neutral-700">
+          Preferred contact (optional)
+        </label>
+        <select
+          id="contactPref"
+          name="contactPref"
+          defaultValue=""
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        >
+          <option value="">No preference</option>
+          <option value="WHATSAPP">WhatsApp</option>
+          <option value="SMS">SMS</option>
+          <option value="EMAIL">Email</option>
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="notes" className="block text-sm font-medium text-neutral-700">
+          Notes / address (optional)
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          rows={2}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button

@@ -112,6 +112,12 @@ enum PrivateTuitionRequestStatus {
   DECLINED
 }
 
+enum ContactPref {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
 // ---------------------------------------------------------------------------
 // Teacher / School / scheduling
 // ---------------------------------------------------------------------------
@@ -331,6 +337,19 @@ model Payer {
   /// Persistent unique 6-digit microsite access code (unique per family, not shared globally)
   accessCode          String   @unique
   accessCodeUpdatedAt DateTime @default(now())
+
+  /// True when this Payer record IS the adult (18+) student paying for their own tuition — created
+  /// by the new-student wizard's self-pay branch from the student's own contact details.
+  isSelf Boolean @default(false)
+
+  /// True for a safeguarding/emergency contact captured for an under-18 student whose SCHOOL is
+  /// billed — has no billing role (never carries a Subscription), just contact + notes, so
+  /// guardian info exists without implying they're invoiced. Distinct from a normal paying Payer.
+  isEmergencyContactOnly Boolean @default(false)
+
+  /// Preferred contact channel; notes is freeform (also holds address, which has no dedicated column).
+  contactPref ContactPref?
+  notes       String?
 
   teacher             Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   studentLinks        StudentPayerLink[]

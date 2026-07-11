@@ -38,7 +38,11 @@ export default async function PayersPage() {
             <tbody>
               {payers.map((payer) => (
                 <tr key={payer.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="px-4 py-3 text-neutral-900">{payer.name}</td>
+                  <td className="px-4 py-3 text-neutral-900">
+                    <Link href={`/dashboard/payers/${payer.id}`} className="hover:underline">
+                      {payer.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-neutral-500">
                     {payer.studentLinks.map((link) => link.student.name).join(", ") || "—"}
                   </td>

@@ -18,6 +18,8 @@ export async function createPayerAction(
     name: formData.get("name"),
     email: formData.get("email") || undefined,
     phone: formData.get("phone") || undefined,
+    contactPref: formData.get("contactPref") || undefined,
+    notes: formData.get("notes") || undefined,
   });
 
   if (!parsed.success) {

@@ -35,7 +35,38 @@ export const payerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
+  contactPref: z.enum(["WHATSAPP", "SMS", "EMAIL"]).optional(),
+  notes: z.string().optional(),
 });
+
+// One payer entry inside the new-student wizard payload. `payerId` set = link an existing payer;
+// otherwise the contact fields describe a new payer to create.
+const wizardPayerSchema = z.object({
+  payerId: z.string().optional(),
+  name: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  contactPref: z.enum(["WHATSAPP", "SMS", "EMAIL"]).optional(),
+  notes: z.string().optional(),
+  splitPercent: z.coerce.number().min(0).max(100).optional(),
+  isSelf: z.boolean().optional(),
+  isEmergencyContactOnly: z.boolean().optional(),
+});
+
+export const newStudentWizardSchema = z.object({
+  name: z.string().min(1, "Student name is required"),
+  dob: z.string().optional(),
+  discipline: z.string().min(1, "Discipline is required"),
+  source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
+  paymentResponsibility: z.enum(["SELF", "GUARDIAN", "SCHOOL"]),
+  /// School the student attends — independent of who is billed.
+  schoolId: z.string().optional(),
+  /// Set when paymentResponsibility is SCHOOL — the school being invoiced.
+  invoicingSchoolId: z.string().optional(),
+  payers: z.array(wizardPayerSchema),
+});
+
+export type WizardPayer = z.infer<typeof wizardPayerSchema>;
 
 export const subscriptionSchema = z.object({
   studentId: z.string().min(1),

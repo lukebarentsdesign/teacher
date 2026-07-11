@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { NewStudentForm } from "./new-student-form";
+import { StudentWizard } from "./student-wizard";
 
 export default async function NewStudentPage() {
   const session = await auth();
@@ -9,12 +9,15 @@ export default async function NewStudentPage() {
     where: { teacherId: session!.user.id },
     include: { school: true },
   });
-  const schools = links.map((link) => link.school);
+  // De-dupe schools (a teacher may have one link per school, but be defensive).
+  const schools = Array.from(
+    new Map(links.map((link) => [link.school.id, { id: link.school.id, name: link.school.name }])).values()
+  );
 
   return (
     <div className="max-w-lg">
       <h1 className="mb-6 text-2xl font-semibold text-neutral-900">Add student</h1>
-      <NewStudentForm schools={schools} />
+      <StudentWizard schools={schools} />
     </div>
   );
 }

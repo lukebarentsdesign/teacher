@@ -20,7 +20,7 @@ export default async function StudentDetailPage({
     where: { id, teacherId: session!.user.id },
     include: {
       school: true,
-      payerLinks: { include: { payer: true } },
+      payerLinks: { include: { payer: true }, orderBy: { isPrimary: "desc" } },
       subscriptions: { include: { payer: true }, orderBy: { startDate: "desc" } },
       assessments: { orderBy: { date: "desc" } },
     },
@@ -69,15 +69,30 @@ export default async function StudentDetailPage({
         </section>
       )}
 
-      <section>
-        <h2 className="mb-3 text-lg font-medium text-neutral-900">Payers</h2>
+      <section id="payers" className="scroll-mt-20">
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Payer(s)</h2>
         {student.payerLinks.length === 0 ? (
           <p className="mb-4 text-sm text-neutral-500">No payer linked yet.</p>
         ) : (
-          <ul className="mb-4 space-y-1 text-sm text-neutral-700">
+          <ul className="mb-4 space-y-2 text-sm text-neutral-700">
             {student.payerLinks.map((link) => (
-              <li key={link.id}>
-                {link.payer.name} {link.isPrimary && <span className="text-neutral-400">(primary)</span>}
+              <li key={link.id} className="flex flex-wrap items-center gap-2">
+                <Link href={`/dashboard/payers/${link.payer.id}`} className="text-neutral-900 hover:underline">
+                  {link.payer.name}
+                </Link>
+                {link.isPrimary && student.payerLinks.length > 1 && (
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">primary</span>
+                )}
+                {student.payerLinks.length > 1 && link.splitPercent != null && (
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                    {link.splitPercent.toString()}% split
+                  </span>
+                )}
+                {link.payer.isEmergencyContactOnly && (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                    contact only — not billed
+                  </span>
+                )}
               </li>
             ))}
           </ul>

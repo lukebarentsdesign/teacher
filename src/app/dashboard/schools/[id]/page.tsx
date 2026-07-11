@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { ageInYears } from "@/lib/age";
 import { NewLinkForm } from "./new-link-form";
 import { NewRoomForm } from "./new-room-form";
 import { NewGroupClassForm } from "./new-group-class-form";
@@ -29,6 +30,14 @@ export default async function SchoolDetailPage({
   const groupClasses = await prisma.groupClass.findMany({
     where: { schoolId: id, teacherId: session?.user?.id },
     include: { room: true, members: { where: { leftAt: null } } },
+    orderBy: { name: "asc" },
+  });
+
+  // Enrolled = Student.schoolId matches, regardless of who pays (single source of truth for
+  // enrollment; billing relationships live separately on StudentPayerLink).
+  const enrolledStudents = await prisma.student.findMany({
+    where: { schoolId: id, teacherId: session?.user?.id },
+    include: { payerLinks: { include: { payer: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -137,6 +146,42 @@ export default async function SchoolDetailPage({
           </div>
         )}
         <NewGroupClassForm schoolId={school.id} rooms={rooms} />
+      </section>
+
+      <section id="enrolled" className="scroll-mt-20">
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Enrolled students</h2>
+        {enrolledStudents.length === 0 ? (
+          <p className="text-sm text-neutral-500">No students enrolled at this school yet.</p>
+        ) : (
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 text-left text-neutral-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Student</th>
+                  <th className="px-4 py-3 font-medium">Age</th>
+                  <th className="px-4 py-3 font-medium">Payer(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrolledStudents.map((student) => (
+                  <tr key={student.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="px-4 py-3 text-neutral-900">
+                      <Link href={`/dashboard/students/${student.id}`} className="hover:underline">
+                        {student.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">
+                      {student.dob ? ageInYears(student.dob) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">
+                      {student.payerLinks.map((l) => l.payer.name).join(", ") || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

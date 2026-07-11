@@ -24,6 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
+import { GlobalSearch } from "@/components/ui/global-search";
 
 type NavLink = { href: string; label: string; icon: LucideIcon };
 
@@ -132,8 +133,8 @@ export function DashboardChrome({ userName, children }: { userName: string; chil
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Single full-width top bar — hamburger + brand on mobile, just the user menu on desktop. */}
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/90 px-4 py-2.5 backdrop-blur sm:justify-end sm:px-6">
+        {/* Full-width top bar: hamburger+brand (mobile only), global search, user menu. */}
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-neutral-200 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-6">
           <div className="flex items-center gap-3 sm:hidden">
             <button
               type="button"
@@ -145,6 +146,9 @@ export function DashboardChrome({ userName, children }: { userName: string; chil
             </button>
             <BrandMark />
           </div>
+          <div className="hidden flex-1 sm:block">
+            <GlobalSearch />
+          </div>
           <UserMenu name={userName} />
         </header>
 
@@ -155,8 +159,11 @@ export function DashboardChrome({ userName, children }: { userName: string; chil
       {mobileOpen && (
         <div className="fixed inset-0 z-40 sm:hidden">
           <div className="absolute inset-0 bg-neutral-900/30" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-card">
-            <div className="flex items-center justify-end px-3 pt-3">
+          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-card">
+            <div className="flex items-center gap-2 px-3 pt-3">
+              <div className="flex-1">
+                <GlobalSearch onNavigate={() => setMobileOpen(false)} />
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
