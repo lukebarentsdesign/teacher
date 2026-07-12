@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { startCheckoutAction, openBillingPortalAction, disconnectGmailAction } from "./actions";
 import { BrandSettingsForm } from "./brand-settings-form";
 import { CancellationPolicyForm } from "../cancellation-policy/cancellation-policy-form";
+import { EmergencyContactForm } from "./emergency-contact-form";
 
 const STATUS_COPY: Record<string, string> = {
   TRIALING: "You're on a trial — full access, nothing charged yet.",
@@ -114,6 +115,15 @@ export default async function BillingPage({
         <BrandSettingsForm
           personalBrandColor={teacher.personalBrandColor}
           autoApplyCreditToNextPayment={teacher.autoApplyCreditToNextPayment}
+        />
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Emergency contact</h2>
+        <EmergencyContactForm
+          emergencyContactName={teacher.emergencyContactName}
+          emergencyContactPhone={teacher.emergencyContactPhone}
+          emergencyContactEmail={teacher.emergencyContactEmail}
         />
       </div>
 

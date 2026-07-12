@@ -66,6 +66,36 @@ export async function deleteCoverAssignmentAction(coverAssignmentId: string, les
   revalidatePath(`/dashboard/lessons/${lessonId}`);
 }
 
+export async function checkInAction(lessonId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, teacherId: session.user.id } });
+  if (!lesson) return;
+
+  const expectedEndAt = new Date(lesson.scheduledAt.getTime() + lesson.durationMins * 60_000);
+
+  await prisma.loneWorkerCheckIn.upsert({
+    where: { lessonId },
+    update: { checkedInAt: new Date(), checkedOutAt: null, alertSentAt: null },
+    create: { lessonId, checkedInAt: new Date(), expectedEndAt },
+  });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
+export async function checkOutAction(lessonId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const owns = await prisma.lesson.findFirst({ where: { id: lessonId, teacherId: session.user.id } });
+  if (!owns) return;
+
+  await prisma.loneWorkerCheckIn.updateMany({ where: { lessonId }, data: { checkedOutAt: new Date() } });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
 export async function saveMeetingUrlAction(
   lessonId: string,
   _prevState: string | undefined,

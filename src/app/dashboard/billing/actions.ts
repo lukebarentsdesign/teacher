@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { createPlatformCheckoutSession, createBillingPortalSession } from "@/lib/billing";
@@ -41,6 +42,38 @@ export async function updateBrandSettingsAction(
     data: {
       personalBrandColor: parsed.data.personalBrandColor,
       autoApplyCreditToNextPayment: formData.get("autoApplyCreditToNextPayment") === "true",
+    },
+  });
+
+  revalidatePath("/dashboard/billing");
+}
+
+const emergencyContactSchema = z.object({
+  emergencyContactName: z.string().trim().optional(),
+  emergencyContactPhone: z.string().trim().optional(),
+  emergencyContactEmail: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
+});
+
+export async function updateEmergencyContactAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const parsed = emergencyContactSchema.safeParse({
+    emergencyContactName: formData.get("emergencyContactName") || undefined,
+    emergencyContactPhone: formData.get("emergencyContactPhone") || undefined,
+    emergencyContactEmail: formData.get("emergencyContactEmail") || "",
+  });
+  if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
+
+  await prisma.teacher.update({
+    where: { id: session.user.id },
+    data: {
+      emergencyContactName: parsed.data.emergencyContactName || null,
+      emergencyContactPhone: parsed.data.emergencyContactPhone || null,
+      emergencyContactEmail: parsed.data.emergencyContactEmail || null,
     },
   });
 

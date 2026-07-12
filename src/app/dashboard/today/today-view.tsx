@@ -1,8 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { TodayResponse } from "@/app/api/today/route";
 import { saveTodaySnapshot, loadTodaySnapshot } from "@/lib/offline-cache";
+
+function cancelTodayHref(): string {
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const params = new URLSearchParams({
+    start: now.toISOString(),
+    end: endOfToday.toISOString(),
+    reason: "Illness/emergency",
+  });
+  return `/dashboard/unavailability/preview?${params.toString()}`;
+}
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -58,12 +71,22 @@ export function TodayView({ teacherId }: { teacherId: string }) {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">My day</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Today &amp; tomorrow&apos;s lessons, view-only — works with no connection once loaded here
-          at least once. Attendance, notes, and billing all need a live connection.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">My day</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Today &amp; tomorrow&apos;s lessons, view-only — works with no connection once loaded
+            here at least once. Attendance, notes, and billing all need a live connection.
+          </p>
+        </div>
+        {!isOffline && (
+          <Link
+            href={cancelTodayHref()}
+            className="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors duration-150 hover:bg-red-50"
+          >
+            Cancel remaining lessons today
+          </Link>
+        )}
       </div>
 
       {isOffline && (

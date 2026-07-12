@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { checkAndSendLoneWorkerAlerts } from "@/lib/lone-worker";
 
 export type TodayLesson = {
   id: string;
@@ -26,6 +27,15 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const teacherId = session.user.id;
+
+  // Lazy lone-worker overdue-checkout sweep — see checkAndSendLoneWorkerAlerts for why this runs
+  // here rather than on a real schedule (no cron infra in this app). Best-effort, never blocks
+  // the actual Today response even if it fails.
+  try {
+    await checkAndSendLoneWorkerAlerts(teacherId);
+  } catch {
+    // Non-fatal — Today data still returns below.
+  }
 
   const start = new Date();
   start.setHours(0, 0, 0, 0);

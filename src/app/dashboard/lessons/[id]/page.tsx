@@ -7,6 +7,7 @@ import { AddOnBookings } from "./addon-bookings";
 import { LessonSessionPlanPanel } from "../../session-plans/lesson-session-plan-panel";
 import { MeetingUrlForm } from "./meeting-url-form";
 import { CoverAssignmentPanel } from "./cover-assignment-panel";
+import { LoneWorkerPanel } from "./lone-worker-panel";
 
 export default async function LessonDetailPage({
   params,
@@ -26,6 +27,7 @@ export default async function LessonDetailPage({
       addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
       feedback: { include: { payer: true }, orderBy: { submittedAt: "desc" } },
       coverAssignments: { include: { coveringInstructor: true }, orderBy: { createdAt: "desc" } },
+      loneWorkerCheckIn: true,
     },
   });
 
@@ -73,6 +75,29 @@ export default async function LessonDetailPage({
         )}
         <MeetingUrlForm lessonId={lesson.id} initialUrl={lesson.meetingUrl ?? ""} />
       </section>
+
+      {lesson.location.locationType === "STUDENT_HOME" && (
+        <section>
+          <h2 className="mb-3 text-lg font-medium text-neutral-900">Lone-worker check-in</h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            Home visit — check in on arrival, check out on leaving. If you don&apos;t check out
+            within {lesson.loneWorkerCheckIn?.graceMinutes ?? 15} minutes of the expected end time,
+            your emergency contact gets an automated alert next time you have the app open.
+          </p>
+          <LoneWorkerPanel
+            lessonId={lesson.id}
+            checkIn={
+              lesson.loneWorkerCheckIn
+                ? {
+                    checkedInAt: lesson.loneWorkerCheckIn.checkedInAt?.toISOString() ?? null,
+                    checkedOutAt: lesson.loneWorkerCheckIn.checkedOutAt?.toISOString() ?? null,
+                  }
+                : null
+            }
+            hasEmergencyContact={!!teacher.emergencyContactEmail}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Attendance</h2>
