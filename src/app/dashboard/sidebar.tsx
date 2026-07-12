@@ -33,6 +33,9 @@ import {
   Wifi,
   ShieldCheck,
   AlertTriangle,
+  Gift,
+  Percent,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -51,6 +54,9 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
+  { href: "/dashboard/gift-cards", label: "Gift cards", icon: Gift },
+  { href: "/dashboard/promo-codes", label: "Promo codes", icon: Percent },
+  { href: "/dashboard/accounting-export", label: "Accounting export", icon: FileSpreadsheet },
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
   { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/dashboard/billing", label: "Billing", icon: Settings },

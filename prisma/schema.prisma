@@ -246,6 +246,8 @@ model Teacher {
   certifications          InstructorCertification[]
   incidentLogs            IncidentLog[]
   cancellationPolicies    CancellationPolicy[]
+  giftCards               GiftCard[]
+  promoCodes              PromoCode[]
 }
 
 model TeachingLocation {
@@ -368,6 +370,7 @@ model LessonType {
   requestedByStudents Student[]
   locationPricing LessonTypeLocationPricing[]
   curriculumTemplates CurriculumTemplate[]
+  promoCodes PromoCode[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -611,6 +614,7 @@ model Payer {
   subscriptions       Subscription[]
   contractAcceptances ContractAcceptance[]
   lessonFeedback      LessonFeedback[]
+  giftCardsPurchased  GiftCard[]
 
   @@index([teacherId])
 }
@@ -1266,6 +1270,56 @@ model LessonFeedback {
 
   @@unique([lessonId, payerId])
   @@index([lessonId])
+}
+
+/// Prepaid credit the teacher issues, redeemable against any Subscription's ledger for that
+/// teacher (not scoped to a specific student/subscription until redemption). `remainingBalance`
+/// decrements on each redemption (posts a MANUAL_CORRECTION-style CREDIT — see
+/// src/lib/gift-card.ts) rather than the card being single-use.
+model GiftCard {
+  id                String   @id @default(cuid())
+  teacherId         String
+  code              String   @unique
+  initialValue      Decimal  @db.Decimal(10, 2)
+  remainingBalance  Decimal  @db.Decimal(10, 2)
+  purchasedByPayerId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  teacher         Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  purchasedByPayer Payer? @relation(fields: [purchasedByPayerId], references: [id], onDelete: SetNull)
+
+  @@index([teacherId])
+}
+
+enum PromoDiscountType {
+  PERCENT
+  FIXED
+}
+
+/// A one-time discount code the teacher can apply to a Subscription (or scope to a specific
+/// LessonType, informational only — LessonType has no direct billing hook of its own, pricing
+/// lives on the Subscription). `timesUsed` + `usageLimit` are simple counters, not a redemption
+/// log — good enough for "used N of M", not an audit trail (that's what LedgerEntry is for).
+model PromoCode {
+  id             String            @id @default(cuid())
+  teacherId      String
+  code           String
+  discountType   PromoDiscountType
+  value          Decimal           @db.Decimal(10, 2)
+  validFrom      DateTime?
+  validTo        DateTime?
+  usageLimit     Int?
+  timesUsed      Int               @default(0)
+  lessonTypeId   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  teacher    Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonType LessonType? @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
+
+  @@unique([teacherId, code])
+  @@index([teacherId])
 }
 
 /// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain
