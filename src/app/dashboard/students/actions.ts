@@ -161,6 +161,36 @@ export async function updateStudentAction(
   redirect(`/dashboard/students/${studentId}`);
 }
 
+/** Approves a self-serve (PENDING_REVIEW) submission, making it a live enrolment. */
+export async function approvePendingStudentAction(studentId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, teacherId: session.user.id, status: "PENDING_REVIEW" },
+  });
+  if (!student) return;
+
+  await prisma.student.update({ where: { id: studentId }, data: { status: "ACTIVE" } });
+  revalidatePath("/dashboard/students/pending");
+  revalidatePath("/dashboard/students");
+}
+
+/** Soft-rejects a self-serve submission — kept for record rather than deleted. */
+export async function declinePendingStudentAction(studentId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, teacherId: session.user.id, status: "PENDING_REVIEW" },
+  });
+  if (!student) return;
+
+  await prisma.student.update({ where: { id: studentId }, data: { status: "DECLINED" } });
+  revalidatePath("/dashboard/students/pending");
+  revalidatePath("/dashboard/students");
+}
+
 /** Sets the student's IG Card wallet-pass identifier, used only for CheckIn scan lookups. */
 export async function updateIgCardIdAction(
   studentId: string,

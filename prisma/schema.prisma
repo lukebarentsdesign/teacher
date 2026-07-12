@@ -45,6 +45,12 @@ enum StudentSource {
   COLLEGE
 }
 
+enum StudentStatus {
+  PENDING_REVIEW
+  ACTIVE
+  DECLINED
+}
+
 enum SubscriptionStatus {
   ACTIVE
   CANCELLED
@@ -239,6 +245,7 @@ model LessonType {
   /// at home) — an EMPTY set here means "offered everywhere", not "offered nowhere". Only treat
   /// this as a filter when non-empty; see how onboarding/the self-serve link use it.
   locations TeachingLocation[]
+  requestedByStudents Student[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -322,6 +329,17 @@ model Student {
   igCardId   String? // links to existing IG Card wallet pass, for CheckIn scanning only
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+
+  /// PENDING_REVIEW = created via the self-serve onboarding questionnaire, not yet a confirmed
+  /// enrolment — the teacher must approve before it's ACTIVE. Directly-created (wizard) students
+  /// skip straight to ACTIVE. DECLINED is a soft-reject, kept for record rather than deleted.
+  status StudentStatus @default(ACTIVE)
+
+  /// Which LessonType a self-serve submission expressed interest in — informational only, shown
+  /// on the teacher's review screen; not a durable enrolment record (a Student isn't tied to one
+  /// LessonType long-term once active, they may end up scheduled across several).
+  requestedLessonTypeId String?
+  requestedLessonType   LessonType? @relation(fields: [requestedLessonTypeId], references: [id], onDelete: SetNull)
 
   /// Only settable true if the student is 16+ (checked against dob when toggled on, not
   /// continuously enforced). Grants a second, independent microsite login — additive to the

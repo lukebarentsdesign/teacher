@@ -63,6 +63,18 @@ export const newStudentWizardSchema = z.object({
 
 export type WizardPayer = z.infer<typeof wizardPayerSchema>;
 
+/// Part 4.2 self-serve questionnaire — same shape as the wizard, minus `discipline` (derived from
+/// the chosen LessonType instead of freeform text) plus the LessonType itself.
+export const selfServeOnboardingSchema = z.object({
+  name: z.string().min(1, "Student name is required"),
+  dob: z.string().optional(),
+  lessonTypeId: z.string().min(1, "Choose what you're interested in"),
+  paymentResponsibility: z.enum(["SELF", "GUARDIAN", "SCHOOL"]),
+  locationId: z.string().optional(),
+  invoicingSchoolId: z.string().optional(),
+  payers: z.array(wizardPayerSchema),
+});
+
 export const subscriptionSchema = z.object({
   studentId: z.string().min(1),
   payerId: z.string().min(1),

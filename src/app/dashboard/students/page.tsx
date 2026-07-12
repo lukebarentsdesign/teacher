@@ -10,16 +10,18 @@ export default async function StudentsPage({
   const { subject: subjectFilter } = await searchParams;
   const session = await auth();
 
-  const [students, subjects] = await Promise.all([
+  const [students, subjects, pendingCount] = await Promise.all([
     prisma.student.findMany({
       where: {
         teacherId: session!.user.id,
+        status: "ACTIVE",
         ...(subjectFilter ? { subjects: { some: { id: subjectFilter } } } : {}),
       },
       orderBy: { name: "asc" },
       include: { location: true, subjects: true },
     }),
     prisma.subject.findMany({ where: { teacherId: session!.user.id }, orderBy: { name: "asc" } }),
+    prisma.student.count({ where: { teacherId: session!.user.id, status: "PENDING_REVIEW" } }),
   ]);
 
   // Group by subject so the teacher can see, e.g., every flute student together — a student
@@ -82,6 +84,15 @@ export default async function StudentsPage({
           Add student
         </Link>
       </div>
+
+      {pendingCount > 0 && (
+        <Link
+          href="/dashboard/students/pending"
+          className="mb-6 block rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 hover:bg-amber-100"
+        >
+          {pendingCount} self-serve submission{pendingCount === 1 ? "" : "s"} waiting for your review →
+        </Link>
+      )}
 
       {subjects.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-2">
