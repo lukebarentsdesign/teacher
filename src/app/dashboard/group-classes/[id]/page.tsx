@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { AddMemberForm } from "./add-member-form";
 import { RemoveMemberButton } from "./remove-member-button";
+import { GroupClassSessionPlanPanel } from "../../session-plans/group-class-session-plan-panel";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -18,6 +19,7 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
       room: true,
       subject: true,
       members: { where: { leftAt: null }, include: { student: true }, orderBy: { joinedAt: "asc" } },
+      sessionPlans: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!groupClass) notFound();
@@ -26,6 +28,11 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
   const availableStudents = await prisma.student.findMany({
     where: { teacherId: session!.user.id, id: { notIn: memberStudentIds } },
     orderBy: { name: "asc" },
+  });
+
+  const sessionPlanTemplates = await prisma.sessionPlanTemplate.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { title: "asc" },
   });
 
   return (
@@ -83,6 +90,25 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
           </div>
         )}
         <AddMemberForm groupClassId={groupClass.id} students={availableStudents} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Session plan</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          What&apos;s happening in this week&apos;s session. Publish it to show on this
+          location&apos;s Now/Next display screen.
+        </p>
+        <GroupClassSessionPlanPanel
+          groupClassId={groupClass.id}
+          plans={groupClass.sessionPlans.map((p) => ({
+            id: p.id,
+            title: p.title,
+            content: p.content,
+            publishedAt: p.publishedAt?.toISOString() ?? null,
+            createdAt: p.createdAt.toISOString(),
+          }))}
+          templates={sessionPlanTemplates}
+        />
       </section>
     </div>
   );

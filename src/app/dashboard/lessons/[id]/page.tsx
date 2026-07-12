@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { LessonNoteForm } from "./lesson-note-form";
 import { AttendanceButtons } from "./attendance-buttons";
 import { AddOnBookings } from "./addon-bookings";
+import { LessonSessionPlanPanel } from "../../session-plans/lesson-session-plan-panel";
 
 export default async function LessonDetailPage({
   params,
@@ -18,6 +19,7 @@ export default async function LessonDetailPage({
     include: {
       student: true,
       note: true,
+      sessionPlan: true,
       addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
     },
   });
@@ -27,6 +29,11 @@ export default async function LessonDetailPage({
   const addOns = await prisma.addOn.findMany({
     where: { teacherId: session!.user.id, archivedAt: null },
     orderBy: { name: "asc" },
+  });
+
+  const sessionPlanTemplates = await prisma.sessionPlanTemplate.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { title: "asc" },
   });
 
   return (
@@ -77,6 +84,28 @@ export default async function LessonDetailPage({
           Visible to the guardian, and to the student too if they have independent access.
         </p>
         <LessonNoteForm lessonId={lesson.id} initialContent={lesson.note?.content ?? ""} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Session plan</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          What&apos;s happening in this lesson — distinct from the private note above. Publish it to
+          show on this location&apos;s Now/Next display screen.
+        </p>
+        <LessonSessionPlanPanel
+          lessonId={lesson.id}
+          plan={
+            lesson.sessionPlan
+              ? {
+                  id: lesson.sessionPlan.id,
+                  title: lesson.sessionPlan.title,
+                  content: lesson.sessionPlan.content,
+                  publishedAt: lesson.sessionPlan.publishedAt?.toISOString() ?? null,
+                }
+              : null
+          }
+          templates={sessionPlanTemplates}
+        />
       </section>
     </div>
   );

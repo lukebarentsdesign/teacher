@@ -7,6 +7,7 @@ import { NewLinkForm } from "./new-link-form";
 import { NewRoomForm } from "./new-room-form";
 import { NewGroupClassForm } from "./new-group-class-form";
 import { VenueFeeArrangements } from "./venue-fee-arrangements";
+import { DisplayLink } from "./display-link";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -92,6 +93,15 @@ export default async function LocationDetailPage({
           Edit
         </Link>
       </div>
+
+      <section>
+        <h2 className="mb-2 text-lg font-medium text-neutral-900">Now/Next display</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          A public, no-login screen for a venue TV/tablet showing today&apos;s current and next
+          session plans here. Only published session plans appear on it.
+        </p>
+        <DisplayLink locationId={location.id} initialToken={location.displayToken} />
+      </section>
 
       {location.accessNotes && (
         <section className="rounded-xl bg-amber-50 p-4">

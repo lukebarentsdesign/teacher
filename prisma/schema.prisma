@@ -219,6 +219,7 @@ model Teacher {
   lessonTypes             LessonType[]
   termCalendars           TermCalendar[]
   curriculumTemplates     CurriculumTemplate[]
+  sessionPlanTemplates    SessionPlanTemplate[]
 }
 
 model TeachingLocation {
@@ -250,6 +251,11 @@ model TeachingLocation {
   /// visible to the teacher (and any other teacher assigned to this location) but never exposed
   /// to parents/students in any UI.
   accessNotes String?
+
+  /// Unguessable token for the public, no-login "Now/Next" session-plan display view (a venue TV
+  /// or tablet) — generated on demand, not present by default. Unlike accessNotes this IS meant
+  /// to be shown publicly (it's the room's own agenda), just not tied to any parent/student login.
+  displayToken String? @unique
 
   teacherLinks   TeacherLocationLink[]
   rooms          Room[]
@@ -767,6 +773,7 @@ model Lesson {
   resources          Resource[]
   makeUpLessonAsOriginal MakeUpLesson? @relation("OriginalLesson")
   makeUpLessonAsMakeUp   MakeUpLesson? @relation("MakeUpLessonSlot")
+  sessionPlan        SessionPlan?
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])
@@ -837,6 +844,10 @@ model GroupClass {
   members       GroupClassMember[]
   checkIns      CheckIn[]
   addOnBookings AddOnBooking[]
+  /// GroupClass has no dated per-occurrence row (see CheckIn's "attendance-only, no dated
+  /// instance to bill" note elsewhere) — so unlike Lesson's one-to-one SessionPlan, a recurring
+  /// class can accumulate several over time. The most recently created one is treated as "current".
+  sessionPlans  SessionPlan[]
 }
 
 /// Each member keeps their own independent Subscription/Ledger even though they share a timeslot.
@@ -1097,4 +1108,42 @@ model StudentCurriculumSection {
   lessonNotes       LessonNote[]
 
   @@index([studentCurriculumId])
+}
+
+/// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain
+/// title/content pair, copied (not referenced) into a new SessionPlan when applied, same
+/// snapshot-not-live-link principle used throughout this app (Contract, CurriculumTemplate).
+model SessionPlanTemplate {
+  id        String   @id @default(cuid())
+  teacherId String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+/// What's happening in *this specific class* — shared by everyone attending, distinct from
+/// LessonNote (a private per-lesson note). Exactly one of lessonId/groupClassId is set: a Lesson
+/// gets at most one plan (1:1), a GroupClass (which has no dated per-occurrence row — see
+/// GroupClass.sessionPlans) can accumulate several over time, with the latest treated as current.
+/// Only publishedAt-set plans are shown on the public Now/Next display (drafts stay teacher-only).
+model SessionPlan {
+  id           String    @id @default(cuid())
+  lessonId     String?   @unique
+  groupClassId String?
+  title        String
+  content      String
+  createdBy    String // teacherId, informational (no multi-instructor support yet)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lesson     Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  groupClass GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+
+  @@index([groupClassId, createdAt])
 }
