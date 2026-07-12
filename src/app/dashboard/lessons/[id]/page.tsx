@@ -21,6 +21,7 @@ export default async function LessonDetailPage({
       note: true,
       sessionPlan: true,
       addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
+      feedback: { include: { payer: true }, orderBy: { submittedAt: "desc" } },
     },
   });
 
@@ -109,6 +110,24 @@ export default async function LessonDetailPage({
           templates={sessionPlanTemplates}
         />
       </section>
+
+      {lesson.feedback.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-medium text-neutral-900">Feedback</h2>
+          <div className="space-y-2">
+            {lesson.feedback.map((f) => (
+              <div key={f.id} className="rounded-xl bg-white p-4 shadow-sm">
+                <p className="text-sm font-medium text-neutral-900">
+                  {"★".repeat(f.rating)}
+                  {"☆".repeat(5 - f.rating)}
+                  <span className="ml-2 text-xs font-normal text-neutral-500">{f.payer.name}</span>
+                </p>
+                {f.comments && <p className="mt-1 text-sm text-neutral-700">{f.comments}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

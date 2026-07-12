@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAuthorizedStudentView } from "@/lib/microsite-access";
+import { LessonFeedbackForm } from "../lesson-feedback-form";
 
 export default async function StudentLessonNotesPage({
   params,
@@ -14,7 +15,10 @@ export default async function StudentLessonNotesPage({
   const lessons = await prisma.lesson.findMany({
     where: { studentId, note: { isNot: null } },
     orderBy: { scheduledAt: "desc" },
-    include: { note: true },
+    include: {
+      note: true,
+      feedback: { where: { payerId: context.payerId ?? "__no-payer__" } },
+    },
   });
 
   return (
@@ -32,6 +36,13 @@ export default async function StudentLessonNotesPage({
               <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-800">
                 {lesson.note?.content}
               </p>
+              {context.viewerType === "guardian" && (
+                <LessonFeedbackForm
+                  studentId={studentId}
+                  lessonId={lesson.id}
+                  existing={lesson.feedback[0] ? { rating: lesson.feedback[0].rating, comments: lesson.feedback[0].comments } : null}
+                />
+              )}
             </div>
           ))}
         </div>

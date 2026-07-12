@@ -610,6 +610,7 @@ model Payer {
   studentLinks        StudentPayerLink[]
   subscriptions       Subscription[]
   contractAcceptances ContractAcceptance[]
+  lessonFeedback      LessonFeedback[]
 
   @@index([teacherId])
 }
@@ -805,6 +806,7 @@ model Lesson {
   makeUpLessonAsMakeUp   MakeUpLesson? @relation("MakeUpLessonSlot")
   sessionPlan        SessionPlan?
   incidentLogs       IncidentLog[]
+  feedback           LessonFeedback[]
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])
@@ -1246,6 +1248,24 @@ model CancellationPolicy {
   location TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
+}
+
+/// A guardian's rating/comment on a delivered lesson, submitted from the microsite's lesson notes
+/// view (the natural place they're already looking at what happened in a lesson). One per
+/// lesson+payer — a guardian can update their own feedback but not leave duplicates.
+model LessonFeedback {
+  id          String   @id @default(cuid())
+  lessonId    String
+  payerId     String
+  rating      Int
+  comments    String?
+  submittedAt DateTime @default(now())
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  payer  Payer  @relation(fields: [payerId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, payerId])
+  @@index([lessonId])
 }
 
 /// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain

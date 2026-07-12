@@ -68,6 +68,12 @@ export default async function StudentDetailPage({
     select: { id: true, name: true },
   });
 
+  const feedbackAgg = await prisma.lessonFeedback.aggregate({
+    where: { lesson: { studentId: student.id } },
+    _avg: { rating: true },
+    _count: { rating: true },
+  });
+
   return (
     <div className="max-w-2xl space-y-8">
       <div className="flex items-start justify-between">
@@ -75,6 +81,13 @@ export default async function StudentDetailPage({
           <h1 className="text-2xl font-semibold text-neutral-900">{student.name}</h1>
           <p className="mt-1 text-sm text-neutral-500">
             {student.discipline} · {student.source} · {student.location?.name ?? "Home student"}
+            {feedbackAgg._count.rating > 0 && (
+              <>
+                {" · "}
+                {feedbackAgg._avg.rating!.toFixed(1)}★ avg ({feedbackAgg._count.rating} rating
+                {feedbackAgg._count.rating === 1 ? "" : "s"})
+              </>
+            )}
           </p>
         </div>
         <Link

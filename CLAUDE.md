@@ -232,6 +232,13 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **`FULL_CHARGE`/`PARTIAL_CHARGE` post a new `LATE_CANCELLATION_CHARGE` ledger reason** (`postLateCancellationCharge` in `src/lib/ledger.ts`), added to `CASH_BALANCE_REASONS` since — unlike `MAKE_UP_CREDIT_ISSUED` — it's a real charge, not a banked lesson. `FORFEIT` posts nothing at all (the student simply loses the slot); `CREDIT` is the original `postMakeUpCreditIssued` + `MakeUpLesson` row, unchanged.
 - **The "already marked" double-submit guard now also checks `Lesson.noShowConfirmed`**, not only a tagged ledger entry — `FORFEIT` posts no ledger row at all, so the pre-existing ledger-tag-only guard would have let a second submission through for that one outcome.
 
+## Lesson Feedback (roadmap v2 Part 6f)
+
+- **Guardian-only, not student-viewer** — `LessonFeedback.payerId` needs a real `Payer` row to attribute to, and a 16+ student's independent microsite login has no `Payer` record of its own (see the `isAtLeast16`/`isAtLeast18` distinction in Conventions above). `StudentViewContext` (`src/lib/microsite-access.ts`) gained a `payerId: string | null` field (set only for `viewerType: "guardian"`) specifically so the feedback form/query knows this; the notes page only renders the form when `viewerType === "guardian"`.
+- **Submitted from the existing lesson-notes microsite page** ([src/app/parent/students/[studentId]/notes/page.tsx](src/app/parent/students/[studentId]/notes/page.tsx)), not a new route — a guardian is already looking at what happened in a specific lesson there, so that's the natural place to rate it, and it avoids building a second per-lesson browsing view.
+- **Upsert on the `(lessonId, payerId)` unique constraint** (`submitLessonFeedbackAction` in `src/app/parent/students/[studentId]/actions.ts`) — re-submitting updates the guardian's own existing feedback rather than erroring or duplicating; the form pre-fills from any existing row so it visibly reads as "Update" not "Submit" on a second visit.
+- **Teacher side is two views, not one**: per-lesson feedback (stars + comment + which payer) on the Lesson detail page, and a lightweight average-rating/count aggregate (`prisma.lessonFeedback.aggregate`) shown inline in the Student detail header — no separate feedback dashboard/report page was built, since both existing pages were the natural place to surface this without adding new navigation.
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH

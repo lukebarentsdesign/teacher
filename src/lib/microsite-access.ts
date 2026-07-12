@@ -6,6 +6,8 @@ export type StudentViewContext = {
   viewerType: "guardian" | "student";
   /** Guardian visibility is always full; a student viewer depends on Student.shareBalanceWithStudent. */
   canSeeLedger: boolean;
+  /** Set only for a guardian viewer — LessonFeedback.payerId needs this; a student viewer has no Payer row. */
+  payerId: string | null;
 };
 
 /**
@@ -22,7 +24,7 @@ export async function getAuthorizedStudentView(studentId: string): Promise<Stude
 
   if (session.type === "student") {
     if (session.studentId !== studentId) return null;
-    return { studentId, viewerType: "student", canSeeLedger: student.shareBalanceWithStudent };
+    return { studentId, viewerType: "student", canSeeLedger: student.shareBalanceWithStudent, payerId: null };
   }
 
   const link = await prisma.studentPayerLink.findFirst({
@@ -30,5 +32,5 @@ export async function getAuthorizedStudentView(studentId: string): Promise<Stude
   });
   if (!link) return null;
 
-  return { studentId, viewerType: "guardian", canSeeLedger: true };
+  return { studentId, viewerType: "guardian", canSeeLedger: true, payerId: session.payerId };
 }
