@@ -179,6 +179,7 @@ enum LocationType {
   STUDENT_HOME
   TEACHER_BASE
   HIRED_VENUE
+  ONLINE
   OTHER
 }
 
@@ -795,6 +796,11 @@ model Lesson {
   /// alongside it and the "Review term absences" screen.
   noShowReason    String?
   noShowConfirmed Boolean @default(false)
+
+  /// Teacher-supplied meeting link (Zoom/Meet/Teams/etc.) used when the parent TeachingLocation's
+  /// locationType is ONLINE — MVP deliberately skips API-based meeting creation (no OAuth/API
+  /// setup overhead until there's real usage to justify it), see CLAUDE.md "Online Lessons" notes.
+  meetingUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

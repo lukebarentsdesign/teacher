@@ -61,6 +61,7 @@ export function EditLocationForm({
           <option value="STUDENT_HOME">Student&apos;s home</option>
           <option value="TEACHER_BASE">My own base</option>
           <option value="HIRED_VENUE">Hired venue</option>
+          <option value="ONLINE">Online</option>
           <option value="OTHER">Other</option>
         </select>
       </div>

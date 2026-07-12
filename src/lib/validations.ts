@@ -16,7 +16,7 @@ export const teachingLocationSchema = z.object({
   primaryColor: hexColorSchema,
   secondaryColor: hexColorSchema,
   locationType: z
-    .enum(["SCHOOL", "STUDENT_HOME", "TEACHER_BASE", "HIRED_VENUE", "OTHER"])
+    .enum(["SCHOOL", "STUDENT_HOME", "TEACHER_BASE", "HIRED_VENUE", "ONLINE", "OTHER"])
     .default("SCHOOL"),
   accessNotes: z.string().optional(),
   termCalendarId: z.string().optional(),

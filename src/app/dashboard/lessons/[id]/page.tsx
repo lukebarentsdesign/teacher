@@ -5,6 +5,7 @@ import { LessonNoteForm } from "./lesson-note-form";
 import { AttendanceButtons } from "./attendance-buttons";
 import { AddOnBookings } from "./addon-bookings";
 import { LessonSessionPlanPanel } from "../../session-plans/lesson-session-plan-panel";
+import { MeetingUrlForm } from "./meeting-url-form";
 
 export default async function LessonDetailPage({
   params,
@@ -20,6 +21,7 @@ export default async function LessonDetailPage({
       student: true,
       note: true,
       sessionPlan: true,
+      location: true,
       addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
       feedback: { include: { payer: true }, orderBy: { submittedAt: "desc" } },
     },
@@ -47,6 +49,19 @@ export default async function LessonDetailPage({
           {lesson.status}
         </p>
       </div>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Meeting link</h2>
+        {lesson.location.locationType === "ONLINE" && (
+          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Online lesson with an under-18 student: enable your video platform&apos;s own waiting
+            room and &quot;host must be present&quot; setting, and consider recording to your own
+            storage with a sensible retention period. This is guidance only — Learnio doesn&apos;t
+            control or enforce it (MVP uses your own meeting link, not a platform-created one).
+          </p>
+        )}
+        <MeetingUrlForm lessonId={lesson.id} initialUrl={lesson.meetingUrl ?? ""} />
+      </section>
 
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Attendance</h2>

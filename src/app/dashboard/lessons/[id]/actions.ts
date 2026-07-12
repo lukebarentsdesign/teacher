@@ -19,6 +19,28 @@ const noteSchema = z.object({
   content: z.string().trim().min(1, "Note can't be empty"),
 });
 
+export async function saveMeetingUrlAction(
+  lessonId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, teacherId: session.user.id } });
+  if (!lesson) return "Lesson not found";
+
+  const raw = (formData.get("meetingUrl") as string)?.trim();
+  if (raw) {
+    const parsed = z.string().url("Enter a valid URL").safeParse(raw);
+    if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid URL";
+  }
+
+  await prisma.lesson.update({ where: { id: lessonId }, data: { meetingUrl: raw || null } });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
 export async function saveLessonNoteAction(
   _prevState: string | undefined,
   formData: FormData
