@@ -9,6 +9,7 @@ import {
   BookOpen,
   CalendarX,
   CalendarOff,
+  ScanLine,
   Package,
   Wrench,
   Banknote,
@@ -43,6 +44,7 @@ const SETUP_LINKS: NavLink[] = [
 const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Calendar", icon: CalendarDays },
   { href: "/dashboard/today", label: "Today", icon: Wifi },
+  { href: "/dashboard/checkin", label: "Check in", icon: ScanLine },
   { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
   { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
   { href: "/dashboard/absences", label: "Absences", icon: CalendarX },

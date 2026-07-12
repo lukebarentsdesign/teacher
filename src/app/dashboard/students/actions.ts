@@ -109,3 +109,24 @@ export async function createStudentWithRelationshipsAction(payload: unknown): Pr
   revalidatePath("/dashboard/students");
   return { studentId: newStudentId };
 }
+
+/** Sets the student's IG Card wallet-pass identifier, used only for CheckIn scan lookups. */
+export async function updateIgCardIdAction(
+  studentId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const igCardId = (formData.get("igCardId") as string)?.trim() || null;
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, teacherId: session.user.id },
+  });
+  if (!student) return "Student not found";
+
+  await prisma.student.update({ where: { id: studentId }, data: { igCardId } });
+  revalidatePath(`/dashboard/students/${studentId}`);
+}

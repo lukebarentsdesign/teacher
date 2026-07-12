@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { LinkPayerForm } from "./link-payer-form";
 import { NewSubscriptionForm } from "./new-subscription-form";
 import { AccessSettings } from "./access-settings";
+import { IgCardSettings } from "./ig-card-settings";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
 
@@ -171,6 +172,11 @@ export default async function StudentDetailPage({
           </div>
         )}
         <NewAssessmentForm studentId={student.id} rooms={assessmentRooms} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Check-in</h2>
+        <IgCardSettings studentId={student.id} igCardId={student.igCardId} />
       </section>
 
       <section>
