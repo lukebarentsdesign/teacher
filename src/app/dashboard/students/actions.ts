@@ -130,3 +130,38 @@ export async function updateIgCardIdAction(
   await prisma.student.update({ where: { id: studentId }, data: { igCardId } });
   revalidatePath(`/dashboard/students/${studentId}`);
 }
+
+/**
+ * Replaces the student's full subject tag set with the checked ones from the form — a student can
+ * be taught more than one subject (e.g. Piano + Music Theory), additive to (not a replacement for)
+ * the original free-text `discipline` field. `set` on an implicit m2m overwrites the relation in
+ * one call, so unchecking a box removes it without a separate disconnect step.
+ */
+export async function updateStudentSubjectsAction(
+  studentId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, teacherId: session.user.id },
+  });
+  if (!student) return "Student not found";
+
+  const subjectIds = formData.getAll("subjectIds") as string[];
+  const ownSubjects = await prisma.subject.findMany({
+    where: { teacherId: session.user.id, id: { in: subjectIds } },
+    select: { id: true },
+  });
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { subjects: { set: ownSubjects.map((s) => ({ id: s.id })) } },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath("/dashboard/students");
+}

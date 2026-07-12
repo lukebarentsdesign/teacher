@@ -174,6 +174,7 @@ model Teacher {
   expenses              Expense[]
   privateTuitionRequests PrivateTuitionRequest[]
   addOns                 AddOn[]
+  subjects                Subject[]
 }
 
 model School {
@@ -308,7 +309,28 @@ model Student {
   assignments       Assignment[]
   privateTuitionRequests PrivateTuitionRequest[]
   makeUpLessons     MakeUpLesson[]
+  /// Zero-or-more subjects this student is taught, drawn from the teacher's own Subject list —
+  /// additive to (not a replacement for) the free-text `discipline` field above, which stays as
+  /// the original single-value description shown throughout the app. Lets a student span more
+  /// than one subject (e.g. Piano + Music Theory) and be grouped/filtered by any of them.
+  subjects          Subject[]
 
+  @@index([teacherId])
+}
+
+/// A subject/discipline the teacher offers (e.g. Flute, Sax, Piano, or Yoga, Gymnastics),
+/// teacher-defined so it matches whatever they actually teach. Used to tag Students (many-to-many)
+/// so the teacher can group students — and, by extension, the lessons they need — by subject.
+model Subject {
+  id        String   @id @default(cuid())
+  teacherId String
+  name      String
+  createdAt DateTime @default(now())
+
+  teacher  Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  students Student[]
+
+  @@unique([teacherId, name])
   @@index([teacherId])
 }
 

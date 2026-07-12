@@ -132,6 +132,13 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **Only attachable from the Lesson detail page, not GroupClass**, even though the schema supports both (`AddOnBooking.groupClassId`). `GroupClass` has no dedicated detail page — it's managed inline on the School detail page — so wiring booking UI there would mean building a whole new route for a spec feature ("visibility: PUBLIC | PRIVATE") that has no consumer yet anyway. Revisit if/when GroupClass gets its own detail page.
 - **`visibility` (PUBLIC/PRIVATE) is stored but not yet read anywhere** — no microsite surface shows Add-ons to guardians yet, so it's currently inert metadata for a future microsite view, not a working access control.
 
+## Subject Decisions (beyond the original v1 spec)
+
+- **`Subject` is new, teacher-defined, many-to-many with `Student`** ([prisma/migrations/20260712045620_add_subjects](prisma/migrations/20260712045620_add_subjects)) — a teacher builds their own list (Flute, Sax, Piano / Yoga, Gymnastics) under [src/app/dashboard/subjects/](src/app/dashboard/subjects/), then tags each student with as many as apply from the student detail page's "Subjects taught" section.
+- **Additive to `Student.discipline`, not a replacement.** The original free-text `discipline` field is single-valued and used throughout the app (student wizard validation, `Today`/microsite display, private-tuition-request payload, GroupClass's own separate free-text `discipline`) — replacing it would have meant touching every one of those call sites for a feature that only asked for multi-subject tagging. `Subject` is a second, optional, multi-valued layer on top.
+- **Grouping lives on the Students list** ([src/app/dashboard/students/page.tsx](src/app/dashboard/students/page.tsx)): default view groups all students by subject (a student with 2+ subjects appears in every group they belong to; untagged students get their own group), or a subject chip filters to just that one. This is where "group students — and by extension the lessons they need — by subject" is surfaced; there's no separate lesson-grouping view, since a lesson's subject is really its student's subject.
+- **Not wired into GroupClass.** `GroupClass.discipline` stays its own free-text field — no attempt to unify it with `Subject`, since GroupClass has no detail page to add a picker to (same reasoning as Add-on above).
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH

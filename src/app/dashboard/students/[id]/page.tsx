@@ -6,6 +6,7 @@ import { LinkPayerForm } from "./link-payer-form";
 import { NewSubscriptionForm } from "./new-subscription-form";
 import { AccessSettings } from "./access-settings";
 import { IgCardSettings } from "./ig-card-settings";
+import { SubjectsSettings } from "./subjects-settings";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
 
@@ -24,12 +25,17 @@ export default async function StudentDetailPage({
       payerLinks: { include: { payer: true }, orderBy: { isPrimary: "desc" } },
       subscriptions: { include: { payer: true }, orderBy: { startDate: "desc" } },
       assessments: { orderBy: { date: "desc" } },
+      subjects: true,
     },
   });
 
   if (!student) notFound();
 
   const allPayers = await prisma.payer.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { name: "asc" },
+  });
+  const allSubjects = await prisma.subject.findMany({
     where: { teacherId: session!.user.id },
     orderBy: { name: "asc" },
   });
@@ -51,6 +57,18 @@ export default async function StudentDetailPage({
         <p className="mt-1 text-sm text-neutral-500">
           {student.discipline} · {student.source} · {student.school?.name ?? "Home student"}
         </p>
+        {student.subjects.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {student.subjects.map((subject) => (
+              <span
+                key={subject.id}
+                className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700"
+              >
+                {subject.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {pendingPrivateTuitionRequest && (
@@ -172,6 +190,19 @@ export default async function StudentDetailPage({
           </div>
         )}
         <NewAssessmentForm studentId={student.id} rooms={assessmentRooms} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Subjects taught</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          Tag every subject this student is taught — a student can span more than one. Use these
+          tags to group or filter students (and the lessons they need) on the Students list.
+        </p>
+        <SubjectsSettings
+          studentId={student.id}
+          allSubjects={allSubjects}
+          selectedIds={student.subjects.map((s) => s.id)}
+        />
       </section>
 
       <section>
