@@ -346,6 +346,7 @@ model Teacher {
   courseItems             CourseItem[]
   mileageLogs             MileageLog[]
   timetableWaitlist       TimetableWaitlist[]
+  locationTravelTimes     LocationTravelTime[]
 }
 
 model TeachingLocation {
@@ -402,6 +403,8 @@ model TeachingLocation {
   mileageLogsFrom MileageLog[] @relation("MileageFrom")
   mileageLogsTo   MileageLog[] @relation("MileageTo")
   timetableWaitlist TimetableWaitlist[]
+  travelTimesFrom LocationTravelTime[] @relation("TravelFrom")
+  travelTimesTo   LocationTravelTime[] @relation("TravelTo")
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -887,6 +890,27 @@ model TimetableWaitlist {
   location   TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@index([teacherId, status])
+}
+
+/// Manually entered, directional, one estimate per ordered pair — same "no geocoding/distance-
+/// matrix API in this app" honesty as MileageLog. Feeds the day-feasibility check in
+/// src/lib/route-check.ts, which flags a scheduled gap shorter than this estimate rather than
+/// computing travel time itself. A missing entry for a given pair simply isn't checked (not
+/// flagged as either fine or a problem) — the checker can only judge what's been entered.
+model LocationTravelTime {
+  id             String   @id @default(cuid())
+  teacherId      String
+  fromLocationId String
+  toLocationId   String
+  minutes        Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  teacher      Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  fromLocation TeachingLocation @relation("TravelFrom", fields: [fromLocationId], references: [id], onDelete: Cascade)
+  toLocation   TeachingLocation @relation("TravelTo", fields: [toLocationId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, fromLocationId, toLocationId])
 }
 
 /// One evolving document per teacher (not per subscription) — a teacher's standard terms apply

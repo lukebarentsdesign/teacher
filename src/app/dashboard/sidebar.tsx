@@ -43,6 +43,8 @@ import {
   Receipt,
   ListPlus,
   Handshake,
+  Route,
+  Signpost,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -77,6 +79,7 @@ const SETUP_LINKS: NavLink[] = [
 const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Calendar", icon: CalendarDays },
   { href: "/dashboard/today", label: "Today", icon: Wifi },
+  { href: "/dashboard/route-check", label: "Route check", icon: Route },
   { href: "/dashboard/checkin", label: "Check in", icon: ScanLine },
   { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
   { href: "/dashboard/timetable/bulk", label: "Bulk timetable", icon: CalendarClock },
@@ -90,6 +93,7 @@ const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard/payments", label: "Get paid", icon: Banknote },
   { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
   { href: "/dashboard/mileage", label: "Mileage", icon: Car },
+  { href: "/dashboard/travel-times", label: "Travel times", icon: Signpost },
   { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
   { href: "/dashboard/resources", label: "Resources", icon: FolderOpen },
   { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },

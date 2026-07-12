@@ -300,6 +300,12 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **`Student.referredBy` is deliberately free text, not FK'd to `Payer`** — the actual referrer is very often not a billing party on the student at all (a friend's parent, a school office worker), so forcing it into the app's structured `Payer`/`StudentPayerLink` relationships would be wrong more often than right. The "top referrers" view (`/dashboard/referrals`) groups on the literal string, so consistent spelling matters — no normalization/autocomplete was built.
 - **Termly progress summary is generated text, not a stored document** — `/dashboard/students/[id]/progress-summary` pulls `StudentCurriculumSection` completions, `Assessment`s, and `LessonNote`s already in the date range and formats them fresh on every page load; nothing is persisted as a "summary" entity. "Send to guardian(s)" (`sendProgressSummaryAction`) reuses the existing `sendEmailAsTeacher` Gmail infra, best-effort per recipient, same pattern as the `Unavailability` workflow's guardian notifications.
 
+## Multi-Location Route Feasibility (roadmap v2 Part 9d)
+
+- **`LocationTravelTime` is manually entered, directional, no distance-matrix API** — same "no live API exists" honesty as `MileageLog`/`TermCalendar`. A missing entry for a location pair simply isn't checked by the route checker (not flagged as fine, not flagged as a problem) — the tool can only judge what's been told to it.
+- **Distinct from the existing scheduling-conflict detection** — `splitConflicts` in `src/lib/timetable.ts` catches double-booking overlaps; `checkDayFeasibility` (`src/lib/route-check.ts`, pure, unit-tested) catches the opposite problem: two non-overlapping bookings scheduled too close together given known travel time between their locations. Both are real, different failure modes worth checking independently.
+- **`checkDayFeasibility` takes a lookup function, not a resolved map, as its second argument** — keeps the pure function decoupled from how the caller sources travel times (a `Map` built from `LocationTravelTime` rows in the real page, a plain object literal in tests) while still being trivially unit-testable.
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH
