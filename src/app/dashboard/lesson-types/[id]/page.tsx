@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { LocationPricing } from "./location-pricing";
 
 export default async function LessonTypeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,6 +19,27 @@ export default async function LessonTypeDetailPage({ params }: { params: Promise
     include: { location: true },
     orderBy: { name: "asc" },
   });
+
+  const [pricing, links] = await Promise.all([
+    prisma.lessonTypeLocationPricing.findMany({
+      where: { lessonTypeId: lessonType.id },
+      include: { location: true },
+      orderBy: { location: { name: "asc" } },
+    }),
+    prisma.teacherLocationLink.findMany({
+      where: { teacherId: session!.user.id },
+      include: { location: true },
+    }),
+  ]);
+  // Candidates to price against: the LessonType's own scoped locations if it has any, otherwise
+  // every location the teacher is linked to (since it's offered everywhere).
+  const allTeacherLocations = Array.from(
+    new Map(links.map((l) => [l.location.id, { id: l.location.id, name: l.location.name }])).values()
+  );
+  const candidateLocations =
+    lessonType.locations.length > 0
+      ? lessonType.locations.map((l) => ({ id: l.id, name: l.name }))
+      : allTeacherLocations;
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -53,6 +75,21 @@ export default async function LessonTypeDetailPage({ params }: { params: Promise
             ))}
           </ul>
         )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Pricing by location</h2>
+        <LocationPricing
+          lessonTypeId={lessonType.id}
+          defaultFee={lessonType.defaultFee.toString()}
+          candidateLocations={candidateLocations}
+          pricing={pricing.map((p) => ({
+            id: p.id,
+            locationId: p.locationId,
+            locationName: p.location.name,
+            fee: p.fee.toString(),
+          }))}
+        />
       </section>
 
       <section>

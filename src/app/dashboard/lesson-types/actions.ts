@@ -68,6 +68,65 @@ export async function toggleLessonTypeActiveAction(lessonTypeId: string, active:
   revalidatePath("/dashboard/lesson-types");
 }
 
+const locationPricingSchema = z.object({
+  lessonTypeId: z.string().min(1),
+  locationId: z.string().min(1),
+  fee: z.coerce.number().positive("Fee must be greater than 0"),
+});
+
+/** Sets (or overwrites) this LessonType's fee at one specific location — e.g. the same "Flute —
+ * Beginner" costs £30 at a music college and £20 taught from home. The teacher sets this directly,
+ * already factoring in their own venue cost; nothing derives it automatically from
+ * VenueFeeArrangement. */
+export async function setLessonTypeLocationPricingAction(
+  lessonTypeId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const lessonType = await prisma.lessonType.findFirst({
+    where: { id: lessonTypeId, teacherId: session.user.id },
+    include: { locations: true },
+  });
+  if (!lessonType) return "Lesson type not found";
+
+  const locationId = formData.get("locationId") as string;
+  if (!lessonType.locations.some((l) => l.id === locationId)) {
+    // Also allow when the LessonType is offered everywhere (empty locations set).
+    if (lessonType.locations.length > 0) return "Not offered at that location.";
+  }
+
+  const parsed = locationPricingSchema.safeParse({
+    lessonTypeId,
+    locationId,
+    fee: formData.get("fee"),
+  });
+  if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
+
+  await prisma.lessonTypeLocationPricing.upsert({
+    where: { lessonTypeId_locationId: { lessonTypeId, locationId: parsed.data.locationId } },
+    update: { fee: parsed.data.fee },
+    create: parsed.data,
+  });
+
+  revalidatePath(`/dashboard/lesson-types/${lessonTypeId}`);
+}
+
+export async function removeLessonTypeLocationPricingAction(pricingId: string, lessonTypeId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const pricing = await prisma.lessonTypeLocationPricing.findFirst({
+    where: { id: pricingId, lessonType: { teacherId: session.user.id } },
+  });
+  if (!pricing) return;
+
+  await prisma.lessonTypeLocationPricing.delete({ where: { id: pricingId } });
+  revalidatePath(`/dashboard/lesson-types/${lessonTypeId}`);
+}
+
 export async function updateLessonTypeAction(
   lessonTypeId: string,
   _prevState: string | undefined,

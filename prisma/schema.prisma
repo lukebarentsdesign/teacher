@@ -78,6 +78,21 @@ enum LedgerReason {
   MANUAL_CORRECTION
   MAKE_UP_CREDIT_ISSUED
   MAKE_UP_CREDIT_REDEEMED
+  VENUE_FEE_ITEMISED
+}
+
+enum VenueFeeType {
+  FLAT_PER_SESSION
+  PERCENT_OF_LESSON_FEE
+  PERIOD_RENTAL
+}
+
+/// ABSORBED_INTO_FEE (default): the venue cost is the teacher's own overhead, priced into
+/// LessonType/LessonTypeLocationPricing directly, never itemised to the parent. ITEMISED_TO_PAYER:
+/// the rare opt-in where the teacher wants it broken out as its own ledger line.
+enum VenueFeeBillingMode {
+  ABSORBED_INTO_FEE
+  ITEMISED_TO_PAYER
 }
 
 enum LedgerOperation {
@@ -224,6 +239,8 @@ model TeachingLocation {
   /// Which LessonTypes are offered here — see LessonType.locations for the "scoped to specific
   /// venues" semantics (empty on the LessonType side = offered everywhere, not "offered nowhere").
   lessonTypes    LessonType[]
+  venueFeeArrangements VenueFeeArrangement[]
+  lessonTypePricing    LessonTypeLocationPricing[]
 }
 
 /// A teacher-defined "menu" of what they teach (e.g. "Flute — Beginner", "Flute — Grade 3+") —
@@ -246,9 +263,46 @@ model LessonType {
   /// this as a filter when non-empty; see how onboarding/the self-serve link use it.
   locations TeachingLocation[]
   requestedByStudents Student[]
+  locationPricing LessonTypeLocationPricing[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
+}
+
+/// A cost the teacher pays to use a venue (hall hire, gym rental, etc.) — purely a record against
+/// the teacher, feeding income forecasting. Has NO automatic effect on what's billed to the
+/// parent unless billingMode is explicitly set to ITEMISED_TO_PAYER (rare — see that enum's doc).
+/// Default expectation is the teacher absorbs this into LessonType/LessonTypeLocationPricing
+/// pricing themselves.
+model VenueFeeArrangement {
+  id          String              @id @default(cuid())
+  locationId  String
+  feeType     VenueFeeType
+  amount      Decimal             @db.Decimal(10, 2)
+  billingMode VenueFeeBillingMode @default(ABSORBED_INTO_FEE)
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  location TeachingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([locationId])
+}
+
+/// Per-location override of LessonType.defaultFee — e.g. Flute taught from a music college costs
+/// £30, the same LessonType taught from home costs £20. The teacher sets these directly, already
+/// factoring in their own venue cost; no split/derivation logic reads VenueFeeArrangement to
+/// compute this automatically.
+model LessonTypeLocationPricing {
+  id           String  @id @default(cuid())
+  lessonTypeId String
+  locationId   String
+  fee          Decimal @db.Decimal(10, 2)
+
+  lessonType LessonType       @relation(fields: [lessonTypeId], references: [id], onDelete: Cascade)
+  location   TeachingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonTypeId, locationId])
 }
 
 /// A Teacher's engagement with one TeachingLocation/Venue: scheduling mode, availability,

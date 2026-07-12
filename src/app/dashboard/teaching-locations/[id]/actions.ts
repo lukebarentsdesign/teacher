@@ -265,3 +265,49 @@ export async function updateGroupClassAction(
   revalidatePath(`/dashboard/teaching-locations/${groupClass.locationId}`);
   redirect(`/dashboard/group-classes/${groupClassId}`);
 }
+
+const venueFeeArrangementSchema = z.object({
+  locationId: z.string().min(1),
+  feeType: z.enum(["FLAT_PER_SESSION", "PERCENT_OF_LESSON_FEE", "PERIOD_RENTAL"]),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  billingMode: z.enum(["ABSORBED_INTO_FEE", "ITEMISED_TO_PAYER"]),
+  notes: z.string().optional(),
+});
+
+export async function createVenueFeeArrangementAction(
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const locationId = formData.get("locationId") as string;
+  if (!(await assertLinkedToSchool(locationId, session.user.id))) return "Teaching location not found";
+
+  const parsed = venueFeeArrangementSchema.safeParse({
+    locationId,
+    feeType: formData.get("feeType"),
+    amount: formData.get("amount"),
+    billingMode: formData.get("billingMode"),
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
+
+  await prisma.venueFeeArrangement.create({ data: parsed.data });
+
+  revalidatePath(`/dashboard/teaching-locations/${locationId}`);
+}
+
+export async function deleteVenueFeeArrangementAction(arrangementId: string, locationId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+  if (!(await assertLinkedToSchool(locationId, session.user.id))) return;
+
+  const arrangement = await prisma.venueFeeArrangement.findFirst({
+    where: { id: arrangementId, locationId },
+  });
+  if (!arrangement) return;
+
+  await prisma.venueFeeArrangement.delete({ where: { id: arrangementId } });
+  revalidatePath(`/dashboard/teaching-locations/${locationId}`);
+}

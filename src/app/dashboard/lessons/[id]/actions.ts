@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { deriveLessonValue, postLessonDelivered, postMakeUpCreditIssued, postMakeUpCreditRedeemed } from "@/lib/ledger";
+import {
+  deriveLessonValue,
+  postLessonDelivered,
+  postMakeUpCreditIssued,
+  postMakeUpCreditRedeemed,
+  postVenueFeeIfItemised,
+} from "@/lib/ledger";
 
 const noteSchema = z.object({
   lessonId: z.string().min(1),
@@ -82,6 +88,7 @@ export async function markPresentAction(
     locationId: lesson.locationId,
   });
   await postLessonDelivered(lesson.subscriptionId, lessonValue, attendanceNoteTag(lessonId));
+  await postVenueFeeIfItemised(lesson.subscriptionId, lesson.locationId, lessonValue, attendanceNoteTag(lessonId));
 
   // If this lesson is itself a scheduled make-up slot for an earlier no-show, redeem the banked
   // credit and close out that MakeUpLesson — reuses the existing issued/redeemed ledger pair

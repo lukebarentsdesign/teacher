@@ -85,6 +85,39 @@ export async function postLessonDelivered(subscriptionId: string, lessonValue: n
   });
 }
 
+/**
+ * The rare opt-in from spec Part 4.4: a venue cost itemised as its own ledger line, distinct from
+ * the lesson fee, instead of being absorbed into LessonType/LessonTypeLocationPricing pricing (the
+ * default). Only fires for FLAT_PER_SESSION/PERCENT_OF_LESSON_FEE arrangements set to
+ * ITEMISED_TO_PAYER — PERIOD_RENTAL (e.g. termly hall hire) isn't a per-lesson cost, so it's
+ * excluded here; there's no per-lesson event to hang it on. No-op (returns null) if no such
+ * arrangement exists, so callers can call this unconditionally after every lesson delivery.
+ */
+export async function postVenueFeeIfItemised(
+  subscriptionId: string,
+  locationId: string,
+  lessonValue: number,
+  note?: string
+) {
+  const arrangement = await prisma.venueFeeArrangement.findFirst({
+    where: {
+      locationId,
+      billingMode: "ITEMISED_TO_PAYER",
+      feeType: { in: ["FLAT_PER_SESSION", "PERCENT_OF_LESSON_FEE"] },
+    },
+  });
+  if (!arrangement) return null;
+
+  const amount =
+    arrangement.feeType === "FLAT_PER_SESSION"
+      ? Number(arrangement.amount)
+      : lessonValue * (Number(arrangement.amount) / 100);
+
+  return prisma.ledgerEntry.create({
+    data: { subscriptionId, amount, operation: "DEBIT", reason: "VENUE_FEE_ITEMISED", note },
+  });
+}
+
 async function countHeldLessonsInRange(subscriptionId: string, start: Date, end: Date): Promise<number> {
   return prisma.lesson.count({
     where: { subscriptionId, status: "HELD", scheduledAt: { gte: start, lte: end } },

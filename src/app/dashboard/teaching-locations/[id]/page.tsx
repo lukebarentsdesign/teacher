@@ -6,6 +6,7 @@ import { ageInYears } from "@/lib/age";
 import { NewLinkForm } from "./new-link-form";
 import { NewRoomForm } from "./new-room-form";
 import { NewGroupClassForm } from "./new-group-class-form";
+import { VenueFeeArrangements } from "./venue-fee-arrangements";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -41,8 +42,18 @@ export default async function LocationDetailPage({
   // Enrolled = Student.locationId matches, regardless of who pays (single source of truth for
   // enrollment; billing relationships live separately on StudentPayerLink).
   const enrolledStudents = await prisma.student.findMany({
-    where: { locationId: id, teacherId: session?.user?.id },
+    where: { locationId: id, teacherId: session?.user?.id, status: "ACTIVE" },
     include: { payerLinks: { include: { payer: true } } },
+    orderBy: { name: "asc" },
+  });
+
+  const venueFeeArrangements = await prisma.venueFeeArrangement.findMany({
+    where: { locationId: id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const offeredLessonTypes = await prisma.lessonType.findMany({
+    where: { teacherId: session?.user?.id, locations: { some: { id } } },
     orderBy: { name: "asc" },
   });
 
@@ -175,6 +186,37 @@ export default async function LocationDetailPage({
           </div>
         )}
         <NewGroupClassForm locationId={location.id} rooms={rooms} subjects={subjects} />
+      </section>
+
+      {offeredLessonTypes.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-medium text-neutral-900">Lesson types offered here</h2>
+          <div className="flex flex-wrap gap-2">
+            {offeredLessonTypes.map((lt) => (
+              <Link
+                key={lt.id}
+                href={`/dashboard/lesson-types/${lt.id}`}
+                className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-200"
+              >
+                {lt.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Venue fees</h2>
+        <VenueFeeArrangements
+          locationId={location.id}
+          arrangements={venueFeeArrangements.map((a) => ({
+            id: a.id,
+            feeType: a.feeType,
+            amount: a.amount.toString(),
+            billingMode: a.billingMode,
+            notes: a.notes,
+          }))}
+        />
       </section>
 
       <section id="enrolled" className="scroll-mt-20">

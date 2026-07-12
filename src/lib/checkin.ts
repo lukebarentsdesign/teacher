@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/db";
-import { deriveLessonValue, postLessonDelivered, postMakeUpCreditRedeemed } from "@/lib/ledger";
+import {
+  deriveLessonValue,
+  postLessonDelivered,
+  postMakeUpCreditRedeemed,
+  postVenueFeeIfItemised,
+} from "@/lib/ledger";
 
 /**
  * Card-based sign-in/out (spec section "CheckIn"): a lightweight reuse of the existing IG Card
@@ -115,6 +120,7 @@ export async function signIn(
           locationId: lesson.locationId,
         });
         await postLessonDelivered(lesson.subscriptionId, lessonValue, attendanceNoteTag(lesson.id));
+        await postVenueFeeIfItemised(lesson.subscriptionId, lesson.locationId, lessonValue, attendanceNoteTag(lesson.id));
 
         const asMakeUp = await prisma.makeUpLesson.findUnique({ where: { makeUpLessonId: lesson.id } });
         if (asMakeUp && !asMakeUp.completedAt) {
