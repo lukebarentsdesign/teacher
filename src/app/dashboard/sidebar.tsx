@@ -12,6 +12,7 @@ import {
   ScanLine,
   Tag,
   Music,
+  ListMusic,
   Package,
   Wrench,
   Banknote,
@@ -39,6 +40,7 @@ type NavLink = { href: string; label: string; icon: LucideIcon };
 const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
+  { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },

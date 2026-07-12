@@ -183,6 +183,7 @@ model Teacher {
   privateTuitionRequests PrivateTuitionRequest[]
   addOns                 AddOn[]
   subjects                Subject[]
+  lessonTypes             LessonType[]
 }
 
 model TeachingLocation {
@@ -214,6 +215,33 @@ model TeachingLocation {
   groupClasses   GroupClass[]
   loanableItems  LoanableItem[]
   privateTuitionRequestsAsSource PrivateTuitionRequest[]
+  /// Which LessonTypes are offered here — see LessonType.locations for the "scoped to specific
+  /// venues" semantics (empty on the LessonType side = offered everywhere, not "offered nowhere").
+  lessonTypes    LessonType[]
+}
+
+/// A teacher-defined "menu" of what they teach (e.g. "Flute — Beginner", "Flute — Grade 3+") —
+/// the foundation both onboarding entry points (direct wizard and the self-serve questionnaire)
+/// need something for a student to choose from.
+model LessonType {
+  id                     String   @id @default(cuid())
+  teacherId              String
+  name                   String
+  description            String?
+  defaultDurationMinutes Int
+  defaultFee             Decimal  @db.Decimal(10, 2)
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  /// Optional scoping to specific venues (e.g. group flute only at School A, private flute only
+  /// at home) — an EMPTY set here means "offered everywhere", not "offered nowhere". Only treat
+  /// this as a filter when non-empty; see how onboarding/the self-serve link use it.
+  locations TeachingLocation[]
+
+  @@unique([teacherId, name])
+  @@index([teacherId])
 }
 
 /// A Teacher's engagement with one TeachingLocation/Venue: scheduling mode, availability,
