@@ -41,6 +41,8 @@ import {
   Building,
   Car,
   Receipt,
+  ListPlus,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -59,6 +61,8 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/courses", label: "Courses", icon: PlayCircle },
   { href: "/dashboard/embeds", label: "Onboarding widget", icon: Code2 },
   { href: "/dashboard/students", label: "Students", icon: Users },
+  { href: "/dashboard/waitlist", label: "Waitlist", icon: ListPlus },
+  { href: "/dashboard/referrals", label: "Referrals", icon: Handshake },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
   { href: "/dashboard/gift-cards", label: "Gift cards", icon: Gift },

@@ -90,12 +90,20 @@ export default async function StudentDetailPage({
             )}
           </p>
         </div>
-        <Link
-          href={`/dashboard/students/${student.id}/edit`}
-          className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
-        >
-          Edit
-        </Link>
+        <div className="flex shrink-0 gap-2">
+          <Link
+            href={`/dashboard/students/${student.id}/progress-summary`}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+          >
+            Progress summary
+          </Link>
+          <Link
+            href={`/dashboard/students/${student.id}/edit`}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+          >
+            Edit
+          </Link>
+        </div>
       </div>
       <div>
         {student.subjects.length > 0 && (

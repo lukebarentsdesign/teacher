@@ -294,6 +294,12 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **UK tax year (6 April–5 April) is its own small pure module** (`taxYearRange`/`taxYearForDate` in `src/lib/mileage.ts`), unit-tested separately from the allowance math — reused by both `/dashboard/tax-pack` (the report view) and `GET /api/tax-pack` (the CSV export), so the two never disagree about what "this tax year" means.
 - **Tax pack rolls up data that already exists** (`LedgerEntry` reason `PAYMENT`, `Expense`, `MileageLog`) — a reporting view only, no new income/expense capture beyond the mileage log itself. Net figure is income − expenses − mileage allowance, a simplified self-assessment-adjacent number, not a substitute for an accountant's actual calculation (no VAT, no allowable-expense filtering beyond what's already categorized).
 
+## Growing the Business (roadmap v2 Part 9c)
+
+- **`TimetableWaitlist` is a manual pipeline, not a booking engine** — captures "interested but no space" against an optional `LessonType`/`TeachingLocation` combo, with a status the teacher updates by hand (WAITING/CONTACTED/CONVERTED/CANCELLED). No automatic slot-matching when a space frees up — that's real scheduling-engine work (checking a waitlist entry's constraints against `filterAvailableSlots`) deliberately not attempted here; this pass is the capture/pipeline layer only.
+- **`Student.referredBy` is deliberately free text, not FK'd to `Payer`** — the actual referrer is very often not a billing party on the student at all (a friend's parent, a school office worker), so forcing it into the app's structured `Payer`/`StudentPayerLink` relationships would be wrong more often than right. The "top referrers" view (`/dashboard/referrals`) groups on the literal string, so consistent spelling matters — no normalization/autocomplete was built.
+- **Termly progress summary is generated text, not a stored document** — `/dashboard/students/[id]/progress-summary` pulls `StudentCurriculumSection` completions, `Assessment`s, and `LessonNote`s already in the date range and formats them fresh on every page load; nothing is persisted as a "summary" entity. "Send to guardian(s)" (`sendProgressSummaryAction`) reuses the existing `sendEmailAsTeacher` Gmail infra, best-effort per recipient, same pattern as the `Unavailability` workflow's guardian notifications.
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH

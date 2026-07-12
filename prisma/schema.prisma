@@ -345,6 +345,7 @@ model Teacher {
   courses                 Course[]
   courseItems             CourseItem[]
   mileageLogs             MileageLog[]
+  timetableWaitlist       TimetableWaitlist[]
 }
 
 model TeachingLocation {
@@ -400,6 +401,7 @@ model TeachingLocation {
   embedConfigs   EmbedConfig[]
   mileageLogsFrom MileageLog[] @relation("MileageFrom")
   mileageLogsTo   MileageLog[] @relation("MileageTo")
+  timetableWaitlist TimetableWaitlist[]
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -473,6 +475,7 @@ model LessonType {
   promoCodes PromoCode[]
   embedConfigs EmbedConfig[]
   courseItems CourseItem[]
+  timetableWaitlist TimetableWaitlist[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -590,6 +593,11 @@ model Student {
   source     StudentSource
   locationId String? // null for home students
   igCardId   String? // links to existing IG Card wallet pass, for CheckIn scanning only
+  /// Free text, e.g. a parent's name — low-effort referral tracking (roadmap v2 Part 9c), rolled
+  /// up into a "top referrers" view. Not FK'd to Payer: the referrer is very often not a Payer on
+  /// this student at all (a friend's parent, a school office), so a free-text name is deliberately
+  /// looser than the rest of this app's structured relationships.
+  referredBy String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
@@ -848,6 +856,37 @@ model MileageLog {
   toLocation   TeachingLocation? @relation("MileageTo", fields: [toLocationId], references: [id], onDelete: SetNull)
 
   @@index([teacherId, date])
+}
+
+enum WaitlistStatus {
+  WAITING
+  CONTACTED
+  CONVERTED
+  CANCELLED
+}
+
+/// Captures "interested but no space" against a LessonType (+ optional location), rather than
+/// losing the enquiry entirely when a timetable is full. Manually managed — a teacher adds an
+/// entry when someone asks, updates status as they follow up. No automatic slot-matching; this is
+/// a pipeline list, not a booking engine.
+model TimetableWaitlist {
+  id            String         @id @default(cuid())
+  teacherId     String
+  lessonTypeId  String?
+  locationId    String?
+  contactName   String
+  contactEmail  String?
+  contactPhone  String?
+  notes         String?
+  status        WaitlistStatus @default(WAITING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  teacher    Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonType LessonType?       @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
+  location   TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  @@index([teacherId, status])
 }
 
 /// One evolving document per teacher (not per subscription) — a teacher's standard terms apply

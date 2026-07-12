@@ -118,6 +118,7 @@ const editStudentSchema = z.object({
   discipline: z.string().trim().min(1, "Discipline is required"),
   source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
   locationId: z.string().optional(),
+  referredBy: z.string().trim().optional(),
 });
 
 /** Edits the student's own core fields — separate from payer/subject relationships, which have
@@ -141,6 +142,7 @@ export async function updateStudentAction(
     discipline: formData.get("discipline"),
     source: formData.get("source"),
     locationId: formData.get("locationId") || undefined,
+    referredBy: formData.get("referredBy") || undefined,
   });
 
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
@@ -153,6 +155,7 @@ export async function updateStudentAction(
       discipline: parsed.data.discipline,
       source: parsed.data.source,
       locationId: parsed.data.locationId ?? null,
+      referredBy: parsed.data.referredBy || null,
     },
   });
 

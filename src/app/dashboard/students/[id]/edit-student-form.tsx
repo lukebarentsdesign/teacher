@@ -11,6 +11,7 @@ type Student = {
   discipline: string;
   source: string;
   locationId: string | null;
+  referredBy: string | null;
 };
 
 export function EditStudentForm({ student, locations }: { student: Student; locations: TeachingLocation[] }) {
@@ -93,6 +94,19 @@ export function EditStudentForm({ student, locations }: { student: Student; loca
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label htmlFor="referredBy" className="block text-sm font-medium text-neutral-700">
+          Referred by (optional)
+        </label>
+        <input
+          id="referredBy"
+          name="referredBy"
+          placeholder="e.g. Jo Smith"
+          defaultValue={student.referredBy ?? ""}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

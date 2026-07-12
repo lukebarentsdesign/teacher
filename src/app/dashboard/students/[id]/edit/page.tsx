@@ -35,6 +35,7 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
           discipline: student.discipline,
           source: student.source,
           locationId: student.locationId,
+          referredBy: student.referredBy,
         }}
         locations={locations}
       />
