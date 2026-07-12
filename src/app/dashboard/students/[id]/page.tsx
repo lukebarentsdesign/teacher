@@ -21,7 +21,7 @@ export default async function StudentDetailPage({
   const student = await prisma.student.findFirst({
     where: { id, teacherId: session!.user.id },
     include: {
-      school: true,
+      location: true,
       payerLinks: { include: { payer: true }, orderBy: { isPrimary: "desc" } },
       subscriptions: { include: { payer: true }, orderBy: { startDate: "desc" } },
       assessments: { orderBy: { date: "desc" } },
@@ -42,11 +42,11 @@ export default async function StudentDetailPage({
   const linkedPayerIds = new Set(student.payerLinks.map((link) => link.payerId));
   const unlinkedPayers = allPayers.filter((payer) => !linkedPayerIds.has(payer.id));
 
-  const assessmentRooms = student.schoolId
-    ? await prisma.room.findMany({ where: { schoolId: student.schoolId }, orderBy: { label: "asc" } })
+  const assessmentRooms = student.locationId
+    ? await prisma.room.findMany({ where: { locationId: student.locationId }, orderBy: { label: "asc" } })
     : [];
 
-  const pendingPrivateTuitionRequest = student.schoolId
+  const pendingPrivateTuitionRequest = student.locationId
     ? await prisma.privateTuitionRequest.findFirst({ where: { studentId: student.id, status: "PENDING" } })
     : null;
 
@@ -56,7 +56,7 @@ export default async function StudentDetailPage({
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">{student.name}</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {student.discipline} · {student.source} · {student.school?.name ?? "Home student"}
+            {student.discipline} · {student.source} · {student.location?.name ?? "Home student"}
           </p>
         </div>
         <Link

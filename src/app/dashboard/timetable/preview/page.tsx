@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
@@ -22,23 +23,23 @@ export default async function TimetablePreviewPage({
 
   const [student, link] = await Promise.all([
     prisma.student.findFirst({ where: { id: studentId, teacherId: session.user.id } }),
-    prisma.teacherSchoolLink.findFirst({
+    prisma.teacherLocationLink.findFirst({
       where: { id: linkId, teacherId: session.user.id },
-      include: { school: true },
+      include: { location: true },
     }),
   ]);
 
-  if (!student || !link || !link.school.termStart || !link.school.termEnd) notFound();
+  if (!student || !link || !link.location.termStart || !link.location.termEnd) notFound();
 
   const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session.user.id } });
-  const proposedColor = link.school.primaryColor ?? teacher.personalBrandColor ?? "#171717";
+  const proposedColor = link.location.primaryColor ?? teacher.personalBrandColor ?? "#171717";
 
   const chosenSlots = availabilityArraySchema.parse(JSON.parse(slots));
 
   const result =
     link.schedulingMode === "FIXED"
-      ? await previewFixedTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots[0], roomId)
-      : await previewFluidTimetable(session.user.id, link.school.termStart, link.school.termEnd, chosenSlots, roomId);
+      ? await previewFixedTimetable(session.user.id, link.location.termStart, link.location.termEnd, chosenSlots[0], roomId)
+      : await previewFluidTimetable(session.user.id, link.location.termStart, link.location.termEnd, chosenSlots, roomId);
 
   const pastLessons = await prisma.lesson.findMany({
     where: { studentId: student.id, status: "HELD" },
@@ -83,7 +84,7 @@ export default async function TimetablePreviewPage({
           Timetable preview — {student.name}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
-          {link.school.name} · {link.schedulingMode} · {result.clean.length} lesson
+          {link.location.name} · {link.schedulingMode} · {result.clean.length} lesson
           {result.clean.length === 1 ? "" : "s"} to create
           {result.conflicts.length > 0 && `, ${result.conflicts.length} conflict(s) skipped`}
         </p>
@@ -142,16 +143,16 @@ export default async function TimetablePreviewPage({
         <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
           {activeSubscription.payer.name} hasn&apos;t accepted the current contract yet — lessons
           can&apos;t be booked until they do. Their microsite access code is on the{" "}
-          <a href="/dashboard/payers" className="underline">
+          <Link href="/dashboard/payers" className="underline">
             payers page
-          </a>
+          </Link>
           .
         </div>
       )}
 
       <ConfirmTimetableForm
         studentId={studentId}
-        schoolId={link.schoolId}
+        locationId={link.locationId}
         linkId={linkId}
         slots={slots}
         roomId={roomId}

@@ -112,7 +112,7 @@ export async function signIn(
       if (!alreadyMarked) {
         const lessonValue = await deriveLessonValue(lesson.subscriptionId, {
           durationMins: lesson.durationMins,
-          schoolId: lesson.schoolId,
+          locationId: lesson.locationId,
         });
         await postLessonDelivered(lesson.subscriptionId, lessonValue, attendanceNoteTag(lesson.id));
 

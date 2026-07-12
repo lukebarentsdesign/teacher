@@ -15,11 +15,11 @@ export default async function StudentOverviewPage({
 
   const student = await prisma.student.findUniqueOrThrow({
     where: { id: studentId },
-    include: { school: true, teacher: true },
+    include: { location: true, teacher: true },
   });
 
   const pendingPrivateTuitionRequest =
-    context.viewerType === "guardian" && student.schoolId
+    context.viewerType === "guardian" && student.locationId
       ? await prisma.privateTuitionRequest.findFirst({ where: { studentId, status: "PENDING" } })
       : null;
 
@@ -47,7 +47,7 @@ export default async function StudentOverviewPage({
       <div>
         <h1 className="text-2xl font-semibold text-neutral-900">{student.name}</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          {student.discipline} · {student.school?.name ?? "Home student"}
+          {student.discipline} · {student.location?.name ?? "Home student"}
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export default async function StudentOverviewPage({
         </p>
       )}
 
-      {context.viewerType === "guardian" && student.schoolId && (
+      {context.viewerType === "guardian" && student.locationId && (
         <div className="rounded-xl bg-white p-4 shadow-sm">
           {pendingPrivateTuitionRequest ? (
             <p className="text-sm text-neutral-500">

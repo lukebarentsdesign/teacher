@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { updateSchoolAction } from "../../actions";
 
-type School = {
+type Location = {
   id: string;
   name: string;
   address: string | null;
@@ -13,11 +13,13 @@ type School = {
   logoUrl: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  locationType: string;
+  accessNotes: string | null;
 };
 
-export function EditSchoolForm({ school }: { school: School }) {
+export function EditLocationForm({ location }: { location: Location }) {
   const [error, formAction, pending] = useActionState(
-    updateSchoolAction.bind(null, school.id),
+    updateSchoolAction.bind(null, location.id),
     undefined
   );
 
@@ -31,9 +33,27 @@ export function EditSchoolForm({ school }: { school: School }) {
           id="name"
           name="name"
           required
-          defaultValue={school.name}
+          defaultValue={location.name}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
+      </div>
+
+      <div>
+        <label htmlFor="locationType" className="block text-sm font-medium text-neutral-700">
+          Type
+        </label>
+        <select
+          id="locationType"
+          name="locationType"
+          defaultValue={location.locationType}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        >
+          <option value="SCHOOL">School</option>
+          <option value="STUDENT_HOME">Student&apos;s home</option>
+          <option value="TEACHER_BASE">My own base</option>
+          <option value="HIRED_VENUE">Hired venue</option>
+          <option value="OTHER">Other</option>
+        </select>
       </div>
 
       <div>
@@ -43,7 +63,7 @@ export function EditSchoolForm({ school }: { school: School }) {
         <input
           id="address"
           name="address"
-          defaultValue={school.address ?? ""}
+          defaultValue={location.address ?? ""}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
@@ -55,7 +75,7 @@ export function EditSchoolForm({ school }: { school: School }) {
         <select
           id="invoicingTarget"
           name="invoicingTarget"
-          defaultValue={school.invoicingTarget}
+          defaultValue={location.invoicingTarget}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
           <option value="PARENT">Parent</option>
@@ -72,7 +92,7 @@ export function EditSchoolForm({ school }: { school: School }) {
             id="termStart"
             name="termStart"
             type="date"
-            defaultValue={school.termStart ?? ""}
+            defaultValue={location.termStart ?? ""}
             className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
           />
         </div>
@@ -84,7 +104,7 @@ export function EditSchoolForm({ school }: { school: School }) {
             id="termEnd"
             name="termEnd"
             type="date"
-            defaultValue={school.termEnd ?? ""}
+            defaultValue={location.termEnd ?? ""}
             className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
           />
         </div>
@@ -101,7 +121,7 @@ export function EditSchoolForm({ school }: { school: School }) {
           id="logoUrl"
           name="logoUrl"
           type="url"
-          defaultValue={school.logoUrl ?? ""}
+          defaultValue={location.logoUrl ?? ""}
           placeholder="https://…"
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
@@ -116,7 +136,7 @@ export function EditSchoolForm({ school }: { school: School }) {
             id="primaryColor"
             name="primaryColor"
             type="color"
-            defaultValue={school.primaryColor ?? "#2a78d6"}
+            defaultValue={location.primaryColor ?? "#2a78d6"}
             className="mt-1 h-10 w-16 rounded-lg border border-neutral-300"
           />
         </div>
@@ -128,12 +148,25 @@ export function EditSchoolForm({ school }: { school: School }) {
             id="secondaryColor"
             name="secondaryColor"
             type="color"
-            defaultValue={school.secondaryColor ?? "#2a78d6"}
+            defaultValue={location.secondaryColor ?? "#2a78d6"}
             className="mt-1 h-10 w-16 rounded-lg border border-neutral-300"
           />
         </div>
       </div>
-      <p className="text-xs text-neutral-500">Colors this school&apos;s lessons on your calendar views.</p>
+      <p className="text-xs text-neutral-500">Colors this location&apos;s lessons on your calendar views.</p>
+
+      <div>
+        <label htmlFor="accessNotes" className="block text-sm font-medium text-neutral-700">
+          Access notes (WiFi, door codes, parking — private to you)
+        </label>
+        <textarea
+          id="accessNotes"
+          name="accessNotes"
+          rows={3}
+          defaultValue={location.accessNotes ?? ""}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

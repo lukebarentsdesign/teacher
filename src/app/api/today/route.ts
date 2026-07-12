@@ -9,7 +9,7 @@ export type TodayLesson = {
   status: string;
   studentName: string;
   discipline: string;
-  schoolName: string;
+  locationName: string;
   roomLabel: string | null;
   payers: { name: string; phone: string | null; email: string | null }[];
   lastNote: string | null;
@@ -42,7 +42,7 @@ export async function GET() {
       student: {
         include: { payerLinks: { include: { payer: true } } },
       },
-      school: true,
+      location: true,
       room: true,
       note: true,
     },
@@ -58,7 +58,7 @@ export async function GET() {
       status: lesson.status,
       studentName: lesson.student.name,
       discipline: lesson.student.discipline,
-      schoolName: lesson.school.name,
+      locationName: lesson.location.name,
       roomLabel: lesson.room?.label ?? null,
       payers: lesson.student.payerLinks.map((link) => ({
         name: link.payer.name,

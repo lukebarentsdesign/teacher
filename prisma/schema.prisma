@@ -118,8 +118,16 @@ enum ContactPref {
   EMAIL
 }
 
+enum LocationType {
+  SCHOOL
+  STUDENT_HOME
+  TEACHER_BASE
+  HIRED_VENUE
+  OTHER
+}
+
 // ---------------------------------------------------------------------------
-// Teacher / School / scheduling
+// Teacher / TeachingLocation / scheduling
 // ---------------------------------------------------------------------------
 
 model Teacher {
@@ -140,7 +148,7 @@ model Teacher {
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)
 
-  /// Used for home-sourced students' calendar events, when no School.primaryColor applies.
+  /// Used for home-sourced students' calendar events, when no TeachingLocation.primaryColor applies.
   personalBrandLogoUrl String?
   personalBrandColor   String?
 
@@ -158,7 +166,7 @@ model Teacher {
   gmailRefreshTokenEncrypted String?
   gmailTokenUpdatedAt        DateTime?
 
-  schoolLinks           TeacherSchoolLink[]
+  locationLinks         TeacherLocationLink[]
   unavailability        Unavailability[]
   lessons               Lesson[]
   groupClasses          GroupClass[]
@@ -177,9 +185,10 @@ model Teacher {
   subjects                Subject[]
 }
 
-model School {
+model TeachingLocation {
   id              String          @id @default(cuid())
   name            String
+  locationType    LocationType    @default(SCHOOL)
   address         String?
   invoicingTarget InvoicingTarget
   termStart       DateTime?
@@ -187,12 +196,17 @@ model School {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  /// Optional branding, used to color this school's lessons on the teacher's calendar views.
+  /// Optional branding, used to color this location's lessons on the teacher's calendar views.
   logoUrl       String?
   primaryColor  String?
   secondaryColor String?
 
-  teacherLinks   TeacherSchoolLink[]
+  /// Free-text WiFi codes, door entry codes, parking instructions, reception contact etc. —
+  /// visible to the teacher (and any other teacher assigned to this location) but never exposed
+  /// to parents/students in any UI.
+  accessNotes String?
+
+  teacherLinks   TeacherLocationLink[]
   rooms          Room[]
   students       Student[]
   unavailability Unavailability[]
@@ -202,12 +216,12 @@ model School {
   privateTuitionRequestsAsSource PrivateTuitionRequest[]
 }
 
-/// A Teacher's engagement with one School/Venue: scheduling mode, availability,
+/// A Teacher's engagement with one TeachingLocation/Venue: scheduling mode, availability,
 /// tax handling and protected blocks all vary per link, not globally.
-model TeacherSchoolLink {
+model TeacherLocationLink {
   id             String         @id @default(cuid())
   teacherId      String
-  schoolId       String
+  locationId     String
   schedulingMode SchedulingMode
   taxHandling    TaxHandling
 
@@ -220,10 +234,10 @@ model TeacherSchoolLink {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher  Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location TeachingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
-  @@unique([teacherId, schoolId])
+  @@unique([teacherId, locationId])
 }
 
 /// Teacher-declared unavailability window. On confirmation, affected Lessons/GroupClasses
@@ -231,23 +245,23 @@ model TeacherSchoolLink {
 model Unavailability {
   id            String    @id @default(cuid())
   teacherId     String
-  schoolId      String? // null = spans all schools
+  locationId    String? // null = spans all locations
   startDatetime DateTime
   endDatetime   DateTime
   reason        String?
   confirmedAt   DateTime?
   createdAt     DateTime  @default(now())
 
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school  School? @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher  Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   @@index([teacherId, startDatetime, endDatetime])
 }
 
 model Room {
-  id       String @id @default(cuid())
-  schoolId String
-  label    String
+  id         String @id @default(cuid())
+  locationId String
+  label      String
 
   /// e.g. { hasPiano: true, hasMirrors: false, floor: "1st" }
   features Json @default("{}")
@@ -258,7 +272,7 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  location     TeachingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
   lessons      Lesson[]
   groupClasses GroupClass[]
   assessments  Assessment[]
@@ -276,7 +290,7 @@ model Student {
   dob        DateTime?
   discipline String // instrument / class / discipline
   source     StudentSource
-  schoolId   String? // null for home students
+  locationId String? // null for home students
   igCardId   String? // links to existing IG Card wallet pass, for CheckIn scanning only
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -296,7 +310,7 @@ model Student {
   shareBalanceWithStudent Boolean @default(false)
 
   teacher           Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school            School?            @relation(fields: [schoolId], references: [id])
+  location          TeachingLocation?  @relation(fields: [locationId], references: [id])
   payerLinks        StudentPayerLink[]
   subscriptions     Subscription[]
   packages          Package[]
@@ -343,15 +357,15 @@ model PrivateTuitionRequest {
   id               String                      @id @default(cuid())
   studentId        String
   teacherId        String
-  sourceSchoolId   String
+  sourceLocationId String
   status           PrivateTuitionRequestStatus @default(PENDING)
   requestedAt      DateTime                    @default(now())
   /// Set on acceptance — the new HOME-sourced Student created as a result, for traceability.
   resultingStudentId String?
 
-  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher      Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  sourceSchool School  @relation(fields: [sourceSchoolId], references: [id])
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher        Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sourceLocation TeachingLocation @relation(fields: [sourceLocationId], references: [id])
 
   @@index([studentId, status])
 }
@@ -549,7 +563,7 @@ model Lesson {
   id             String       @id @default(cuid())
   studentId      String
   teacherId      String
-  schoolId       String
+  locationId     String
   roomId         String?
   subscriptionId String?
   packageId      String?
@@ -569,10 +583,10 @@ model Lesson {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student            Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher            Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school             School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  room               Room?          @relation(fields: [roomId], references: [id])
+  student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher            Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location           TeachingLocation  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  room               Room?             @relation(fields: [roomId], references: [id])
   subscription       Subscription?  @relation(fields: [subscriptionId], references: [id])
   package            Package?       @relation(fields: [packageId], references: [id])
   addOnBookings      AddOnBooking[]
@@ -622,7 +636,7 @@ model LessonNote {
 model GroupClass {
   id         String  @id @default(cuid())
   teacherId  String
-  schoolId   String
+  locationId String
   roomId     String?
   name       String
   discipline String
@@ -640,7 +654,7 @@ model GroupClass {
   updatedAt DateTime @updatedAt
 
   teacher       Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  location      TeachingLocation   @relation(fields: [locationId], references: [id], onDelete: Cascade)
   room          Room?              @relation(fields: [roomId], references: [id])
   subject       Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   members       GroupClassMember[]
@@ -790,13 +804,13 @@ model LoanableItem {
   type      String // instrument / book / CD / etc.
   condition String?
   value     Decimal? @db.Decimal(10, 2)
-  teacherId String? // owned by Teacher or School (exactly one should be set)
-  schoolId  String?
+  teacherId String? // owned by Teacher or TeachingLocation (exactly one should be set)
+  locationId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   teacher              Teacher?              @relation(fields: [teacherId], references: [id])
-  school               School?               @relation(fields: [schoolId], references: [id])
+  location             TeachingLocation?     @relation(fields: [locationId], references: [id])
   loans                Loan[]
   maintenanceReminders MaintenanceReminder[]
 }

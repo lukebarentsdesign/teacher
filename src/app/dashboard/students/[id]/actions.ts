@@ -170,7 +170,7 @@ export async function createAssessmentAction(
 
   const roomId = (formData.get("roomId") as string) || undefined;
   if (roomId) {
-    const room = await prisma.room.findFirst({ where: { id: roomId, schoolId: student.schoolId ?? undefined } });
+    const room = await prisma.room.findFirst({ where: { id: roomId, locationId: student.locationId ?? undefined } });
     if (!room) return "Room not found";
   }
 

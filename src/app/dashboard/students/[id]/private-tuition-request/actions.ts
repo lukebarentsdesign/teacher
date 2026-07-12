@@ -22,7 +22,7 @@ export async function acceptPrivateTuitionRequestAction(requestId: string): Prom
       dob: request.student.dob,
       discipline: request.student.discipline,
       source: "HOME",
-      schoolId: null,
+      locationId: null,
     },
   });
 

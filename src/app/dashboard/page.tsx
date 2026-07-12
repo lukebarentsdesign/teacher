@@ -6,13 +6,13 @@ export default async function DashboardHomePage() {
   const session = await auth();
   const teacherId = session!.user.id;
 
-  const [schoolCount, studentCount, activeSubscriptionCount, lessons, groupClasses, teacher] = await Promise.all([
-    prisma.teacherSchoolLink.count({ where: { teacherId } }),
+  const [locationCount, studentCount, activeSubscriptionCount, lessons, groupClasses, teacher] = await Promise.all([
+    prisma.teacherLocationLink.count({ where: { teacherId } }),
     prisma.student.count({ where: { teacherId } }),
     prisma.subscription.count({ where: { status: "ACTIVE", student: { teacherId } } }),
     prisma.lesson.findMany({
       where: { teacherId, status: "HELD" },
-      include: { student: true, school: true },
+      include: { student: true, location: true },
       orderBy: { scheduledAt: "asc" },
     }),
     prisma.groupClass.findMany({ where: { teacherId } }),
@@ -25,7 +25,7 @@ export default async function DashboardHomePage() {
     title: lesson.student.name,
     start: lesson.scheduledAt.toISOString(),
     end: new Date(lesson.scheduledAt.getTime() + lesson.durationMins * 60_000).toISOString(),
-    color: lesson.school.primaryColor ?? teacher.personalBrandColor ?? DEFAULT_COLOR,
+    color: lesson.location.primaryColor ?? teacher.personalBrandColor ?? DEFAULT_COLOR,
   }));
 
   const groupClassEvents = groupClasses.map((gc) => ({
@@ -41,7 +41,7 @@ export default async function DashboardHomePage() {
       <h1 className="mb-1 text-2xl font-semibold text-neutral-900">Overview</h1>
       <p className="mb-6 text-sm text-neutral-500">Your week at a glance.</p>
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <SummaryCard label="Schools / venues" value={schoolCount} />
+        <SummaryCard label="Teaching locations" value={locationCount} />
         <SummaryCard label="Students" value={studentCount} />
         <SummaryCard label="Active subscriptions" value={activeSubscriptionCount} />
       </div>

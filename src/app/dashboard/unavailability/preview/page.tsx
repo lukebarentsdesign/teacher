@@ -8,9 +8,9 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 export default async function PreviewUnavailabilityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string; reason?: string; schoolId?: string }>;
+  searchParams: Promise<{ start?: string; end?: string; reason?: string; locationId?: string }>;
 }) {
-  const { start, end, reason, schoolId } = await searchParams;
+  const { start, end, reason, locationId } = await searchParams;
   const session = await auth();
 
   if (!start || !end) {
@@ -26,7 +26,7 @@ export default async function PreviewUnavailabilityPage({
 
   const startDate = new Date(start);
   const endDate = new Date(end);
-  const affected = await findAffectedBookings(session!.user.id, startDate, endDate, schoolId);
+  const affected = await findAffectedBookings(session!.user.id, startDate, endDate, locationId);
 
   const totalGuardianEmails = affected.lessons.reduce((n, l) => n + l.guardianEmails.length, 0);
   const nothingAffected = affected.lessons.length === 0 && affected.groupClasses.length === 0;
@@ -108,7 +108,7 @@ export default async function PreviewUnavailabilityPage({
         <input type="hidden" name="start" value={start} />
         <input type="hidden" name="end" value={end} />
         {reason && <input type="hidden" name="reason" value={reason} />}
-        {schoolId && <input type="hidden" name="schoolId" value={schoolId} />}
+        {locationId && <input type="hidden" name="locationId" value={locationId} />}
         <button
           type="submit"
           className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700"

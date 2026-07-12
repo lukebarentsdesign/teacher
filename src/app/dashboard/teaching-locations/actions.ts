@@ -4,13 +4,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { schoolSchema } from "@/lib/validations";
+import { teachingLocationSchema } from "@/lib/validations";
 
 export async function createSchoolAction(
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  const parsed = schoolSchema.safeParse({
+  const parsed = teachingLocationSchema.safeParse({
     name: formData.get("name"),
     address: formData.get("address") || undefined,
     invoicingTarget: formData.get("invoicingTarget"),
@@ -19,6 +19,8 @@ export async function createSchoolAction(
     logoUrl: formData.get("logoUrl") || undefined,
     primaryColor: formData.get("primaryColor") || undefined,
     secondaryColor: formData.get("secondaryColor") || undefined,
+    locationType: formData.get("locationType") || undefined,
+    accessNotes: formData.get("accessNotes") || undefined,
   });
 
   if (!parsed.success) {
@@ -27,7 +29,7 @@ export async function createSchoolAction(
 
   const { termStart, termEnd, ...rest } = parsed.data;
 
-  const school = await prisma.school.create({
+  const location = await prisma.teachingLocation.create({
     data: {
       ...rest,
       termStart: termStart ? new Date(termStart) : undefined,
@@ -35,32 +37,32 @@ export async function createSchoolAction(
     },
   });
 
-  revalidatePath("/dashboard/schools");
-  // Straight to the detail page — a school with no TeacherSchoolLink yet is invisible to the
-  // teacher-scoped schools list, so they need to set up their engagement here right away.
-  redirect(`/dashboard/schools/${school.id}`);
+  revalidatePath("/dashboard/teaching-locations");
+  // Straight to the detail page — a location with no TeacherLocationLink yet is invisible to the
+  // teacher-scoped locations list, so they need to set up their engagement here right away.
+  redirect(`/dashboard/teaching-locations/${location.id}`);
 }
 
 /**
- * School is shared reference data, not teacher-owned (see CLAUDE.md's "Multi-tenant" note) — so
- * edit access is gated on the teacher having a TeacherSchoolLink to this school, the same
- * ownership check the detail page's own queries use, rather than a teacherId field School doesn't
- * have.
+ * TeachingLocation is shared reference data, not teacher-owned (see CLAUDE.md's "Multi-tenant"
+ * note) — so edit access is gated on the teacher having a TeacherLocationLink to this location,
+ * the same ownership check the detail page's own queries use, rather than a teacherId field
+ * TeachingLocation doesn't have.
  */
 export async function updateSchoolAction(
-  schoolId: string,
+  locationId: string,
   _prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
 
-  const link = await prisma.teacherSchoolLink.findFirst({
-    where: { schoolId, teacherId: session.user.id },
+  const link = await prisma.teacherLocationLink.findFirst({
+    where: { locationId, teacherId: session.user.id },
   });
-  if (!link) return "You don't have access to edit this school.";
+  if (!link) return "You don't have access to edit this teaching location.";
 
-  const parsed = schoolSchema.safeParse({
+  const parsed = teachingLocationSchema.safeParse({
     name: formData.get("name"),
     address: formData.get("address") || undefined,
     invoicingTarget: formData.get("invoicingTarget"),
@@ -69,6 +71,8 @@ export async function updateSchoolAction(
     logoUrl: formData.get("logoUrl") || undefined,
     primaryColor: formData.get("primaryColor") || undefined,
     secondaryColor: formData.get("secondaryColor") || undefined,
+    locationType: formData.get("locationType") || undefined,
+    accessNotes: formData.get("accessNotes") || undefined,
   });
 
   if (!parsed.success) {
@@ -77,8 +81,8 @@ export async function updateSchoolAction(
 
   const { termStart, termEnd, ...rest } = parsed.data;
 
-  await prisma.school.update({
-    where: { id: schoolId },
+  await prisma.teachingLocation.update({
+    where: { id: locationId },
     data: {
       ...rest,
       termStart: termStart ? new Date(termStart) : null,
@@ -86,7 +90,7 @@ export async function updateSchoolAction(
     },
   });
 
-  revalidatePath(`/dashboard/schools/${schoolId}`);
-  revalidatePath("/dashboard/schools");
-  redirect(`/dashboard/schools/${schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${locationId}`);
+  revalidatePath("/dashboard/teaching-locations");
+  redirect(`/dashboard/teaching-locations/${locationId}`);
 }

@@ -110,7 +110,7 @@ async function countHeldLessonsInRange(subscriptionId: string, start: Date, end:
  */
 export async function deriveLessonValue(
   subscriptionId: string,
-  lesson: { durationMins: number; schoolId: string }
+  lesson: { durationMins: number; locationId: string }
 ): Promise<number> {
   const subscription = await prisma.subscription.findUniqueOrThrow({ where: { id: subscriptionId } });
   const rate = Number(subscription.annualFee);
@@ -123,9 +123,9 @@ export async function deriveLessonValue(
       return rate * (lesson.durationMins / 60);
 
     case "TERMLY": {
-      const school = await prisma.school.findUnique({ where: { id: lesson.schoolId } });
-      if (!school?.termStart || !school?.termEnd) return rate;
-      const count = await countHeldLessonsInRange(subscriptionId, school.termStart, school.termEnd);
+      const location = await prisma.teachingLocation.findUnique({ where: { id: lesson.locationId } });
+      if (!location?.termStart || !location?.termEnd) return rate;
+      const count = await countHeldLessonsInRange(subscriptionId, location.termStart, location.termEnd);
       return count > 0 ? rate / count : rate;
     }
 

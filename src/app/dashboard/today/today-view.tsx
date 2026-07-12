@@ -93,7 +93,7 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                   </p>
                 </div>
                 <p className="mt-1 text-sm text-neutral-500">
-                  {lesson.discipline} · {lesson.schoolName}
+                  {lesson.discipline} · {lesson.locationName}
                   {lesson.roomLabel ? ` · ${lesson.roomLabel}` : ""}
                 </p>
                 {lesson.payers.length > 0 && (

@@ -40,14 +40,14 @@ export async function findAffectedBookings(
   teacherId: string,
   start: Date,
   end: Date,
-  schoolId?: string
+  locationId?: string
 ): Promise<AffectedBookings> {
   const lessons = await prisma.lesson.findMany({
     where: {
       teacherId,
       status: "HELD",
       scheduledAt: { gte: start, lte: end },
-      ...(schoolId ? { schoolId } : {}),
+      ...(locationId ? { locationId } : {}),
     },
     include: {
       student: { include: { payerLinks: { include: { payer: true } } } },
@@ -56,11 +56,11 @@ export async function findAffectedBookings(
   });
 
   // GroupClasses recur weekly; include any whose weekday falls within the window's span. If the
-  // window is 7+ days it covers every weekday, so all the teacher's (optionally school-scoped)
+  // window is 7+ days it covers every weekday, so all the teacher's (optionally location-scoped)
   // classes qualify; otherwise only the specific weekdays the window touches.
   const weekdaysInWindow = weekdaysBetween(start, end);
   const groupClasses = await prisma.groupClass.findMany({
-    where: { teacherId, ...(schoolId ? { schoolId } : {}), dayOfWeek: { in: weekdaysInWindow } },
+    where: { teacherId, ...(locationId ? { locationId } : {}), dayOfWeek: { in: weekdaysInWindow } },
     orderBy: { name: "asc" },
   });
 
@@ -114,16 +114,16 @@ export async function confirmUnavailability(
   teacherId: string,
   start: Date,
   end: Date,
-  schoolId: string | undefined,
+  locationId: string | undefined,
   reason: string | undefined
 ): Promise<ConfirmResult> {
-  const affected = await findAffectedBookings(teacherId, start, end, schoolId);
+  const affected = await findAffectedBookings(teacherId, start, end, locationId);
 
   const result = await prisma.$transaction(async (tx) => {
     const unavailability = await tx.unavailability.create({
       data: {
         teacherId,
-        schoolId: schoolId || null,
+        locationId: locationId || null,
         startDatetime: start,
         endDatetime: end,
         reason: reason || null,

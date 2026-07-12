@@ -9,7 +9,7 @@ import { roomSchema, groupClassSchema } from "@/lib/validations";
 import { z } from "zod";
 
 const createLinkSchema = z.object({
-  schoolId: z.string().min(1),
+  locationId: z.string().min(1),
   schedulingMode: z.enum(["FIXED", "FLUID"]),
   taxHandling: z.enum(["SELF_EMPLOYED", "PAYE_VIA_SCHOOL"]),
   availability: z.string().min(1),
@@ -24,7 +24,7 @@ export async function createTeacherSchoolLinkAction(
   if (!session?.user?.id) return "Not authenticated";
 
   const parsed = createLinkSchema.safeParse({
-    schoolId: formData.get("schoolId"),
+    locationId: formData.get("locationId"),
     schedulingMode: formData.get("schedulingMode"),
     taxHandling: formData.get("taxHandling"),
     availability: formData.get("availability"),
@@ -47,10 +47,10 @@ export async function createTeacherSchoolLinkAction(
     return "At least one availability row is required.";
   }
 
-  await prisma.teacherSchoolLink.create({
+  await prisma.teacherLocationLink.create({
     data: {
       teacherId: session.user.id,
-      schoolId: parsed.data.schoolId,
+      locationId: parsed.data.locationId,
       schedulingMode: parsed.data.schedulingMode,
       taxHandling: parsed.data.taxHandling,
       availability,
@@ -58,13 +58,14 @@ export async function createTeacherSchoolLinkAction(
     },
   });
 
-  revalidatePath(`/dashboard/schools/${parsed.data.schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${parsed.data.locationId}`);
 }
 
-/** Room/GroupClass are scoped to a School the teacher has a TeacherSchoolLink to — School itself
- * is shared reference data (per CLAUDE.md), so ownership is verified via the link, not the School row. */
-async function assertLinkedToSchool(schoolId: string, teacherId: string) {
-  return prisma.teacherSchoolLink.findFirst({ where: { schoolId, teacherId } });
+/** Room/GroupClass are scoped to a TeachingLocation the teacher has a TeacherLocationLink to —
+ * TeachingLocation itself is shared reference data (per CLAUDE.md), so ownership is verified via
+ * the link, not the TeachingLocation row. */
+async function assertLinkedToSchool(locationId: string, teacherId: string) {
+  return prisma.teacherLocationLink.findFirst({ where: { locationId, teacherId } });
 }
 
 export async function createRoomAction(
@@ -74,8 +75,8 @@ export async function createRoomAction(
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
 
-  const schoolId = formData.get("schoolId") as string;
-  if (!(await assertLinkedToSchool(schoolId, session.user.id))) return "School not found";
+  const locationId = formData.get("locationId") as string;
+  if (!(await assertLinkedToSchool(locationId, session.user.id))) return "Teaching location not found";
 
   let openHours: unknown[] = [];
   try {
@@ -85,7 +86,7 @@ export async function createRoomAction(
   }
 
   const parsed = roomSchema.safeParse({
-    schoolId,
+    locationId,
     label: formData.get("label"),
     hasPiano: formData.get("hasPiano") === "true",
     hasMirrors: formData.get("hasMirrors") === "true",
@@ -99,14 +100,14 @@ export async function createRoomAction(
 
   await prisma.room.create({
     data: {
-      schoolId: parsed.data.schoolId,
+      locationId: parsed.data.locationId,
       label: parsed.data.label,
       features: { hasPiano: !!parsed.data.hasPiano, hasMirrors: !!parsed.data.hasMirrors, floor: parsed.data.floor ?? null },
       openHours: parsed.data.openHours ?? [],
     },
   });
 
-  revalidatePath(`/dashboard/schools/${schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${locationId}`);
 }
 
 export async function updateRoomAction(
@@ -118,7 +119,7 @@ export async function updateRoomAction(
   if (!session?.user?.id) return "Not authenticated";
 
   const room = await prisma.room.findUnique({ where: { id: roomId } });
-  if (!room || !(await assertLinkedToSchool(room.schoolId, session.user.id))) return "Room not found";
+  if (!room || !(await assertLinkedToSchool(room.locationId, session.user.id))) return "Room not found";
 
   let openHours: unknown[] = [];
   try {
@@ -128,7 +129,7 @@ export async function updateRoomAction(
   }
 
   const parsed = roomSchema.safeParse({
-    schoolId: room.schoolId,
+    locationId: room.locationId,
     label: formData.get("label"),
     hasPiano: formData.get("hasPiano") === "true",
     hasMirrors: formData.get("hasMirrors") === "true",
@@ -149,8 +150,8 @@ export async function updateRoomAction(
     },
   });
 
-  revalidatePath(`/dashboard/schools/${room.schoolId}`);
-  redirect(`/dashboard/schools/${room.schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${room.locationId}`);
+  redirect(`/dashboard/teaching-locations/${room.locationId}`);
 }
 
 export async function createGroupClassAction(
@@ -160,12 +161,12 @@ export async function createGroupClassAction(
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
 
-  const schoolId = formData.get("schoolId") as string;
-  if (!(await assertLinkedToSchool(schoolId, session.user.id))) return "School not found";
+  const locationId = formData.get("locationId") as string;
+  if (!(await assertLinkedToSchool(locationId, session.user.id))) return "Teaching location not found";
 
   const roomId = (formData.get("roomId") as string) || undefined;
   if (roomId) {
-    const room = await prisma.room.findFirst({ where: { id: roomId, schoolId } });
+    const room = await prisma.room.findFirst({ where: { id: roomId, locationId } });
     if (!room) return "Room not found";
   }
 
@@ -176,7 +177,7 @@ export async function createGroupClassAction(
   }
 
   const parsed = groupClassSchema.safeParse({
-    schoolId,
+    locationId,
     name: formData.get("name"),
     discipline: formData.get("discipline"),
     roomId,
@@ -193,7 +194,7 @@ export async function createGroupClassAction(
   await prisma.groupClass.create({
     data: {
       teacherId: session.user.id,
-      schoolId: parsed.data.schoolId,
+      locationId: parsed.data.locationId,
       roomId: parsed.data.roomId,
       subjectId: parsed.data.subjectId,
       name: parsed.data.name,
@@ -204,7 +205,7 @@ export async function createGroupClassAction(
     },
   });
 
-  revalidatePath(`/dashboard/schools/${schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${locationId}`);
 }
 
 export async function updateGroupClassAction(
@@ -222,7 +223,7 @@ export async function updateGroupClassAction(
 
   const roomId = (formData.get("roomId") as string) || undefined;
   if (roomId) {
-    const room = await prisma.room.findFirst({ where: { id: roomId, schoolId: groupClass.schoolId } });
+    const room = await prisma.room.findFirst({ where: { id: roomId, locationId: groupClass.locationId } });
     if (!room) return "Room not found";
   }
 
@@ -233,7 +234,7 @@ export async function updateGroupClassAction(
   }
 
   const parsed = groupClassSchema.safeParse({
-    schoolId: groupClass.schoolId,
+    locationId: groupClass.locationId,
     name: formData.get("name"),
     discipline: formData.get("discipline"),
     roomId,
@@ -261,6 +262,6 @@ export async function updateGroupClassAction(
   });
 
   revalidatePath(`/dashboard/group-classes/${groupClassId}`);
-  revalidatePath(`/dashboard/schools/${groupClass.schoolId}`);
+  revalidatePath(`/dashboard/teaching-locations/${groupClass.locationId}`);
   redirect(`/dashboard/group-classes/${groupClassId}`);
 }

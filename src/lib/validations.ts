@@ -6,7 +6,7 @@ const hexColorSchema = z
   .optional()
   .or(z.literal(""));
 
-export const schoolSchema = z.object({
+export const teachingLocationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   address: z.string().optional(),
   invoicingTarget: z.enum(["SCHOOL", "PARENT"]),
@@ -15,6 +15,10 @@ export const schoolSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal("")),
   primaryColor: hexColorSchema,
   secondaryColor: hexColorSchema,
+  locationType: z
+    .enum(["SCHOOL", "STUDENT_HOME", "TEACHER_BASE", "HIRED_VENUE", "OTHER"])
+    .default("SCHOOL"),
+  accessNotes: z.string().optional(),
 });
 
 export const teacherBrandSchema = z.object({
@@ -50,9 +54,9 @@ export const newStudentWizardSchema = z.object({
   discipline: z.string().min(1, "Discipline is required"),
   source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
   paymentResponsibility: z.enum(["SELF", "GUARDIAN", "SCHOOL"]),
-  /// School the student attends — independent of who is billed.
-  schoolId: z.string().optional(),
-  /// Set when paymentResponsibility is SCHOOL — the school being invoiced.
+  /// Teaching location the student attends — independent of who is billed.
+  locationId: z.string().optional(),
+  /// Set when paymentResponsibility is SCHOOL — the location being invoiced.
   invoicingSchoolId: z.string().optional(),
   payers: z.array(wizardPayerSchema),
 });
@@ -74,7 +78,7 @@ export const roomOpenHoursRowSchema = z.object({
 });
 
 export const roomSchema = z.object({
-  schoolId: z.string().min(1),
+  locationId: z.string().min(1),
   label: z.string().min(1, "Label is required"),
   hasPiano: z.boolean().optional(),
   hasMirrors: z.boolean().optional(),
@@ -83,7 +87,7 @@ export const roomSchema = z.object({
 });
 
 export const groupClassSchema = z.object({
-  schoolId: z.string().min(1),
+  locationId: z.string().min(1),
   name: z.string().min(1, "Name is required"),
   discipline: z.string().min(1, "Discipline is required"),
   roomId: z.string().optional(),

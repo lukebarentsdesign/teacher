@@ -17,11 +17,11 @@ const DAY_OPTIONS = [
 type Subject = { id: string; name: string };
 
 export function NewGroupClassForm({
-  schoolId,
+  locationId,
   rooms,
   subjects,
 }: {
-  schoolId: string;
+  locationId: string;
   rooms: Room[];
   subjects: Subject[];
 }) {
@@ -29,7 +29,7 @@ export function NewGroupClassForm({
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
-      <input type="hidden" name="schoolId" value={schoolId} />
+      <input type="hidden" name="locationId" value={locationId} />
 
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-neutral-700">

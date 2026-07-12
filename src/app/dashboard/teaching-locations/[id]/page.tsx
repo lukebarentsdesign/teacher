@@ -9,7 +9,7 @@ import { NewGroupClassForm } from "./new-group-class-form";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default async function SchoolDetailPage({
+export default async function LocationDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -17,18 +17,18 @@ export default async function SchoolDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  const school = await prisma.school.findUnique({ where: { id } });
-  if (!school) notFound();
+  const location = await prisma.teachingLocation.findUnique({ where: { id } });
+  if (!location) notFound();
 
-  const links = await prisma.teacherSchoolLink.findMany({
-    where: { schoolId: id, teacherId: session?.user?.id },
+  const links = await prisma.teacherLocationLink.findMany({
+    where: { locationId: id, teacherId: session?.user?.id },
     include: { teacher: true },
   });
 
-  const rooms = await prisma.room.findMany({ where: { schoolId: id }, orderBy: { label: "asc" } });
+  const rooms = await prisma.room.findMany({ where: { locationId: id }, orderBy: { label: "asc" } });
 
   const groupClasses = await prisma.groupClass.findMany({
-    where: { schoolId: id, teacherId: session?.user?.id },
+    where: { locationId: id, teacherId: session?.user?.id },
     include: { room: true, subject: true, members: { where: { leftAt: null } } },
     orderBy: { name: "asc" },
   });
@@ -38,10 +38,10 @@ export default async function SchoolDetailPage({
     orderBy: { name: "asc" },
   });
 
-  // Enrolled = Student.schoolId matches, regardless of who pays (single source of truth for
+  // Enrolled = Student.locationId matches, regardless of who pays (single source of truth for
   // enrollment; billing relationships live separately on StudentPayerLink).
   const enrolledStudents = await prisma.student.findMany({
-    where: { schoolId: id, teacherId: session?.user?.id },
+    where: { locationId: id, teacherId: session?.user?.id },
     include: { payerLinks: { include: { payer: true } } },
     orderBy: { name: "asc" },
   });
@@ -50,16 +50,16 @@ export default async function SchoolDetailPage({
     <div className="max-w-2xl space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">{school.name}</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">{location.name}</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {school.address ?? "No address on file"} · Invoicing: {school.invoicingTarget}
-            {school.termStart && school.termEnd
-              ? ` · Term: ${school.termStart.toLocaleDateString("en-GB")}–${school.termEnd.toLocaleDateString("en-GB")}`
+            {location.address ?? "No address on file"} · Invoicing: {location.invoicingTarget}
+            {location.termStart && location.termEnd
+              ? ` · Term: ${location.termStart.toLocaleDateString("en-GB")}–${location.termEnd.toLocaleDateString("en-GB")}`
               : " · No term dates set"}
           </p>
         </div>
         <Link
-          href={`/dashboard/schools/${school.id}/edit`}
+          href={`/dashboard/teaching-locations/${location.id}/edit`}
           className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
         >
           Edit
@@ -95,7 +95,7 @@ export default async function SchoolDetailPage({
             ))}
           </div>
         )}
-        <NewLinkForm schoolId={school.id} />
+        <NewLinkForm locationId={location.id} />
       </section>
 
       <section>
@@ -121,7 +121,7 @@ export default async function SchoolDetailPage({
                     </p>
                   </div>
                   <Link
-                    href={`/dashboard/schools/${school.id}/rooms/${room.id}`}
+                    href={`/dashboard/teaching-locations/${location.id}/rooms/${room.id}`}
                     className="shrink-0 text-xs text-neutral-500 underline hover:text-neutral-900"
                   >
                     Edit
@@ -131,7 +131,7 @@ export default async function SchoolDetailPage({
             })}
           </div>
         )}
-        <NewRoomForm schoolId={school.id} />
+        <NewRoomForm locationId={location.id} />
       </section>
 
       <section>
@@ -174,13 +174,13 @@ export default async function SchoolDetailPage({
             </table>
           </div>
         )}
-        <NewGroupClassForm schoolId={school.id} rooms={rooms} subjects={subjects} />
+        <NewGroupClassForm locationId={location.id} rooms={rooms} subjects={subjects} />
       </section>
 
       <section id="enrolled" className="scroll-mt-20">
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Enrolled students</h2>
         {enrolledStudents.length === 0 ? (
-          <p className="text-sm text-neutral-500">No students enrolled at this school yet.</p>
+          <p className="text-sm text-neutral-500">No students enrolled at this teaching location yet.</p>
         ) : (
           <div className="overflow-hidden rounded-xl bg-white shadow-sm">
             <table className="w-full text-sm">

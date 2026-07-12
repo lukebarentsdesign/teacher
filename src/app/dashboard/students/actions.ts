@@ -48,10 +48,10 @@ export async function createStudentWithRelationshipsAction(payload: unknown): Pr
 
   // --- Validation rules (server-authoritative; the client mirrors these for UX only) ---
   const billingPayers = data.payers.filter((p) => !p.isEmergencyContactOnly);
-  const schoolInvoiced = data.paymentResponsibility === "SCHOOL" && !!data.invoicingSchoolId;
+  const locationInvoiced = data.paymentResponsibility === "SCHOOL" && !!data.invoicingSchoolId;
 
-  if (billingPayers.length === 0 && !schoolInvoiced) {
-    return { error: "A student needs at least one paying payer, or a school to invoice." };
+  if (billingPayers.length === 0 && !locationInvoiced) {
+    return { error: "A student needs at least one paying payer, or a teaching location to invoice." };
   }
   if (!isAdult && data.payers.length === 0) {
     return { error: "Under-18 students need at least one payer or emergency contact on file." };
@@ -68,7 +68,7 @@ export async function createStudentWithRelationshipsAction(payload: unknown): Pr
         dob: data.dob ? new Date(data.dob) : undefined,
         discipline: data.discipline,
         source: data.source,
-        schoolId: data.schoolId || undefined,
+        locationId: data.locationId || undefined,
       },
     });
 
@@ -117,7 +117,7 @@ const editStudentSchema = z.object({
   dob: z.string().optional(),
   discipline: z.string().trim().min(1, "Discipline is required"),
   source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
-  schoolId: z.string().optional(),
+  locationId: z.string().optional(),
 });
 
 /** Edits the student's own core fields — separate from payer/subject relationships, which have
@@ -140,7 +140,7 @@ export async function updateStudentAction(
     dob: formData.get("dob") || undefined,
     discipline: formData.get("discipline"),
     source: formData.get("source"),
-    schoolId: formData.get("schoolId") || undefined,
+    locationId: formData.get("locationId") || undefined,
   });
 
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
@@ -152,7 +152,7 @@ export async function updateStudentAction(
       dob: parsed.data.dob ? new Date(parsed.data.dob) : null,
       discipline: parsed.data.discipline,
       source: parsed.data.source,
-      schoolId: parsed.data.schoolId ?? null,
+      locationId: parsed.data.locationId ?? null,
     },
   });
 

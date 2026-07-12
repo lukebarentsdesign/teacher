@@ -3,17 +3,17 @@
 import { useActionState } from "react";
 import { updateStudentAction } from "../actions";
 
-type School = { id: string; name: string };
+type TeachingLocation = { id: string; name: string };
 type Student = {
   id: string;
   name: string;
   dob: string | null;
   discipline: string;
   source: string;
-  schoolId: string | null;
+  locationId: string | null;
 };
 
-export function EditStudentForm({ student, schools }: { student: Student; schools: School[] }) {
+export function EditStudentForm({ student, locations }: { student: Student; locations: TeachingLocation[] }) {
   const [error, formAction, pending] = useActionState(
     updateStudentAction.bind(null, student.id),
     undefined
@@ -77,19 +77,19 @@ export function EditStudentForm({ student, schools }: { student: Student; school
       </div>
 
       <div>
-        <label htmlFor="schoolId" className="block text-sm font-medium text-neutral-700">
-          School (optional)
+        <label htmlFor="locationId" className="block text-sm font-medium text-neutral-700">
+          Teaching location (optional)
         </label>
         <select
-          id="schoolId"
-          name="schoolId"
-          defaultValue={student.schoolId ?? ""}
+          id="locationId"
+          name="locationId"
+          defaultValue={student.locationId ?? ""}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
-          <option value="">Home student — no school</option>
-          {schools.map((school) => (
-            <option key={school.id} value={school.id}>
-              {school.name}
+          <option value="">Home student — no teaching location</option>
+          {locations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {location.name}
             </option>
           ))}
         </select>

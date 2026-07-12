@@ -14,7 +14,7 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
   const groupClass = await prisma.groupClass.findFirst({
     where: { id, teacherId: session!.user.id },
     include: {
-      school: true,
+      location: true,
       room: true,
       subject: true,
       members: { where: { leftAt: null }, include: { student: true }, orderBy: { joinedAt: "asc" } },
@@ -34,7 +34,7 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">{groupClass.name}</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {groupClass.discipline} · {groupClass.school.name} · {DAY_LABELS[groupClass.dayOfWeek]}{" "}
+            {groupClass.discipline} · {groupClass.location.name} · {DAY_LABELS[groupClass.dayOfWeek]}{" "}
             {groupClass.startTime}–{groupClass.endTime}
             {groupClass.room ? ` · ${groupClass.room.label}` : ""}
           </p>

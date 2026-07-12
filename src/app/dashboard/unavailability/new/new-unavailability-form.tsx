@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type School = { id: string; name: string };
+type Location = { id: string; name: string };
 
-export function NewUnavailabilityForm({ schools }: { schools: School[] }) {
+export function NewUnavailabilityForm({ locations }: { locations: Location[] }) {
   const router = useRouter();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [reason, setReason] = useState("");
-  const [schoolId, setSchoolId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [error, setError] = useState<string>();
 
   function handleSubmit(e: React.FormEvent) {
@@ -21,7 +21,7 @@ export function NewUnavailabilityForm({ schools }: { schools: School[] }) {
 
     const query = new URLSearchParams({ start, end });
     if (reason) query.set("reason", reason);
-    if (schoolId) query.set("schoolId", schoolId);
+    if (locationId) query.set("locationId", locationId);
     router.push(`/dashboard/unavailability/preview?${query.toString()}`);
   }
 
@@ -52,14 +52,14 @@ export function NewUnavailabilityForm({ schools }: { schools: School[] }) {
         <input id="reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Illness" className={inputClass} />
       </div>
 
-      {schools.length > 0 && (
+      {locations.length > 0 && (
         <div>
-          <label htmlFor="schoolId" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="locationId" className="block text-sm font-medium text-neutral-700">
             Scope
           </label>
-          <select id="schoolId" value={schoolId} onChange={(e) => setSchoolId(e.target.value)} className={inputClass}>
-            <option value="">All schools &amp; home students</option>
-            {schools.map((s) => (
+          <select id="locationId" value={locationId} onChange={(e) => setLocationId(e.target.value)} className={inputClass}>
+            <option value="">All locations &amp; home students</option>
+            {locations.map((s) => (
               <option key={s.id} value={s.id}>
                 Just {s.name}
               </option>

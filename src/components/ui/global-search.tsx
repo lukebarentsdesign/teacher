@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, GraduationCap, Wallet, Building2 } from "lucide-react";
 import type { SearchResults } from "@/app/api/search/route";
 
-const EMPTY: SearchResults = { students: [], payers: [], schools: [] };
+const EMPTY: SearchResults = { students: [], payers: [], locations: [] };
 
 export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
@@ -46,7 +46,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   const hasResults =
-    results.students.length > 0 || results.payers.length > 0 || results.schools.length > 0;
+    results.students.length > 0 || results.payers.length > 0 || results.locations.length > 0;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xs">
@@ -59,7 +59,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Search students, payers, schools…"
+          placeholder="Search students, payers, teaching locations…"
           className="w-full rounded-lg border border-neutral-300 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none"
         />
       </div>
@@ -75,7 +75,7 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
                 <ResultRow key={s.id} onClick={() => go(`/dashboard/students/${s.id}#payers`)}>
                   <span className="text-neutral-900">{s.name}</span>
                   <span className="ml-2 text-xs text-neutral-400">
-                    {[s.age != null ? `age ${s.age}` : null, s.school ?? "home", s.payers.join(", ") || null]
+                    {[s.age != null ? `age ${s.age}` : null, s.location ?? "home", s.payers.join(", ") || null]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
@@ -99,10 +99,10 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
             </Group>
           )}
 
-          {results.schools.length > 0 && (
-            <Group icon={<Building2 className="h-3.5 w-3.5" />} label="Schools">
-              {results.schools.map((sc) => (
-                <ResultRow key={sc.id} onClick={() => go(`/dashboard/schools/${sc.id}#enrolled`)}>
+          {results.locations.length > 0 && (
+            <Group icon={<Building2 className="h-3.5 w-3.5" />} label="Teaching locations">
+              {results.locations.map((sc) => (
+                <ResultRow key={sc.id} onClick={() => go(`/dashboard/teaching-locations/${sc.id}#enrolled`)}>
                   <span className="text-neutral-900">{sc.name}</span>
                   <span className="ml-2 text-xs text-neutral-400">
                     {sc.enrolledCount} enrolled

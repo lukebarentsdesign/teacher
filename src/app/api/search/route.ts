@@ -4,9 +4,9 @@ import { auth } from "@/auth";
 import { ageInYears } from "@/lib/age";
 
 export type SearchResults = {
-  students: { id: string; name: string; age: number | null; school: string | null; payers: string[] }[];
+  students: { id: string; name: string; age: number | null; location: string | null; payers: string[] }[];
   payers: { id: string; name: string; phone: string | null; pupils: string[]; isEmergencyContactOnly: boolean }[];
-  schools: { id: string; name: string; enrolledCount: number }[];
+  locations: { id: string; name: string; enrolledCount: number }[];
 };
 
 /**
@@ -25,17 +25,17 @@ export async function GET(request: Request) {
   const scope = searchParams.get("scope");
 
   if (q.length < 2) {
-    return NextResponse.json({ students: [], payers: [], schools: [] } satisfies SearchResults);
+    return NextResponse.json({ students: [], payers: [], locations: [] } satisfies SearchResults);
   }
 
   const insensitive = { contains: q, mode: "insensitive" as const };
 
-  const [students, payers, schools] = await Promise.all([
+  const [students, payers, locations] = await Promise.all([
     scope === "payers"
       ? Promise.resolve([])
       : prisma.student.findMany({
           where: { teacherId, name: insensitive },
-          include: { school: true, payerLinks: { include: { payer: true } } },
+          include: { location: true, payerLinks: { include: { payer: true } } },
           orderBy: { name: "asc" },
           take: 8,
         }),
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     }),
     scope === "payers"
       ? Promise.resolve([])
-      : prisma.school.findMany({
+      : prisma.teachingLocation.findMany({
           where: { name: insensitive, teacherLinks: { some: { teacherId } } },
           include: { _count: { select: { students: true } } },
           orderBy: { name: "asc" },
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
       id: s.id,
       name: s.name,
       age: s.dob ? ageInYears(s.dob) : null,
-      school: s.school?.name ?? null,
+      location: s.location?.name ?? null,
       payers: s.payerLinks.map((l) => l.payer.name),
     })),
     payers: payers.map((p) => ({
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
       pupils: p.studentLinks.map((l) => l.student.name),
       isEmergencyContactOnly: p.isEmergencyContactOnly,
     })),
-    schools: schools.map((sc) => ({ id: sc.id, name: sc.name, enrolledCount: sc._count.students })),
+    locations: locations.map((sc) => ({ id: sc.id, name: sc.name, enrolledCount: sc._count.students })),
   };
 
   return NextResponse.json(results);

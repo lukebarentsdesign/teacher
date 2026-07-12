@@ -17,7 +17,7 @@ export default async function StudentsPage({
         ...(subjectFilter ? { subjects: { some: { id: subjectFilter } } } : {}),
       },
       orderBy: { name: "asc" },
-      include: { school: true, subjects: true },
+      include: { location: true, subjects: true },
     }),
     prisma.subject.findMany({ where: { teacherId: session!.user.id }, orderBy: { name: "asc" } }),
   ]);
@@ -49,7 +49,7 @@ export default async function StudentsPage({
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Discipline</th>
               <th className="px-4 py-3 font-medium">Source</th>
-              <th className="px-4 py-3 font-medium">School</th>
+              <th className="px-4 py-3 font-medium">Teaching location</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +62,7 @@ export default async function StudentsPage({
                 </td>
                 <td className="px-4 py-3 text-neutral-500">{student.discipline}</td>
                 <td className="px-4 py-3 text-neutral-500">{student.source}</td>
-                <td className="px-4 py-3 text-neutral-500">{student.school?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-neutral-500">{student.location?.name ?? "—"}</td>
               </tr>
             ))}
           </tbody>

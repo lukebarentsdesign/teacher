@@ -79,7 +79,7 @@ export async function markPresentAction(
 
   const lessonValue = await deriveLessonValue(lesson.subscriptionId, {
     durationMins: lesson.durationMins,
-    schoolId: lesson.schoolId,
+    locationId: lesson.locationId,
   });
   await postLessonDelivered(lesson.subscriptionId, lessonValue, attendanceNoteTag(lessonId));
 

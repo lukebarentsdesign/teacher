@@ -9,7 +9,7 @@ export default async function PrivateTuitionRequestPage({ params }: { params: Pr
 
   const student = await prisma.student.findFirst({
     where: { id, teacherId: session!.user.id },
-    include: { school: true },
+    include: { location: true },
   });
   if (!student) notFound();
 
@@ -23,7 +23,7 @@ export default async function PrivateTuitionRequestPage({ params }: { params: Pr
       <h1 className="text-2xl font-semibold text-neutral-900">Accept private-tuition request</h1>
 
       <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-        <p className="font-medium">Check your agreement with {student.school?.name ?? "this school"} before accepting.</p>
+        <p className="font-medium">Check your agreement with {student.location?.name ?? "this teaching location"} before accepting.</p>
         <p className="mt-2">
           Many peripatetic teacher contracts restrict converting a school-sourced student into a
           private client — accepting this request does not check that for you.
@@ -32,7 +32,7 @@ export default async function PrivateTuitionRequestPage({ params }: { params: Pr
 
       <p className="text-sm text-neutral-600">
         Accepting creates a new, separate private-student record for {student.name} (source: Home)
-        alongside their existing {student.school?.name ?? "school"} relationship — it does not
+        alongside their existing {student.location?.name ?? "teaching location"} relationship — it does not
         remove or change the existing one.
       </p>
 

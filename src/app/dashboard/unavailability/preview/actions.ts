@@ -12,7 +12,7 @@ const confirmSchema = z.object({
   start: z.string().min(1),
   end: z.string().min(1),
   reason: z.string().optional(),
-  schoolId: z.string().optional(),
+  locationId: z.string().optional(),
 });
 
 export async function confirmUnavailabilityAction(formData: FormData): Promise<void> {
@@ -24,14 +24,14 @@ export async function confirmUnavailabilityAction(formData: FormData): Promise<v
     start: formData.get("start"),
     end: formData.get("end"),
     reason: formData.get("reason") || undefined,
-    schoolId: formData.get("schoolId") || undefined,
+    locationId: formData.get("locationId") || undefined,
   });
 
   const result = await confirmUnavailability(
     teacherId,
     new Date(parsed.start),
     new Date(parsed.end),
-    parsed.schoolId,
+    parsed.locationId,
     parsed.reason
   );
 

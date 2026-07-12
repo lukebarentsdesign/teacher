@@ -4,13 +4,13 @@ import { useActionState, useState } from "react";
 import { createRoomAction } from "./actions";
 import { OpenHoursEditor, type OpenHoursRow } from "./open-hours-editor";
 
-export function NewRoomForm({ schoolId }: { schoolId: string }) {
+export function NewRoomForm({ locationId }: { locationId: string }) {
   const [error, formAction, pending] = useActionState(createRoomAction, undefined);
   const [openHours, setOpenHours] = useState<OpenHoursRow[]>([]);
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
-      <input type="hidden" name="schoolId" value={schoolId} />
+      <input type="hidden" name="locationId" value={locationId} />
       <input type="hidden" name="openHours" value={JSON.stringify(openHours)} />
 
       <div>

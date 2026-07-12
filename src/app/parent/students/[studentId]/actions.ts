@@ -12,7 +12,7 @@ export async function requestPrivateTuitionAction(studentId: string): Promise<vo
   if (!link) return;
 
   const student = await prisma.student.findUnique({ where: { id: studentId } });
-  if (!student || !student.schoolId) return;
+  if (!student || !student.locationId) return;
 
   const existingPending = await prisma.privateTuitionRequest.findFirst({
     where: { studentId, status: "PENDING" },
@@ -23,7 +23,7 @@ export async function requestPrivateTuitionAction(studentId: string): Promise<vo
     data: {
       studentId,
       teacherId: student.teacherId,
-      sourceSchoolId: student.schoolId,
+      sourceLocationId: student.locationId,
     },
   });
 

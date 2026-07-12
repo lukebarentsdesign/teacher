@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateGroupClassAction } from "@/app/dashboard/schools/[id]/actions";
+import { updateGroupClassAction } from "@/app/dashboard/teaching-locations/[id]/actions";
 
 const DAY_OPTIONS = [
   { value: 0, label: "Sunday" },

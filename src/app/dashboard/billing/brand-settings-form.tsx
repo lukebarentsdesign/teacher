@@ -19,7 +19,7 @@ export function BrandSettingsForm({
           Your brand color
         </label>
         <p className="mb-1 text-xs text-neutral-500">
-          Used for home-sourced students&apos; lessons on your calendar, when no school color applies.
+          Used for home-sourced students&apos; lessons on your calendar, when no teaching location color applies.
         </p>
         <input
           id="personalBrandColor"

@@ -9,28 +9,28 @@ export default async function NewTimetablePage() {
 
   const [students, links] = await Promise.all([
     prisma.student.findMany({ where: { teacherId: session?.user?.id }, orderBy: { name: "asc" } }),
-    prisma.teacherSchoolLink.findMany({
+    prisma.teacherLocationLink.findMany({
       where: { teacherId: session?.user?.id },
-      include: { school: true },
+      include: { location: true },
     }),
   ]);
 
-  const schoolIds = [...new Set(links.map((link) => link.schoolId))];
-  const rooms = await prisma.room.findMany({ where: { schoolId: { in: schoolIds } } });
-  const roomsBySchool = new Map(schoolIds.map((id) => [id, rooms.filter((r) => r.schoolId === id)]));
+  const locationIds = [...new Set(links.map((link) => link.locationId))];
+  const rooms = await prisma.room.findMany({ where: { locationId: { in: locationIds } } });
+  const roomsByLocation = new Map(locationIds.map((id) => [id, rooms.filter((r) => r.locationId === id)]));
 
   const linksWithSlots = links.map((link) => ({
     id: link.id,
-    schoolId: link.schoolId,
-    schoolName: link.school.name,
+    locationId: link.locationId,
+    locationName: link.location.name,
     schedulingMode: link.schedulingMode,
-    termStart: link.school.termStart?.toISOString() ?? null,
-    termEnd: link.school.termEnd?.toISOString() ?? null,
+    termStart: link.location.termStart?.toISOString() ?? null,
+    termEnd: link.location.termEnd?.toISOString() ?? null,
     availableSlots: filterAvailableSlots(
       parseAvailability(link.availability),
       parseProtectedBlocks(link.protectedBlocks)
     ),
-    rooms: (roomsBySchool.get(link.schoolId) ?? []).map((r) => ({ id: r.id, label: r.label })),
+    rooms: (roomsByLocation.get(link.locationId) ?? []).map((r) => ({ id: r.id, label: r.label })),
   }));
 
   return (
@@ -38,7 +38,7 @@ export default async function NewTimetablePage() {
       <h1 className="mb-6 text-2xl font-semibold text-neutral-900">Generate timetable</h1>
       {linksWithSlots.length === 0 ? (
         <p className="text-sm text-neutral-500">
-          Add availability for a school first (Schools → open a school → set up your engagement).
+          Add availability for a location first (Locations → open a location → set up your engagement).
         </p>
       ) : (
         <NewTimetableForm students={students} links={linksWithSlots} />

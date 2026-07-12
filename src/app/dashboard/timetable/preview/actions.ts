@@ -10,7 +10,7 @@ import { hasAcceptedCurrentContract } from "@/lib/contracts";
 
 const confirmSchema = z.object({
   studentId: z.string().min(1),
-  schoolId: z.string().min(1),
+  locationId: z.string().min(1),
   linkId: z.string().min(1),
   slots: z.string().min(1),
   roomId: z.string().optional(),
@@ -23,7 +23,7 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
 
   const parsed = confirmSchema.parse({
     studentId: formData.get("studentId"),
-    schoolId: formData.get("schoolId"),
+    locationId: formData.get("locationId"),
     linkId: formData.get("linkId"),
     slots: formData.get("slots"),
     roomId: formData.get("roomId") || undefined,
@@ -31,15 +31,15 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
 
   const [student, link] = await Promise.all([
     prisma.student.findFirst({ where: { id: parsed.studentId, teacherId } }),
-    prisma.teacherSchoolLink.findFirst({
+    prisma.teacherLocationLink.findFirst({
       where: { id: parsed.linkId, teacherId },
-      include: { school: true },
+      include: { location: true },
     }),
   ]);
 
-  if (!student || !link) throw new Error("Student or school engagement not found");
-  if (!link.school.termStart || !link.school.termEnd) {
-    throw new Error("School has no term dates set");
+  if (!student || !link) throw new Error("Student or location engagement not found");
+  if (!link.location.termStart || !link.location.termEnd) {
+    throw new Error("Location has no term dates set");
   }
 
   // Defense in depth — the preview page already disables the submit button for this case.
@@ -56,15 +56,15 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
     link.schedulingMode === "FIXED"
       ? await previewFixedTimetable(
           teacherId,
-          link.school.termStart,
-          link.school.termEnd,
+          link.location.termStart,
+          link.location.termEnd,
           chosenSlots[0],
           parsed.roomId
         )
       : await previewFluidTimetable(
           teacherId,
-          link.school.termStart,
-          link.school.termEnd,
+          link.location.termStart,
+          link.location.termEnd,
           chosenSlots,
           parsed.roomId
         );
@@ -72,7 +72,7 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
   await createLessonsFromSchedule({
     studentId: parsed.studentId,
     teacherId,
-    schoolId: parsed.schoolId,
+    locationId: parsed.locationId,
     roomId: parsed.roomId,
     lessons: result.clean,
   });

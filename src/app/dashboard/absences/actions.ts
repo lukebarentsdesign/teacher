@@ -32,7 +32,7 @@ export async function applyAsCreditAction(
 
   const lessonValue = await deriveLessonValue(originalLesson.subscriptionId, {
     durationMins: originalLesson.durationMins,
-    schoolId: originalLesson.schoolId,
+    locationId: originalLesson.locationId,
   });
 
   await postManualCorrection(

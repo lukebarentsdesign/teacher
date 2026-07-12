@@ -37,7 +37,7 @@ type NavLink = { href: string; label: string; icon: LucideIcon };
 // Setup: occasional, guided configuration — schools, students, contracts, account-level billing.
 // Operations: daily-use surface — schedule, day-to-day money, equipment.
 const SETUP_LINKS: NavLink[] = [
-  { href: "/dashboard/schools", label: "Schools", icon: Building2 },
+  { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },

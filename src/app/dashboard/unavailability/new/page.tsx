@@ -5,12 +5,12 @@ import { NewUnavailabilityForm } from "./new-unavailability-form";
 export default async function NewUnavailabilityPage() {
   const session = await auth();
 
-  const links = await prisma.teacherSchoolLink.findMany({
+  const links = await prisma.teacherLocationLink.findMany({
     where: { teacherId: session!.user.id },
-    include: { school: true },
+    include: { location: true },
   });
-  const schools = Array.from(
-    new Map(links.map((l) => [l.school.id, { id: l.school.id, name: l.school.name }])).values()
+  const locations = Array.from(
+    new Map(links.map((l) => [l.location.id, { id: l.location.id, name: l.location.name }])).values()
   );
 
   return (
@@ -19,7 +19,7 @@ export default async function NewUnavailabilityPage() {
       <p className="mb-6 text-sm text-neutral-500">
         You&apos;ll see exactly which lessons this affects before anything is cancelled.
       </p>
-      <NewUnavailabilityForm schools={schools} />
+      <NewUnavailabilityForm locations={locations} />
     </div>
   );
 }

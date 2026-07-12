@@ -14,7 +14,7 @@ export default async function EditGroupClassPage({ params }: { params: Promise<{
   if (!groupClass) notFound();
 
   const [rooms, subjects] = await Promise.all([
-    prisma.room.findMany({ where: { schoolId: groupClass.schoolId }, orderBy: { label: "asc" } }),
+    prisma.room.findMany({ where: { locationId: groupClass.locationId }, orderBy: { label: "asc" } }),
     prisma.subject.findMany({ where: { teacherId: session!.user.id }, orderBy: { name: "asc" } }),
   ]);
 

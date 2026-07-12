@@ -18,7 +18,7 @@ export default async function GroupClassesPage({
         teacherId: session!.user.id,
         ...(subjectFilter ? { subjectId: subjectFilter } : {}),
       },
-      include: { school: true, subject: true, members: { where: { leftAt: null } } },
+      include: { location: true, subject: true, members: { where: { leftAt: null } } },
       orderBy: { name: "asc" },
     }),
     prisma.subject.findMany({ where: { teacherId: session!.user.id }, orderBy: { name: "asc" } }),
@@ -41,7 +41,7 @@ export default async function GroupClassesPage({
           <thead className="border-b border-neutral-200 text-left text-neutral-500">
             <tr>
               <th className="px-4 py-3 font-medium">Class</th>
-              <th className="px-4 py-3 font-medium">School</th>
+              <th className="px-4 py-3 font-medium">Teaching location</th>
               <th className="px-4 py-3 font-medium">Slot</th>
               <th className="px-4 py-3 font-medium">Members</th>
             </tr>
@@ -55,7 +55,7 @@ export default async function GroupClassesPage({
                   </Link>
                   <span className="ml-2 text-xs text-neutral-500">{gc.discipline}</span>
                 </td>
-                <td className="px-4 py-3 text-neutral-500">{gc.school.name}</td>
+                <td className="px-4 py-3 text-neutral-500">{gc.location.name}</td>
                 <td className="px-4 py-3 text-neutral-500">
                   {DAY_LABELS[gc.dayOfWeek]} {gc.startTime}–{gc.endTime}
                 </td>
@@ -73,7 +73,7 @@ export default async function GroupClassesPage({
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-neutral-900">Group classes</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Add or manage a class from its school&apos;s detail page. Tag a class with a subject there
+          Add or manage a class from its teaching location&apos;s detail page. Tag a class with a subject there
           to group it here alongside the students who share it.
         </p>
       </div>

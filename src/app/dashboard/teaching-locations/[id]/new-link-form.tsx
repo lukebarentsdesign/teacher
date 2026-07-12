@@ -85,7 +85,7 @@ function RowEditor({
   );
 }
 
-export function NewLinkForm({ schoolId }: { schoolId: string }) {
+export function NewLinkForm({ locationId }: { locationId: string }) {
   const [error, formAction, pending] = useActionState(createTeacherSchoolLinkAction, undefined);
   const [availability, setAvailability] = useState<Row[]>([
     { dayOfWeek: 1, startTime: "09:00", endTime: "17:00" },
@@ -94,7 +94,7 @@ export function NewLinkForm({ schoolId }: { schoolId: string }) {
 
   return (
     <form action={formAction} className="space-y-5 rounded-xl bg-white p-6 shadow-sm">
-      <input type="hidden" name="schoolId" value={schoolId} />
+      <input type="hidden" name="locationId" value={locationId} />
       <input type="hidden" name="availability" value={JSON.stringify(availability)} />
       <input type="hidden" name="protectedBlocks" value={JSON.stringify(protectedBlocks)} />
 

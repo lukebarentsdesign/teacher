@@ -15,7 +15,7 @@ export const protectedBlockSchema = timeSlotSchema.extend({
 export const availabilityArraySchema = z.array(timeSlotSchema);
 export const protectedBlocksArraySchema = z.array(protectedBlockSchema);
 
-/** Parses a TeacherSchoolLink's Json `availability`/`protectedBlocks` fields at the runtime boundary. */
+/** Parses a TeacherLocationLink's Json `availability`/`protectedBlocks` fields at the runtime boundary. */
 export function parseAvailability(value: unknown) {
   return availabilityArraySchema.parse(value);
 }

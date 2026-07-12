@@ -24,7 +24,7 @@ export default async function PayerDetailPage({ params }: { params: Promise<{ id
           include: {
             student: {
               include: {
-                school: true,
+                location: true,
                 subscriptions: { orderBy: { startDate: "desc" }, take: 1 },
               },
             },
@@ -107,7 +107,7 @@ export default async function PayerDetailPage({ params }: { params: Promise<{ id
                 <tr>
                   <th className="px-4 py-3 font-medium">Pupil</th>
                   <th className="px-4 py-3 font-medium">Age</th>
-                  <th className="px-4 py-3 font-medium">School</th>
+                  <th className="px-4 py-3 font-medium">Teaching location</th>
                   <th className="px-4 py-3 font-medium">Subscription</th>
                 </tr>
               </thead>
@@ -127,7 +127,7 @@ export default async function PayerDetailPage({ params }: { params: Promise<{ id
                       <td className="px-4 py-3 text-neutral-500">
                         {link.student.dob ? ageInYears(link.student.dob) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-neutral-500">{link.student.school?.name ?? "Home"}</td>
+                      <td className="px-4 py-3 text-neutral-500">{link.student.location?.name ?? "Home"}</td>
                       <td className="px-4 py-3 text-neutral-500">{sub ? sub.status : "None"}</td>
                     </tr>
                   );

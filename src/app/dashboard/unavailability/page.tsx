@@ -13,7 +13,7 @@ export default async function UnavailabilityPage({
 
   const items = await prisma.unavailability.findMany({
     where: { teacherId: session!.user.id },
-    include: { school: true },
+    include: { location: true },
     orderBy: { startDatetime: "desc" },
   });
 
@@ -67,7 +67,7 @@ export default async function UnavailabilityPage({
                   {fmt(item.startDatetime)} → {fmt(item.endDatetime)}
                 </span>
                 <span className="text-xs text-neutral-400">
-                  {item.school ? item.school.name : "All schools & home"}
+                  {item.location ? item.location.name : "All locations & home"}
                 </span>
               </div>
               {item.reason && <p className="mt-1 text-sm text-neutral-500">{item.reason}</p>}

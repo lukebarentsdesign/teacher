@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createStudentWithRelationshipsAction } from "../actions";
 import { ageInYears } from "@/lib/age";
 
-type School = { id: string; name: string };
+type TeachingLocation = { id: string; name: string };
 
 type PayerDraft = {
   payerId?: string; // set when an existing payer was picked
@@ -162,7 +162,7 @@ function PayerFields({
   );
 }
 
-export function StudentWizard({ schools }: { schools: School[] }) {
+export function StudentWizard({ locations }: { locations: TeachingLocation[] }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string>();
@@ -184,7 +184,7 @@ export function StudentWizard({ schools }: { schools: School[] }) {
   const [invoicingSchoolId, setInvoicingSchoolId] = useState("");
 
   // Step 4
-  const [schoolId, setSchoolId] = useState("");
+  const [locationId, setLocationId] = useState("");
 
   const isAdult = dob ? ageInYears(new Date(dob)) >= 18 : false;
   const total = 5;
@@ -231,7 +231,7 @@ export function StudentWizard({ schools }: { schools: School[] }) {
       discipline,
       source,
       paymentResponsibility: responsibility,
-      schoolId: schoolId || undefined,
+      locationId: locationId || undefined,
       invoicingSchoolId: responsibility === "SCHOOL" ? invoicingSchoolId || undefined : undefined,
       payers: resolvedPayers().map((p) => ({
         payerId: p.payerId,
@@ -250,7 +250,7 @@ export function StudentWizard({ schools }: { schools: School[] }) {
     router.push(`/dashboard/students/${result.studentId}`);
   }
 
-  const schoolName = (sid: string) => schools.find((s) => s.id === sid)?.name ?? "—";
+  const locationName = (sid: string) => locations.find((s) => s.id === sid)?.name ?? "—";
 
   return (
     <div className="max-w-lg rounded-xl bg-white p-6 shadow-sm">
@@ -357,13 +357,13 @@ export function StudentWizard({ schools }: { schools: School[] }) {
 
       {step === 3 && responsibility === "SCHOOL" && (
         <>
-          <StepHeader step={3} total={total} title="School to invoice" />
+          <StepHeader step={3} total={total} title="Teaching location to invoice" />
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>School</label>
+              <label className={labelClass}>Teaching location</label>
               <select value={invoicingSchoolId} onChange={(e) => setInvoicingSchoolId(e.target.value)} className={inputClass}>
-                <option value="">Select a school</option>
-                {schools.map((s) => (
+                <option value="">Select a teaching location</option>
+                {locations.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
@@ -390,13 +390,13 @@ export function StudentWizard({ schools }: { schools: School[] }) {
 
       {step === 4 && (
         <>
-          <StepHeader step={4} total={total} title="Link to a school (optional)" />
+          <StepHeader step={4} total={total} title="Link to a teaching location (optional)" />
           <p className="mb-3 text-sm text-neutral-500">
             Where lessons happen — independent of who is invoiced. Leave blank for a home student.
           </p>
-          <select value={schoolId} onChange={(e) => setSchoolId(e.target.value)} className={inputClass}>
-            <option value="">No school</option>
-            {schools.map((s) => (
+          <select value={locationId} onChange={(e) => setLocationId(e.target.value)} className={inputClass}>
+            <option value="">No teaching location</option>
+            {locations.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -416,7 +416,7 @@ export function StudentWizard({ schools }: { schools: School[] }) {
             <div className="border-t border-neutral-200 pt-3">
               <p className="text-xs uppercase tracking-wide text-neutral-400">Billing</p>
               {responsibility === "SCHOOL" ? (
-                <p className="text-neutral-900">School invoiced: {schoolName(invoicingSchoolId)}</p>
+                <p className="text-neutral-900">Teaching location invoiced: {locationName(invoicingSchoolId)}</p>
               ) : (
                 <p className="text-neutral-900">
                   {responsibility === "SELF" ? "Self-paying" : "Guardian(s)"}:{" "}
@@ -428,8 +428,8 @@ export function StudentWizard({ schools }: { schools: School[] }) {
               )}
             </div>
             <div className="border-t border-neutral-200 pt-3">
-              <p className="text-xs uppercase tracking-wide text-neutral-400">Attends school</p>
-              <p className="text-neutral-900">{schoolId ? schoolName(schoolId) : "Home student"}</p>
+              <p className="text-xs uppercase tracking-wide text-neutral-400">Teaching location</p>
+              <p className="text-neutral-900">{locationId ? locationName(locationId) : "Home student"}</p>
             </div>
           </div>
         </>

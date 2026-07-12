@@ -9,8 +9,8 @@ const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 type LinkOption = {
   id: string;
-  schoolId: string;
-  schoolName: string;
+  locationId: string;
+  locationName: string;
   schedulingMode: "FIXED" | "FLUID";
   termStart: string | null;
   termEnd: string | null;
@@ -49,11 +49,11 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
     setError(undefined);
 
     if (!link) {
-      setError("Pick a school engagement.");
+      setError("Pick a location engagement.");
       return;
     }
     if (!link.termStart || !link.termEnd) {
-      setError(`${link.schoolName} has no term dates set — add them before generating a timetable.`);
+      setError(`${link.locationName} has no term dates set — add them before generating a timetable.`);
       return;
     }
     const chosenSlots = slotsForLink.filter((slot) => selectedSlotKeys.has(slotKey(slot)));
@@ -97,7 +97,7 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
 
       <div>
         <label htmlFor="linkId" className="block text-sm font-medium text-neutral-700">
-          School / engagement
+          Location / engagement
         </label>
         <select
           id="linkId"
@@ -111,7 +111,7 @@ export function NewTimetableForm({ students, links }: { students: Student[]; lin
         >
           {links.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.schoolName} ({option.schedulingMode})
+              {option.locationName} ({option.schedulingMode})
             </option>
           ))}
         </select>

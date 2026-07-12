@@ -11,12 +11,12 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
   const student = await prisma.student.findFirst({ where: { id, teacherId: session!.user.id } });
   if (!student) notFound();
 
-  const links = await prisma.teacherSchoolLink.findMany({
+  const links = await prisma.teacherLocationLink.findMany({
     where: { teacherId: session!.user.id },
-    include: { school: true },
+    include: { location: true },
   });
-  const schools = Array.from(
-    new Map(links.map((l) => [l.school.id, { id: l.school.id, name: l.school.name }])).values()
+  const locations = Array.from(
+    new Map(links.map((l) => [l.location.id, { id: l.location.id, name: l.location.name }])).values()
   );
 
   return (
@@ -34,9 +34,9 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
           dob: student.dob ? student.dob.toISOString().slice(0, 10) : null,
           discipline: student.discipline,
           source: student.source,
-          schoolId: student.schoolId,
+          locationId: student.locationId,
         }}
-        schools={schools}
+        locations={locations}
       />
     </div>
   );

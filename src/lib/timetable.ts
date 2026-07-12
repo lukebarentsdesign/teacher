@@ -11,9 +11,9 @@ import {
 import { parseAvailability, parseProtectedBlocks } from "@/lib/schedule-json";
 import { solveFluidScheduleViaService } from "@/lib/timetable-service-client";
 
-export async function getAvailableSlotsForLink(teacherSchoolLinkId: string): Promise<TimeSlot[]> {
-  const link = await prisma.teacherSchoolLink.findUniqueOrThrow({
-    where: { id: teacherSchoolLinkId },
+export async function getAvailableSlotsForLink(teacherLocationLinkId: string): Promise<TimeSlot[]> {
+  const link = await prisma.teacherLocationLink.findUniqueOrThrow({
+    where: { id: teacherLocationLinkId },
   });
 
   const availability = parseAvailability(link.availability);
@@ -35,7 +35,7 @@ export type TimetablePreviewResult = {
 /**
  * Marks lessons that overlap an existing HELD lesson for the same teacher (double-booking the
  * teacher) or, when roomId is given, an existing lesson/GroupClass occupying that room (booked by
- * anyone — a room can be double-booked across different teachers sharing a school/venue, so this
+ * anyone — a room can be double-booked across different teachers sharing a location/venue, so this
  * axis is NOT scoped by teacherId). Overlap is time-range based (via lessonsOverlap), not exact
  * timestamp equality, so two different-length lessons that overlap without sharing a start time
  * are now caught too — previously they slipped through undetected.
@@ -140,7 +140,7 @@ export async function previewFluidTimetable(
 export type CreateLessonsInput = {
   studentId: string;
   teacherId: string;
-  schoolId: string;
+  locationId: string;
   roomId?: string;
   lessons: ScheduledLesson[];
 };
@@ -149,7 +149,7 @@ export type CreateLessonsInput = {
 export async function createLessonsFromSchedule({
   studentId,
   teacherId,
-  schoolId,
+  locationId,
   roomId,
   lessons,
 }: CreateLessonsInput) {
@@ -159,7 +159,7 @@ export async function createLessonsFromSchedule({
     data: lessons.map((lesson) => ({
       studentId,
       teacherId,
-      schoolId,
+      locationId,
       roomId,
       scheduledAt: lesson.scheduledAt,
       durationMins: lesson.durationMins,
