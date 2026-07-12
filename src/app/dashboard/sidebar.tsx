@@ -39,6 +39,8 @@ import {
   Code2,
   PlayCircle,
   Building,
+  Car,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -83,6 +85,8 @@ const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/dashboard/payments", label: "Get paid", icon: Banknote },
   { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
+  { href: "/dashboard/mileage", label: "Mileage", icon: Car },
+  { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
   { href: "/dashboard/resources", label: "Resources", icon: FolderOpen },
   { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
 ];

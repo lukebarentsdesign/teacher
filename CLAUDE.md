@@ -287,6 +287,13 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **`src/lib/invoice-pdf.ts` deliberately doesn't share code with `contract-pdf.ts`**, despite both using `pdf-lib` — a tabular ledger statement and a flowing contract-text document differ enough in layout that a shared abstraction would cost more than it saves. Both independently reimplement the same basic "measure width, wrap, paginate" primitives, which is fine at this size.
 - **Unsigned, informational only** — same as the contract PDF, this has zero bearing on any actual payment/billing state; it's a formatted view of data that already exists, for a payer who wants paperwork (reimbursement, their own tax return, a school reconciling its books).
 
+## Tax & Mileage Pack (roadmap v2 Part 9a)
+
+- **Mileage is logged manually, not derived from the schedule** — `TeachingLocation` has only a free-text `address`, no coordinates, and this app has no geocoding/distance-matrix API integration. Rather than fake automatic distance calculation, `MileageLog` is a plain manual entry (date, miles, optional from/to `TeachingLocation`, purpose) — same "no live API exists, build the manual version honestly" pattern as `TermCalendar` (no UK-wide term-date feed exists either).
+- **HMRC's mileage allowance is cumulative across the whole tax year, not per-trip** — first 10,000 miles at 45p, everything after at 25p. `calculateMileageAllowance` (`src/lib/mileage.ts`, pure, unit-tested) takes trip miles **in chronological order** and correctly splits a single trip across the threshold if it straddles it. Callers must sort before calling — the function itself has no date awareness, it just consumes a plain number array.
+- **UK tax year (6 April–5 April) is its own small pure module** (`taxYearRange`/`taxYearForDate` in `src/lib/mileage.ts`), unit-tested separately from the allowance math — reused by both `/dashboard/tax-pack` (the report view) and `GET /api/tax-pack` (the CSV export), so the two never disagree about what "this tax year" means.
+- **Tax pack rolls up data that already exists** (`LedgerEntry` reason `PAYMENT`, `Expense`, `MileageLog`) — a reporting view only, no new income/expense capture beyond the mileage log itself. Net figure is income − expenses − mileage allowance, a simplified self-assessment-adjacent number, not a substitute for an accountant's actual calculation (no VAT, no allowable-expense filtering beyond what's already categorized).
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH

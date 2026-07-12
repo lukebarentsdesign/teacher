@@ -344,6 +344,7 @@ model Teacher {
   embedConfigs            EmbedConfig[]
   courses                 Course[]
   courseItems             CourseItem[]
+  mileageLogs             MileageLog[]
 }
 
 model TeachingLocation {
@@ -397,6 +398,8 @@ model TeachingLocation {
   termCalendar   TermCalendar? @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
   cancellationPolicy CancellationPolicy?
   embedConfigs   EmbedConfig[]
+  mileageLogsFrom MileageLog[] @relation("MileageFrom")
+  mileageLogsTo   MileageLog[] @relation("MileageTo")
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -821,6 +824,28 @@ model Expense {
   createdAt DateTime @default(now())
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, date])
+}
+
+/// Manually logged, not auto-derived from the schedule — TeachingLocation only has a free-text
+/// address, no coordinates, and this app has no geocoding/distance-matrix API integration to
+/// compute travel distance automatically (same "no live API" honesty as the term-calendar note
+/// elsewhere: build the manual version, don't fake automation that doesn't exist). Rolls up
+/// against HMRC's tiered mileage allowance in the year-end tax pack — see src/lib/mileage.ts.
+model MileageLog {
+  id             String   @id @default(cuid())
+  teacherId      String
+  date           DateTime
+  miles          Decimal  @db.Decimal(6, 1)
+  fromLocationId String?
+  toLocationId   String?
+  purpose        String?
+  createdAt      DateTime @default(now())
+
+  teacher      Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  fromLocation TeachingLocation? @relation("MileageFrom", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocation   TeachingLocation? @relation("MileageTo", fields: [toLocationId], references: [id], onDelete: SetNull)
 
   @@index([teacherId, date])
 }
