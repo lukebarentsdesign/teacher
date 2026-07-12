@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
@@ -108,6 +109,50 @@ export async function createRoomAction(
   revalidatePath(`/dashboard/schools/${schoolId}`);
 }
 
+export async function updateRoomAction(
+  roomId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const room = await prisma.room.findUnique({ where: { id: roomId } });
+  if (!room || !(await assertLinkedToSchool(room.schoolId, session.user.id))) return "Room not found";
+
+  let openHours: unknown[] = [];
+  try {
+    openHours = JSON.parse((formData.get("openHours") as string) || "[]");
+  } catch {
+    return "Invalid open hours data";
+  }
+
+  const parsed = roomSchema.safeParse({
+    schoolId: room.schoolId,
+    label: formData.get("label"),
+    hasPiano: formData.get("hasPiano") === "true",
+    hasMirrors: formData.get("hasMirrors") === "true",
+    floor: formData.get("floor") || undefined,
+    openHours,
+  });
+
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Invalid input";
+  }
+
+  await prisma.room.update({
+    where: { id: roomId },
+    data: {
+      label: parsed.data.label,
+      features: { hasPiano: !!parsed.data.hasPiano, hasMirrors: !!parsed.data.hasMirrors, floor: parsed.data.floor ?? null },
+      openHours: parsed.data.openHours ?? [],
+    },
+  });
+
+  revalidatePath(`/dashboard/schools/${room.schoolId}`);
+  redirect(`/dashboard/schools/${room.schoolId}`);
+}
+
 export async function createGroupClassAction(
   _prevState: string | undefined,
   formData: FormData
@@ -160,4 +205,62 @@ export async function createGroupClassAction(
   });
 
   revalidatePath(`/dashboard/schools/${schoolId}`);
+}
+
+export async function updateGroupClassAction(
+  groupClassId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const groupClass = await prisma.groupClass.findFirst({
+    where: { id: groupClassId, teacherId: session.user.id },
+  });
+  if (!groupClass) return "Group class not found";
+
+  const roomId = (formData.get("roomId") as string) || undefined;
+  if (roomId) {
+    const room = await prisma.room.findFirst({ where: { id: roomId, schoolId: groupClass.schoolId } });
+    if (!room) return "Room not found";
+  }
+
+  const subjectId = (formData.get("subjectId") as string) || undefined;
+  if (subjectId) {
+    const subject = await prisma.subject.findFirst({ where: { id: subjectId, teacherId: session.user.id } });
+    if (!subject) return "Subject not found";
+  }
+
+  const parsed = groupClassSchema.safeParse({
+    schoolId: groupClass.schoolId,
+    name: formData.get("name"),
+    discipline: formData.get("discipline"),
+    roomId,
+    subjectId,
+    dayOfWeek: formData.get("dayOfWeek"),
+    startTime: formData.get("startTime"),
+    endTime: formData.get("endTime"),
+  });
+
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Invalid input";
+  }
+
+  await prisma.groupClass.update({
+    where: { id: groupClassId },
+    data: {
+      roomId: parsed.data.roomId ?? null,
+      subjectId: parsed.data.subjectId ?? null,
+      name: parsed.data.name,
+      discipline: parsed.data.discipline,
+      dayOfWeek: parsed.data.dayOfWeek,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime,
+    },
+  });
+
+  revalidatePath(`/dashboard/group-classes/${groupClassId}`);
+  revalidatePath(`/dashboard/schools/${groupClass.schoolId}`);
+  redirect(`/dashboard/group-classes/${groupClassId}`);
 }

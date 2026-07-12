@@ -36,6 +36,7 @@ export default async function StudentOverviewPage({
       ? [{ href: "ledger", label: "Ledger", detail: "Balance & payment history" }]
       : []),
     { href: "resources", label: "Resources", detail: "Shared library" },
+    { href: "extras", label: "Extras", detail: "Instrument hire, sheet music, and the like" },
     { href: "assignments", label: "Assignments", detail: `${openAssignmentCount} to review` },
     { href: "maintenance", label: "Maintenance", detail: "Equipment reminders" },
     { href: "notes", label: "Lesson notes", detail: "What was covered each lesson" },

@@ -107,17 +107,25 @@ export default async function SchoolDetailPage({
             {rooms.map((room) => {
               const features = room.features as { hasPiano?: boolean; hasMirrors?: boolean; floor?: string | null };
               return (
-                <div key={room.id} className="rounded-xl bg-white p-4 shadow-sm">
-                  <p className="text-sm font-medium text-neutral-900">{room.label}</p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {[
-                      features.floor ? `Floor: ${features.floor}` : null,
-                      features.hasPiano ? "Piano" : null,
-                      features.hasMirrors ? "Mirrors" : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "No features noted"}
-                  </p>
+                <div key={room.id} className="flex items-start justify-between rounded-xl bg-white p-4 shadow-sm">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">{room.label}</p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      {[
+                        features.floor ? `Floor: ${features.floor}` : null,
+                        features.hasPiano ? "Piano" : null,
+                        features.hasMirrors ? "Mirrors" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "No features noted"}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/dashboard/schools/${school.id}/rooms/${room.id}`}
+                    className="shrink-0 text-xs text-neutral-500 underline hover:text-neutral-900"
+                  >
+                    Edit
+                  </Link>
                 </div>
               );
             })}

@@ -52,11 +52,21 @@ export default async function StudentDetailPage({
 
   return (
     <div className="max-w-2xl space-y-8">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">{student.name}</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {student.discipline} · {student.source} · {student.school?.name ?? "Home student"}
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/students/${student.id}/edit`}
+          className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+        >
+          Edit
+        </Link>
+      </div>
       <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">{student.name}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {student.discipline} · {student.source} · {student.school?.name ?? "Home student"}
-        </p>
         {student.subjects.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {student.subjects.map((subject) => (

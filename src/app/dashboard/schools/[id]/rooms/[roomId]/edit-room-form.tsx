@@ -1,16 +1,22 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createRoomAction } from "./actions";
-import { OpenHoursEditor, type OpenHoursRow } from "./open-hours-editor";
+import { updateRoomAction } from "../../actions";
+import { OpenHoursEditor, type OpenHoursRow } from "../../open-hours-editor";
 
-export function NewRoomForm({ schoolId }: { schoolId: string }) {
-  const [error, formAction, pending] = useActionState(createRoomAction, undefined);
-  const [openHours, setOpenHours] = useState<OpenHoursRow[]>([]);
+type Room = {
+  id: string;
+  label: string;
+  features: { hasPiano?: boolean; hasMirrors?: boolean; floor?: string | null };
+  openHours: OpenHoursRow[];
+};
+
+export function EditRoomForm({ room }: { room: Room }) {
+  const [error, formAction, pending] = useActionState(updateRoomAction.bind(null, room.id), undefined);
+  const [openHours, setOpenHours] = useState<OpenHoursRow[]>(room.openHours);
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
-      <input type="hidden" name="schoolId" value={schoolId} />
       <input type="hidden" name="openHours" value={JSON.stringify(openHours)} />
 
       <div>
@@ -22,7 +28,7 @@ export function NewRoomForm({ schoolId }: { schoolId: string }) {
           name="label"
           type="text"
           required
-          placeholder="e.g. Music room 2"
+          defaultValue={room.label}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
@@ -35,18 +41,18 @@ export function NewRoomForm({ schoolId }: { schoolId: string }) {
           id="floor"
           name="floor"
           type="text"
-          placeholder="e.g. 1st"
+          defaultValue={room.features.floor ?? ""}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input type="checkbox" name="hasPiano" value="true" />
+          <input type="checkbox" name="hasPiano" value="true" defaultChecked={!!room.features.hasPiano} />
           Has piano
         </label>
         <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input type="checkbox" name="hasMirrors" value="true" />
+          <input type="checkbox" name="hasMirrors" value="true" defaultChecked={!!room.features.hasMirrors} />
           Has mirrors
         </label>
       </div>
@@ -63,7 +69,7 @@ export function NewRoomForm({ schoolId }: { schoolId: string }) {
         disabled={pending}
         className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Add room"}
+        {pending ? "Saving…" : "Save changes"}
       </button>
     </form>
   );

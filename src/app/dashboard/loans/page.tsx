@@ -84,6 +84,7 @@ export default async function LoansPage() {
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 font-medium">Condition</th>
                   <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -94,6 +95,14 @@ export default async function LoansPage() {
                     <td className="px-4 py-3 text-neutral-500">{item.condition ?? "—"}</td>
                     <td className="px-4 py-3 text-neutral-500">
                       {outItemIds.has(item.id) ? "On loan" : "Available"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/dashboard/loans/${item.id}/edit`}
+                        className="text-xs text-neutral-500 underline hover:text-neutral-900"
+                      >
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}

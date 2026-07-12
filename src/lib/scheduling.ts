@@ -111,7 +111,7 @@ export function getSundayOfWeek(date: Date): Date {
   return result;
 }
 
-function getWeekStarts(termStart: Date, termEnd: Date): Date[] {
+export function getWeekStarts(termStart: Date, termEnd: Date): Date[] {
   const starts: Date[] = [];
   const current = getSundayOfWeek(termStart);
 

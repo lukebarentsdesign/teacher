@@ -30,13 +30,17 @@ uvicorn main:app --reload --port 8001
 Then `POST /generate-timetable` with a `TimetableRequest` body (see `models.py`), or
 `GET /health` to check it's up.
 
-## Status: not yet wired into the main app
+## Status: optionally wired into the main app
 
-`src/lib/timetable.ts` in the Next.js app still does its own simpler, one-student-at-a-time
-conflict checking against already-created `Lesson` rows. This service solves for **every**
-student jointly in one pass — that's the actual upgrade integrating it brings, since the
-current TypeScript approach can't guarantee a globally optimal (or even globally conflict-free
-under contention) schedule the way a joint constraint solve can.
+`src/lib/timetable-service-client.ts` calls this service from `previewFluidTimetable`
+(`src/lib/timetable.ts`) when `TIMETABLE_SERVICE_URL` is set, falling back to the app's own
+simpler round-robin on any failure. See CLAUDE.md's "Timetable Service Decisions" for the current
+scope: it's wired in as a single-student call (matching the app's existing one-student-at-a-time
+preview/confirm UX), not the joint multi-student solve this service is actually built for — that
+would need a batch "generate for everyone at once" flow the app doesn't have yet. Post-hoc
+teacher/room double-booking conflict detection against already-created `Lesson` rows still runs
+in the TS app either way, since the solver has no visibility into other students' existing
+lessons.
 
 ## Deployment — needs a decision before this can be tested end-to-end
 

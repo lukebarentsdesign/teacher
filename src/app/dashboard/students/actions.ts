@@ -1,6 +1,8 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { newStudentWizardSchema, type WizardPayer } from "@/lib/validations";
@@ -108,6 +110,55 @@ export async function createStudentWithRelationshipsAction(payload: unknown): Pr
 
   revalidatePath("/dashboard/students");
   return { studentId: newStudentId };
+}
+
+const editStudentSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  dob: z.string().optional(),
+  discipline: z.string().trim().min(1, "Discipline is required"),
+  source: z.enum(["HOME", "SCHOOL_INQUIRY", "COLLEGE"]),
+  schoolId: z.string().optional(),
+});
+
+/** Edits the student's own core fields — separate from payer/subject relationships, which have
+ * their own management UI elsewhere on the detail page. */
+export async function updateStudentAction(
+  studentId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, teacherId: session.user.id },
+  });
+  if (!student) return "Student not found";
+
+  const parsed = editStudentSchema.safeParse({
+    name: formData.get("name"),
+    dob: formData.get("dob") || undefined,
+    discipline: formData.get("discipline"),
+    source: formData.get("source"),
+    schoolId: formData.get("schoolId") || undefined,
+  });
+
+  if (!parsed.success) return parsed.error.issues[0]?.message ?? "Invalid input";
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: {
+      name: parsed.data.name,
+      dob: parsed.data.dob ? new Date(parsed.data.dob) : null,
+      discipline: parsed.data.discipline,
+      source: parsed.data.source,
+      schoolId: parsed.data.schoolId ?? null,
+    },
+  });
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath("/dashboard/students");
+  redirect(`/dashboard/students/${studentId}`);
 }
 
 /** Sets the student's IG Card wallet-pass identifier, used only for CheckIn scan lookups. */

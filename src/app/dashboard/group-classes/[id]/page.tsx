@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
@@ -29,18 +30,26 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
 
   return (
     <div className="max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">{groupClass.name}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {groupClass.discipline} · {groupClass.school.name} · {DAY_LABELS[groupClass.dayOfWeek]}{" "}
-          {groupClass.startTime}–{groupClass.endTime}
-          {groupClass.room ? ` · ${groupClass.room.label}` : ""}
-        </p>
-        {groupClass.subject && (
-          <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
-            {groupClass.subject.name}
-          </span>
-        )}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">{groupClass.name}</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {groupClass.discipline} · {groupClass.school.name} · {DAY_LABELS[groupClass.dayOfWeek]}{" "}
+            {groupClass.startTime}–{groupClass.endTime}
+            {groupClass.room ? ` · ${groupClass.room.label}` : ""}
+          </p>
+          {groupClass.subject && (
+            <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+              {groupClass.subject.name}
+            </span>
+          )}
+        </div>
+        <Link
+          href={`/dashboard/group-classes/${groupClass.id}/edit`}
+          className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+        >
+          Edit
+        </Link>
       </div>
 
       <section>

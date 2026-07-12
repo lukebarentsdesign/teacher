@@ -3,11 +3,13 @@ import {
   filterAvailableSlots,
   generateFixedSchedule,
   generateFluidSchedule,
+  getWeekStarts,
   lessonsOverlap,
   type ScheduledLesson,
   type TimeSlot,
 } from "@/lib/scheduling";
 import { parseAvailability, parseProtectedBlocks } from "@/lib/schedule-json";
+import { solveFluidScheduleViaService } from "@/lib/timetable-service-client";
 
 export async function getAvailableSlotsForLink(teacherSchoolLinkId: string): Promise<TimeSlot[]> {
   const link = await prisma.teacherSchoolLink.findUniqueOrThrow({
@@ -116,6 +118,12 @@ export async function previewFixedTimetable(
   return splitConflicts(teacherId, lessons, roomId);
 }
 
+/**
+ * FLUID mode: tries the OR-Tools joint solver first (see timetable-service-client.ts — it's a
+ * pure optimization upgrade, off by default until TIMETABLE_SERVICE_URL is configured), falling
+ * back to the plain round-robin (generateFluidSchedule) if the service isn't configured, isn't
+ * reachable, or doesn't return a usable result. Either path feeds the same conflict-splitting.
+ */
 export async function previewFluidTimetable(
   teacherId: string,
   termStart: Date,
@@ -123,7 +131,9 @@ export async function previewFluidTimetable(
   candidateSlots: TimeSlot[],
   roomId?: string
 ): Promise<TimetablePreviewResult> {
-  const lessons = generateFluidSchedule(termStart, termEnd, candidateSlots);
+  const weekStarts = getWeekStarts(termStart, termEnd);
+  const solved = await solveFluidScheduleViaService({ teacherId, weekStarts, candidateSlots, roomId });
+  const lessons = solved ?? generateFluidSchedule(termStart, termEnd, candidateSlots);
   return splitConflicts(teacherId, lessons, roomId);
 }
 

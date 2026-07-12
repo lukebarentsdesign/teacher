@@ -32,6 +32,34 @@ export async function createLoanableItemAction(
   redirect("/dashboard/loans");
 }
 
+export async function updateLoanableItemAction(
+  itemId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const item = await prisma.loanableItem.findFirst({ where: { id: itemId, teacherId: session.user.id } });
+  if (!item) return "Item not found";
+
+  const parsed = loanableItemSchema.safeParse({
+    name: formData.get("name"),
+    type: formData.get("type"),
+    condition: formData.get("condition") || undefined,
+    value: formData.get("value") || undefined,
+  });
+
+  if (!parsed.success) {
+    return parsed.error.issues[0]?.message ?? "Invalid input";
+  }
+
+  await prisma.loanableItem.update({ where: { id: itemId }, data: parsed.data });
+
+  revalidatePath("/dashboard/loans");
+  redirect("/dashboard/loans");
+}
+
 export async function checkOutLoanAction(
   _prevState: string | undefined,
   formData: FormData

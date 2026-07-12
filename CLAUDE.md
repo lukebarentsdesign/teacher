@@ -29,7 +29,7 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 | Email | Teacher's own Gmail, via a separate OAuth grant ([src/lib/gmail.ts](src/lib/gmail.ts)) — see below. `Resend` is listed in `package.json`/`.env.example` but has no wrapper or call site anywhere; not actually wired up. |
 | Styling | Tailwind CSS |
 | Calendar UI | FullCalendar (`@fullcalendar/react`) — MIT, see docs/spec.md section 3a |
-| Timetable solver | Google OR-Tools CP-SAT, separate Python service at [timetable-service/](timetable-service/) — not yet wired into the app, see its README |
+| Timetable solver | Google OR-Tools CP-SAT, separate Python service at [timetable-service/](timetable-service/) — now optionally wired in, see "Timetable Service Decisions" below |
 | Hosting | TBD (not yet deployed — local dev only) |
 | Offline (view-only) | `@serwist/next` service worker ([src/app/sw.ts](src/app/sw.ts)), scoped to just `/dashboard/today` — see below |
 
@@ -130,14 +130,47 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **`AddOn` needed a `teacherId` added via migration** ([prisma/migrations/20260712044719_addon_teacher_scope](prisma/migrations/20260712044719_addon_teacher_scope)) — the original schema had no tenancy field on it at all, which would have leaked add-ons across teachers. Also added `archivedAt` (soft-delete, since `AddOnBooking` rows reference an `AddOn` and must survive it being retired from the picker).
 - **Deliberately does not post to the ledger.** The spec frames Add-on explicitly as a way to attach extras "without cluttering the core Subscription/billing model" — `AddOnBooking.priceAtTime` snapshots the price at booking time (same pattern as `ContractAcceptance.contractSnapshot`: a later price edit must never retroactively change an already-booked charge), but collecting payment for it is a manual, out-of-band teacher action, same as `Loan`/`MaintenanceReminder` don't touch the ledger either.
 - **Only attachable from the Lesson detail page, not GroupClass**, even though the schema supports both (`AddOnBooking.groupClassId`). `GroupClass` has no dedicated detail page — it's managed inline on the School detail page — so wiring booking UI there would mean building a whole new route for a spec feature ("visibility: PUBLIC | PRIVATE") that has no consumer yet anyway. Revisit if/when GroupClass gets its own detail page.
-- **`visibility` (PUBLIC/PRIVATE) is stored but not yet read anywhere** — no microsite surface shows Add-ons to guardians yet, so it's currently inert metadata for a future microsite view, not a working access control.
+- **`visibility` (PUBLIC/PRIVATE) is now read** — a new microsite tab, [src/app/parent/students/[studentId]/extras/](src/app/parent/students/[studentId]/extras/) ("Extras"), lists a student's booked add-ons, filtered to `visibility: PUBLIC` only. This is the one and only place the field is read; `PRIVATE` add-ons (teacher-use-only extras) never reach a guardian/student view. Not gated behind `canSeeLedger` like the Ledger tab is — it's what was booked, not balance/payment data.
+
+## Timetable Service Decisions
+
+- **Now optionally wired in** ([src/lib/timetable-service-client.ts](src/lib/timetable-service-client.ts)) — `previewFluidTimetable` (`src/lib/timetable.ts`) tries the OR-Tools service first when `TIMETABLE_SERVICE_URL` is set, falling back to the existing round-robin (`generateFluidSchedule` in `scheduling.ts`) on any failure: unset URL, network error, timeout, non-2xx, or a non-OPTIMAL/FEASIBLE solver status. The service is purely additive — nothing breaks or behaves differently for a teacher who never deploys it.
+- **Single-student calls, not the joint multi-student solve the service is designed for.** The existing FLUID-mode UX previews and confirms one student at a time (`/dashboard/timetable/preview`), so the client sends a `students` array of length 1. The service's real value — solving every student jointly so slot contention gets resolved optimally in one pass — isn't realized this way; a batch "generate for every unscheduled student at once" flow would be needed for that, which is a bigger UX change than this pass made. What this integration *does* deliver even for one student: the service's own fairness objective (even usage across candidate slots, anti-repeat penalty) via real CP-SAT optimization instead of the naive `slot[weekIndex % N]` modulo rotation.
+- **Existing teacher/room double-booking conflict detection (`splitConflicts` in `timetable.ts`) still runs afterward regardless of which path produced the lessons** — the solver only knows about the one student's own hard constraints (no self-overlap, candidate-slot-only placement); it has no visibility into other students' already-created `Lesson` rows, so the post-hoc DB conflict check remains required either way.
+- **Still not deployed anywhere** — the "Status: not yet wired into the main app" line in the service's own README no longer describes the code (fixed there too), but the "Deployment — needs a decision" section is still accurate: this only activates once `TIMETABLE_SERVICE_URL` points at a real running instance.
 
 ## Subject Decisions (beyond the original v1 spec)
 
 - **`Subject` is new, teacher-defined, many-to-many with `Student`** ([prisma/migrations/20260712045620_add_subjects](prisma/migrations/20260712045620_add_subjects)) — a teacher builds their own list (Flute, Sax, Piano / Yoga, Gymnastics) under [src/app/dashboard/subjects/](src/app/dashboard/subjects/), then tags each student with as many as apply from the student detail page's "Subjects taught" section.
 - **Additive to `Student.discipline`, not a replacement.** The original free-text `discipline` field is single-valued and used throughout the app (student wizard validation, `Today`/microsite display, private-tuition-request payload, GroupClass's own separate free-text `discipline`) — replacing it would have meant touching every one of those call sites for a feature that only asked for multi-subject tagging. `Subject` is a second, optional, multi-valued layer on top.
 - **Grouping lives on the Students list** ([src/app/dashboard/students/page.tsx](src/app/dashboard/students/page.tsx)): default view groups all students by subject (a student with 2+ subjects appears in every group they belong to; untagged students get their own group), or a subject chip filters to just that one. This is where "group students — and by extension the lessons they need — by subject" is surfaced; there's no separate lesson-grouping view, since a lesson's subject is really its student's subject.
-- **Now also wired into GroupClass** (`GroupClass.subjectId`, optional, `onDelete: SetNull`) — this line previously said GroupClass had no detail page to add a picker to, which was wrong; [src/app/dashboard/group-classes/[id]/page.tsx](src/app/dashboard/group-classes/[id]/page.tsx) already existed (reachable from a school's Group classes list, just not linked from the sidebar until now). `GroupClass.discipline` stays as its own free-text field for the same additive reasoning as `Student.discipline` above — a class's subject tag is optional and separate. Picked when creating the class ([src/app/dashboard/schools/[id]/new-group-class-form.tsx](src/app/dashboard/schools/[id]/new-group-class-form.tsx)); there's no edit-after-create UI for it yet, same gap as most of this form's other fields. A new top-level [src/app/dashboard/group-classes/page.tsx](src/app/dashboard/group-classes/page.tsx) list (now in the sidebar) mirrors the Students page's grouped/filtered-by-subject view.
+- **Now also wired into GroupClass** (`GroupClass.subjectId`, optional, `onDelete: SetNull`) — this line previously said GroupClass had no detail page to add a picker to, which was wrong; [src/app/dashboard/group-classes/[id]/page.tsx](src/app/dashboard/group-classes/[id]/page.tsx) already existed (reachable from a school's Group classes list, just not linked from the sidebar until now). `GroupClass.discipline` stays as its own free-text field for the same additive reasoning as `Student.discipline` above — a class's subject tag is optional and separate. Picked when creating the class ([src/app/dashboard/schools/[id]/new-group-class-form.tsx](src/app/dashboard/schools/[id]/new-group-class-form.tsx)) or later via [src/app/dashboard/group-classes/[id]/edit/](src/app/dashboard/group-classes/[id]/edit/). A new top-level [src/app/dashboard/group-classes/page.tsx](src/app/dashboard/group-classes/page.tsx) list (now in the sidebar) mirrors the Students page's grouped/filtered-by-subject view.
+
+## Edit Forms (beyond the original v1 spec)
+
+Create-only screens for several entities went unnoticed until asked for directly. Added, all
+following the same pattern (a `use client` form + `useActionState`-bound update action, ownership
+re-checked server-side, ends in `redirect` back to the detail/list page it edits):
+
+- **School** ([src/app/dashboard/schools/[id]/edit/](src/app/dashboard/schools/[id]/edit/)) — gated
+  on `TeacherSchoolLink`, not `teacherId` (School has none — shared reference data). Covers every
+  field the create form does plus `logoUrl`/`secondaryColor`, which the create form never exposed.
+- **Payer** ([src/app/dashboard/payers/[id]/edit/](src/app/dashboard/payers/[id]/edit/)) —
+  deliberately scoped to `payerSchema`'s fields (name/email/phone/contactPref/notes) only.
+  `isSelf`/`isEmergencyContactOnly` are structural flags the wizard sets with validation (e.g.
+  `isSelf` implies the payer is an 18+ self-paying student) that don't belong on a freeform edit
+  form — changing them needs the same judgment the wizard applies, not a raw toggle.
+- **Room** ([src/app/dashboard/schools/[id]/rooms/[roomId]/](src/app/dashboard/schools/[id]/rooms/[roomId]/))
+  — `OpenHoursEditor` was pulled out of `new-room-form.tsx` into a shared
+  [open-hours-editor.tsx](src/app/dashboard/schools/[id]/open-hours-editor.tsx) so create and edit
+  don't duplicate it.
+- **GroupClass** ([src/app/dashboard/group-classes/[id]/edit/](src/app/dashboard/group-classes/[id]/edit/))
+  — same fields as create, including the `Subject` picker.
+- **LoanableItem** ([src/app/dashboard/loans/[itemId]/edit/](src/app/dashboard/loans/[itemId]/edit/)).
+- **Student** ([src/app/dashboard/students/[id]/edit/](src/app/dashboard/students/[id]/edit/)) —
+  scoped to the student's own core fields (name/dob/discipline/source/schoolId). Payer
+  relationships, subject tags, and IG Card ID already had their own dedicated management UI
+  elsewhere on the detail page and weren't duplicated here.
 
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
