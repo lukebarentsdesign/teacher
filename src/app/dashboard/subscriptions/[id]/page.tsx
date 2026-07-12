@@ -39,13 +39,21 @@ export default async function SubscriptionDetailPage({
 
   return (
     <div className="max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">
-          {subscription.student.name} — subscription
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Payer: {subscription.payer.name} · {subscription.billingModel} · {subscription.status}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">
+            {subscription.student.name} — subscription
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Payer: {subscription.payer.name} · {subscription.billingModel} · {subscription.status}
+          </p>
+        </div>
+        <a
+          href={`/api/subscriptions/${subscription.id}/invoice`}
+          className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+        >
+          Download invoice
+        </a>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

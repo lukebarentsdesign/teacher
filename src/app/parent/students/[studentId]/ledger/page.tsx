@@ -42,6 +42,12 @@ export default async function StudentLedgerPage({
 
           return (
             <div key={subscription.id} className="space-y-4">
+              <a
+                href={`/api/subscriptions/${subscription.id}/invoice`}
+                className="inline-block rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+              >
+                Download invoice PDF
+              </a>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl bg-white p-6 shadow-sm">
                   <p className="text-sm text-neutral-500">Balance</p>

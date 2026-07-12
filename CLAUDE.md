@@ -281,6 +281,12 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **The overdue-checkout alert is a lazy, request-triggered sweep, not a real scheduled job** — `checkAndSendLoneWorkerAlerts` (`src/lib/lone-worker.ts`, pure `isOverdue` unit-tested separately) runs on every `GET /api/today` call, i.e. whenever a teacher has the Today page open (the page they'd realistically have open while out teaching). This is a best-effort heuristic, explicitly not a guaranteed real-time alert — same honest "no cron infra in this app" framing as `AccountingExport` and the certification-expiry badges. If a teacher never reopens the app after a lesson, no alert fires; documented as the known limitation rather than glossed over.
 - **`Teacher.emergencyContact*` is a separate contact from anything guardian-facing** — edited under Billing settings, never surfaced to a `/parent` view. The alert email reuses `sendEmailAsTeacher` (the same Gmail-send infra as everything else), so it silently no-ops if Gmail isn't connected or no emergency email is set — the Lesson detail page surfaces a warning callout in that case rather than failing silently with no explanation.
 
+## Invoice PDF Generation (roadmap v2 Part 8a)
+
+- **A document layer only, rendered directly from `LedgerEntry`** — no new billing entity. `GET /api/subscriptions/[id]/invoice` (optional `?from=&to=`) is available to either the owning teacher or the subscription's own payer on the microsite, same dual-audience auth pattern as the `.ics` lesson export.
+- **`src/lib/invoice-pdf.ts` deliberately doesn't share code with `contract-pdf.ts`**, despite both using `pdf-lib` — a tabular ledger statement and a flowing contract-text document differ enough in layout that a shared abstraction would cost more than it saves. Both independently reimplement the same basic "measure width, wrap, paginate" primitives, which is fine at this size.
+- **Unsigned, informational only** — same as the contract PDF, this has zero bearing on any actual payment/billing state; it's a formatted view of data that already exists, for a payer who wants paperwork (reimbursement, their own tax return, a school reconciling its books).
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH
