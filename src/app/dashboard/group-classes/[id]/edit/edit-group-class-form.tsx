@@ -25,6 +25,7 @@ export function EditGroupClassForm({
   endTime,
   roomId,
   subjectId,
+  capacity,
   rooms,
   subjects,
 }: {
@@ -36,6 +37,7 @@ export function EditGroupClassForm({
   endTime: string;
   roomId: string | null;
   subjectId: string | null;
+  capacity: number | null;
   rooms: Room[];
   subjects: Subject[];
 }) {
@@ -140,6 +142,24 @@ export function EditGroupClassForm({
           </select>
         </div>
       )}
+
+      <div>
+        <label htmlFor="capacity" className="block text-sm font-medium text-neutral-700">
+          Capacity (optional)
+        </label>
+        <input
+          id="capacity"
+          name="capacity"
+          type="number"
+          min={1}
+          defaultValue={capacity ?? ""}
+          placeholder="Unlimited"
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-neutral-400">
+          Once a session date hits this many confirmed bookings, further self-service bookings are waitlisted.
+        </p>
+      </div>
 
       {subjects.length > 0 && (
         <div>

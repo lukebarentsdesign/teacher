@@ -126,6 +126,23 @@ export function NewGroupClassForm({
         </div>
       )}
 
+      <div>
+        <label htmlFor="capacity" className="block text-sm font-medium text-neutral-700">
+          Capacity (optional)
+        </label>
+        <input
+          id="capacity"
+          name="capacity"
+          type="number"
+          min={1}
+          placeholder="Unlimited"
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-neutral-400">
+          Once a session date hits this many confirmed bookings, further self-service bookings are waitlisted.
+        </p>
+      </div>
+
       {subjects.length > 0 && (
         <div>
           <label htmlFor="subjectId" className="block text-sm font-medium text-neutral-700">

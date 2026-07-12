@@ -185,6 +185,7 @@ export async function createGroupClassAction(
     dayOfWeek: formData.get("dayOfWeek"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
+    capacity: formData.get("capacity") || undefined,
   });
 
   if (!parsed.success) {
@@ -202,6 +203,7 @@ export async function createGroupClassAction(
       dayOfWeek: parsed.data.dayOfWeek,
       startTime: parsed.data.startTime,
       endTime: parsed.data.endTime,
+      capacity: parsed.data.capacity ?? null,
     },
   });
 
@@ -242,6 +244,7 @@ export async function updateGroupClassAction(
     dayOfWeek: formData.get("dayOfWeek"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
+    capacity: formData.get("capacity") || undefined,
   });
 
   if (!parsed.success) {
@@ -258,6 +261,7 @@ export async function updateGroupClassAction(
       dayOfWeek: parsed.data.dayOfWeek,
       startTime: parsed.data.startTime,
       endTime: parsed.data.endTime,
+      capacity: parsed.data.capacity ?? null,
     },
   });
 

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { AddMemberForm } from "./add-member-form";
 import { RemoveMemberButton } from "./remove-member-button";
 import { GroupClassSessionPlanPanel } from "../../session-plans/group-class-session-plan-panel";
+import { SessionBookingsPanel } from "./session-bookings-panel";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -33,6 +34,19 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
   const sessionPlanTemplates = await prisma.sessionPlanTemplate.findMany({
     where: { teacherId: session!.user.id },
     orderBy: { title: "asc" },
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bookableStudents = await prisma.student.findMany({
+    where: { teacherId: session!.user.id, status: "ACTIVE" },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  const upcomingBookings = await prisma.groupSessionBooking.findMany({
+    where: { groupClassId: groupClass.id, sessionDate: { gte: today }, status: { not: "CANCELLED" } },
+    include: { student: true },
+    orderBy: { sessionDate: "asc" },
   });
 
   return (
@@ -108,6 +122,26 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
             createdAt: p.createdAt.toISOString(),
           }))}
           templates={sessionPlanTemplates}
+        />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Session bookings</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          Self-service booking into a specific dated occurrence of this recurring class — distinct
+          from standing membership above.
+        </p>
+        <SessionBookingsPanel
+          groupClassId={groupClass.id}
+          capacity={groupClass.capacity}
+          bookings={upcomingBookings.map((b) => ({
+            id: b.id,
+            studentId: b.studentId,
+            studentName: b.student.name,
+            sessionDate: b.sessionDate.toISOString().slice(0, 10),
+            status: b.status,
+          }))}
+          students={bookableStudents}
         />
       </section>
     </div>

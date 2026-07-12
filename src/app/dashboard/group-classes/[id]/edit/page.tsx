@@ -38,6 +38,7 @@ export default async function EditGroupClassPage({ params }: { params: Promise<{
         endTime={groupClass.endTime}
         roomId={groupClass.roomId}
         subjectId={groupClass.subjectId}
+        capacity={groupClass.capacity}
         rooms={rooms}
         subjects={subjects}
       />

@@ -139,6 +139,12 @@ enum ContactPref {
   EMAIL
 }
 
+enum GroupBookingStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
 enum StudentCurriculumStatus {
   ACTIVE
   COMPLETED
@@ -506,6 +512,7 @@ model Student {
   /// than one subject (e.g. Piano + Music Theory) and be grouped/filtered by any of them.
   subjects          Subject[]
   curricula         StudentCurriculum[]
+  groupSessionBookings GroupSessionBooking[]
 
   @@index([teacherId])
 }
@@ -834,6 +841,12 @@ model GroupClass {
   startTime String // "HH:mm"
   endTime   String // "HH:mm"
 
+  /// Null = unlimited. When set, self-service bookings (GroupSessionBooking) beyond this many
+  /// CONFIRMED per session date are WAITLISTED instead, promoted automatically as spots free up.
+  /// Standing GroupClassMember rows are not counted against this — capacity governs per-session
+  /// bookings, not the class's overall roster.
+  capacity Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -844,10 +857,30 @@ model GroupClass {
   members       GroupClassMember[]
   checkIns      CheckIn[]
   addOnBookings AddOnBooking[]
+  bookings      GroupSessionBooking[]
   /// GroupClass has no dated per-occurrence row (see CheckIn's "attendance-only, no dated
   /// instance to bill" note elsewhere) — so unlike Lesson's one-to-one SessionPlan, a recurring
   /// class can accumulate several over time. The most recently created one is treated as "current".
   sessionPlans  SessionPlan[]
+}
+
+/// A booking into one specific dated occurrence of a recurring GroupClass — distinct from
+/// GroupClassMember's standing membership (which has no notion of a single date). Since GroupClass
+/// itself has no dated per-occurrence row, sessionDate is the booking's own record of which
+/// occurrence it's for.
+model GroupSessionBooking {
+  id           String              @id @default(cuid())
+  groupClassId String
+  studentId    String
+  sessionDate  DateTime            @db.Date
+  status       GroupBookingStatus  @default(CONFIRMED)
+  bookedAt     DateTime            @default(now())
+
+  groupClass GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupClassId, studentId, sessionDate])
+  @@index([groupClassId, sessionDate])
 }
 
 /// Each member keeps their own independent Subscription/Ledger even though they share a timeslot.
