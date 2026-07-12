@@ -14,7 +14,17 @@ const DAY_OPTIONS = [
   { value: 6, label: "Saturday" },
 ];
 
-export function NewGroupClassForm({ schoolId, rooms }: { schoolId: string; rooms: Room[] }) {
+type Subject = { id: string; name: string };
+
+export function NewGroupClassForm({
+  schoolId,
+  rooms,
+  subjects,
+}: {
+  schoolId: string;
+  rooms: Room[];
+  subjects: Subject[];
+}) {
   const [error, formAction, pending] = useActionState(createGroupClassAction, undefined);
 
   return (
@@ -113,6 +123,30 @@ export function NewGroupClassForm({ schoolId, rooms }: { schoolId: string; rooms
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {subjects.length > 0 && (
+        <div>
+          <label htmlFor="subjectId" className="block text-sm font-medium text-neutral-700">
+            Subject (optional)
+          </label>
+          <select
+            id="subjectId"
+            name="subjectId"
+            defaultValue=""
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          >
+            <option value="">No subject tag</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-neutral-400">
+            Links this class into the same subject grouping used for students.
+          </p>
         </div>
       )}
 

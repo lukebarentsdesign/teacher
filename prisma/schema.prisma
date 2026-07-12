@@ -327,8 +327,9 @@ model Subject {
   name      String
   createdAt DateTime @default(now())
 
-  teacher  Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  students Student[]
+  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  students    Student[]
+  groupClasses GroupClass[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -625,6 +626,11 @@ model GroupClass {
   roomId     String?
   name       String
   discipline String
+  /// Optional link into the teacher-defined Subject list (same one Student tags draw from), so a
+  /// group class can be grouped/filtered alongside the students who share that subject. Additive
+  /// to `discipline` above for the same reason Student kept its own free-text field — see
+  /// "Subject Decisions" in CLAUDE.md.
+  subjectId  String?
 
   dayOfWeek Int // 0-6, recurs weekly
   startTime String // "HH:mm"
@@ -636,6 +642,7 @@ model GroupClass {
   teacher       Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   room          Room?              @relation(fields: [roomId], references: [id])
+  subject       Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   members       GroupClassMember[]
   checkIns      CheckIn[]
   addOnBookings AddOnBooking[]

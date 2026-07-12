@@ -15,6 +15,7 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
     include: {
       school: true,
       room: true,
+      subject: true,
       members: { where: { leftAt: null }, include: { student: true }, orderBy: { joinedAt: "asc" } },
     },
   });
@@ -35,6 +36,11 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
           {groupClass.startTime}–{groupClass.endTime}
           {groupClass.room ? ` · ${groupClass.room.label}` : ""}
         </p>
+        {groupClass.subject && (
+          <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+            {groupClass.subject.name}
+          </span>
+        )}
       </div>
 
       <section>

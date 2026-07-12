@@ -124,11 +124,18 @@ export async function createGroupClassAction(
     if (!room) return "Room not found";
   }
 
+  const subjectId = (formData.get("subjectId") as string) || undefined;
+  if (subjectId) {
+    const subject = await prisma.subject.findFirst({ where: { id: subjectId, teacherId: session.user.id } });
+    if (!subject) return "Subject not found";
+  }
+
   const parsed = groupClassSchema.safeParse({
     schoolId,
     name: formData.get("name"),
     discipline: formData.get("discipline"),
     roomId,
+    subjectId,
     dayOfWeek: formData.get("dayOfWeek"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
@@ -143,6 +150,7 @@ export async function createGroupClassAction(
       teacherId: session.user.id,
       schoolId: parsed.data.schoolId,
       roomId: parsed.data.roomId,
+      subjectId: parsed.data.subjectId,
       name: parsed.data.name,
       discipline: parsed.data.discipline,
       dayOfWeek: parsed.data.dayOfWeek,

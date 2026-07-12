@@ -87,6 +87,7 @@ export const groupClassSchema = z.object({
   name: z.string().min(1, "Name is required"),
   discipline: z.string().min(1, "Discipline is required"),
   roomId: z.string().optional(),
+  subjectId: z.string().optional(),
   dayOfWeek: z.coerce.number().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm"),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:mm"),
