@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewLessonTypeForm } from "./new-lesson-type-form";
@@ -49,7 +50,11 @@ export default async function LessonTypesPage() {
             <tbody>
               {lessonTypes.map((lt) => (
                 <tr key={lt.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="px-4 py-3 text-neutral-900">{lt.name}</td>
+                  <td className="px-4 py-3 text-neutral-900">
+                    <Link href={`/dashboard/lesson-types/${lt.id}`} className="hover:underline">
+                      {lt.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-neutral-500">{lt.defaultDurationMinutes} min</td>
                   <td className="px-4 py-3 text-neutral-500">£{lt.defaultFee.toString()}</td>
                   <td className="px-4 py-3 text-neutral-500">

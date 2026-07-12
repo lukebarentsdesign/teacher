@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, GraduationCap, Wallet, Building2 } from "lucide-react";
+import { Search, GraduationCap, Wallet, Building2, ListMusic } from "lucide-react";
 import type { SearchResults } from "@/app/api/search/route";
 
-const EMPTY: SearchResults = { students: [], payers: [], locations: [] };
+const EMPTY: SearchResults = { students: [], payers: [], locations: [], lessonTypes: [] };
 
 export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
@@ -46,7 +46,10 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   const hasResults =
-    results.students.length > 0 || results.payers.length > 0 || results.locations.length > 0;
+    results.students.length > 0 ||
+    results.payers.length > 0 ||
+    results.locations.length > 0 ||
+    results.lessonTypes.length > 0;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xs">
@@ -106,6 +109,19 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
                   <span className="text-neutral-900">{sc.name}</span>
                   <span className="ml-2 text-xs text-neutral-400">
                     {sc.enrolledCount} enrolled
+                  </span>
+                </ResultRow>
+              ))}
+            </Group>
+          )}
+
+          {results.lessonTypes.length > 0 && (
+            <Group icon={<ListMusic className="h-3.5 w-3.5" />} label="Lesson types">
+              {results.lessonTypes.map((lt) => (
+                <ResultRow key={lt.id} onClick={() => go(`/dashboard/lesson-types/${lt.id}`)}>
+                  <span className="text-neutral-900">{lt.name}</span>
+                  <span className="ml-2 text-xs text-neutral-400">
+                    {lt.locationNames.length > 0 ? lt.locationNames.join(", ") : "Offered everywhere"}
                   </span>
                 </ResultRow>
               ))}

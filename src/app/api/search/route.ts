@@ -7,6 +7,7 @@ export type SearchResults = {
   students: { id: string; name: string; age: number | null; location: string | null; payers: string[] }[];
   payers: { id: string; name: string; phone: string | null; pupils: string[]; isEmergencyContactOnly: boolean }[];
   locations: { id: string; name: string; enrolledCount: number }[];
+  lessonTypes: { id: string; name: string; locationNames: string[] }[];
 };
 
 /**
@@ -25,12 +26,12 @@ export async function GET(request: Request) {
   const scope = searchParams.get("scope");
 
   if (q.length < 2) {
-    return NextResponse.json({ students: [], payers: [], locations: [] } satisfies SearchResults);
+    return NextResponse.json({ students: [], payers: [], locations: [], lessonTypes: [] } satisfies SearchResults);
   }
 
   const insensitive = { contains: q, mode: "insensitive" as const };
 
-  const [students, payers, locations] = await Promise.all([
+  const [students, payers, locations, lessonTypes] = await Promise.all([
     scope === "payers"
       ? Promise.resolve([])
       : prisma.student.findMany({
@@ -56,6 +57,14 @@ export async function GET(request: Request) {
           orderBy: { name: "asc" },
           take: 8,
         }),
+    scope === "payers"
+      ? Promise.resolve([])
+      : prisma.lessonType.findMany({
+          where: { teacherId, name: insensitive },
+          include: { locations: true },
+          orderBy: { name: "asc" },
+          take: 8,
+        }),
   ]);
 
   const results: SearchResults = {
@@ -74,6 +83,11 @@ export async function GET(request: Request) {
       isEmergencyContactOnly: p.isEmergencyContactOnly,
     })),
     locations: locations.map((sc) => ({ id: sc.id, name: sc.name, enrolledCount: sc._count.students })),
+    lessonTypes: lessonTypes.map((lt) => ({
+      id: lt.id,
+      name: lt.name,
+      locationNames: lt.locations.map((l) => l.name),
+    })),
   };
 
   return NextResponse.json(results);
