@@ -8,6 +8,7 @@ import { NewRoomForm } from "./new-room-form";
 import { NewGroupClassForm } from "./new-group-class-form";
 import { VenueFeeArrangements } from "./venue-fee-arrangements";
 import { DisplayLink } from "./display-link";
+import { CancellationPolicyForm } from "../../cancellation-policy/cancellation-policy-form";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -60,6 +61,8 @@ export default async function LocationDetailPage({
     where: { teacherId: session?.user?.id, locations: { some: { id } } },
     orderBy: { name: "asc" },
   });
+
+  const cancellationPolicy = await prisma.cancellationPolicy.findUnique({ where: { locationId: id } });
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -249,6 +252,27 @@ export default async function LocationDetailPage({
             billingMode: a.billingMode,
             notes: a.notes,
           }))}
+        />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Cancellation policy</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          Overrides your account-wide default (set under Billing) for lessons at this location only.
+        </p>
+        <CancellationPolicyForm
+          locationId={location.id}
+          policy={
+            cancellationPolicy
+              ? {
+                  id: cancellationPolicy.id,
+                  noticeHoursRequired: cancellationPolicy.noticeHoursRequired,
+                  lateCancelAction: cancellationPolicy.lateCancelAction,
+                  noShowAction: cancellationPolicy.noShowAction,
+                  partialChargePercent: cancellationPolicy.partialChargePercent,
+                }
+              : null
+          }
         />
       </section>
 

@@ -79,6 +79,17 @@ enum LedgerReason {
   MAKE_UP_CREDIT_ISSUED
   MAKE_UP_CREDIT_REDEEMED
   VENUE_FEE_ITEMISED
+  LATE_CANCELLATION_CHARGE
+}
+
+/// What happens when a lesson is cancelled/no-showed, governed by a CancellationPolicy. CREDIT is
+/// the app's original (and still the no-policy-configured default) behavior: bank a make-up
+/// lesson, no cash impact. The other three are new — see src/lib/cancellation-policy.ts.
+enum CancellationAction {
+  FULL_CHARGE
+  PARTIAL_CHARGE
+  CREDIT
+  FORFEIT
 }
 
 enum VenueFeeType {
@@ -234,6 +245,7 @@ model Teacher {
   sessionPlanTemplates    SessionPlanTemplate[]
   certifications          InstructorCertification[]
   incidentLogs            IncidentLog[]
+  cancellationPolicies    CancellationPolicy[]
 }
 
 model TeachingLocation {
@@ -285,6 +297,7 @@ model TeachingLocation {
   venueFeeArrangements VenueFeeArrangement[]
   lessonTypePricing    LessonTypeLocationPricing[]
   termCalendar   TermCalendar? @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
+  cancellationPolicy CancellationPolicy?
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -1210,6 +1223,29 @@ model IncidentLog {
 
   @@index([teacherId, date])
   @@index([studentId])
+}
+
+/// Configures the existing "Absent, make-up owed" attendance action (previously always free — see
+/// CLAUDE.md's Ledger Engine Decisions) to instead charge based on how much notice was given.
+/// Scoped to a TeachingLocation (specific override) or bare (teacher-wide default) — never both;
+/// resolution in src/lib/cancellation-policy.ts prefers a location-scoped policy when one exists.
+/// No policy configured at all = the original always-free CREDIT behavior, unchanged.
+model CancellationPolicy {
+  id                  String              @id @default(cuid())
+  teacherId           String
+  locationId          String?             @unique
+  noticeHoursRequired Int
+  lateCancelAction    CancellationAction
+  noShowAction        CancellationAction
+  /// Only meaningful when either action above is PARTIAL_CHARGE.
+  partialChargePercent Int?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  teacher  Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
 }
 
 /// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain

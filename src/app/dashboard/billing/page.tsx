@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { startCheckoutAction, openBillingPortalAction, disconnectGmailAction } from "./actions";
 import { BrandSettingsForm } from "./brand-settings-form";
+import { CancellationPolicyForm } from "../cancellation-policy/cancellation-policy-form";
 
 const STATUS_COPY: Record<string, string> = {
   TRIALING: "You're on a trial — full access, nothing charged yet.",
@@ -19,6 +20,9 @@ export default async function BillingPage({
   const session = await auth();
 
   const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session!.user.id } });
+  const defaultCancellationPolicy = await prisma.cancellationPolicy.findFirst({
+    where: { teacherId: session!.user.id, locationId: null },
+  });
 
   return (
     <div className="max-w-lg space-y-6">
@@ -110,6 +114,28 @@ export default async function BillingPage({
         <BrandSettingsForm
           personalBrandColor={teacher.personalBrandColor}
           autoApplyCreditToNextPayment={teacher.autoApplyCreditToNextPayment}
+        />
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Cancellation policy</h2>
+        <p className="mb-3 text-sm text-neutral-500">
+          Your default policy for late cancellations/no-shows, applied to every teaching location
+          unless it has its own override. Leave unset and it stays free, as before.
+        </p>
+        <CancellationPolicyForm
+          locationId={null}
+          policy={
+            defaultCancellationPolicy
+              ? {
+                  id: defaultCancellationPolicy.id,
+                  noticeHoursRequired: defaultCancellationPolicy.noticeHoursRequired,
+                  lateCancelAction: defaultCancellationPolicy.lateCancelAction,
+                  noShowAction: defaultCancellationPolicy.noShowAction,
+                  partialChargePercent: defaultCancellationPolicy.partialChargePercent,
+                }
+              : null
+          }
         />
       </div>
     </div>

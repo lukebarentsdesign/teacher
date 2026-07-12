@@ -25,13 +25,21 @@ export function AttendanceButtons({ lessonId }: { lessonId: string }) {
             {presentPending ? "Saving…" : "Present ($)"}
           </button>
         </form>
-        <form action={absentAction} className="flex items-center gap-2">
+        <form action={absentAction} className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             name="noShowReason"
             placeholder="Reason (optional)"
             className="rounded-lg border border-neutral-300 px-2 py-2 text-sm focus:border-neutral-500 focus:outline-none"
           />
+          <label className="flex items-center gap-1 text-xs text-neutral-500">
+            Informed
+            <input
+              type="datetime-local"
+              name="informedAt"
+              className="rounded-lg border border-neutral-300 px-2 py-1.5 text-xs focus:border-neutral-500 focus:outline-none"
+            />
+          </label>
           <button
             type="submit"
             disabled={absentPending}

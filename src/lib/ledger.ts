@@ -17,6 +17,7 @@ const CASH_BALANCE_REASONS: readonly LedgerReason[] = [
   "LESSON_DELIVERED",
   "CANCELLATION_ADJUSTMENT",
   "MANUAL_CORRECTION",
+  "LATE_CANCELLATION_CHARGE",
 ];
 
 /** Cash running balance = sum(CREDIT) - sum(DEBIT) over cash-affecting entries only. */
@@ -169,6 +170,17 @@ export async function deriveLessonValue(
       return count > 0 ? rate / count : rate;
     }
   }
+}
+
+/**
+ * FULL_CHARGE/PARTIAL_CHARGE outcome of a CancellationPolicy (src/lib/cancellation-policy.ts) —
+ * charges some fraction of the lesson's value for a late cancellation/no-show instead of banking
+ * a free make-up credit. Distinct LedgerReason from LESSON_DELIVERED since no lesson happened.
+ */
+export async function postLateCancellationCharge(subscriptionId: string, amount: number, note?: string) {
+  return prisma.ledgerEntry.create({
+    data: { subscriptionId, amount, operation: "DEBIT", reason: "LATE_CANCELLATION_CHARGE", note },
+  });
 }
 
 /** "Absent, make-up owed" attendance path — banks a make-up lesson, no cash impact. */

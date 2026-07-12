@@ -50,8 +50,10 @@ export default async function LessonDetailPage({
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Attendance</h2>
         <p className="mb-3 text-xs text-neutral-500">
-          &quot;Present&quot; posts a billed lesson entry; &quot;Absent, make-up owed&quot; banks a
-          make-up credit with no cash impact.
+          &quot;Present&quot; posts a billed lesson entry. &quot;Absent&quot; is free (a banked
+          make-up credit, no cash impact) unless a cancellation policy applies — set the
+          &quot;Informed&quot; time to when the guardian actually told you (leave blank for a
+          same-time no-show) so notice is calculated correctly.
         </p>
         <AttendanceButtons lessonId={lesson.id} />
       </section>

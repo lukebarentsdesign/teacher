@@ -10,7 +10,9 @@ import {
   postMakeUpCreditIssued,
   postMakeUpCreditRedeemed,
   postVenueFeeIfItemised,
+  postLateCancellationCharge,
 } from "@/lib/ledger";
+import { resolveCancellationOutcome } from "@/lib/cancellation-policy";
 
 const noteSchema = z.object({
   lessonId: z.string().min(1),
@@ -151,6 +153,18 @@ export async function removeAddOnBookingAction(lessonId: string, bookingId: stri
   revalidatePath(`/dashboard/lessons/${lessonId}`);
 }
 
+/**
+ * Resolves the CancellationPolicy that applies to a lesson — a location-scoped policy overrides
+ * the teacher's own bare (locationId: null) default, matching TermCalendar's "assignment, not
+ * merge" pattern elsewhere in this app. No policy at either level = null, meaning the caller falls
+ * back to the original always-free behavior.
+ */
+async function resolveApplicablePolicy(teacherId: string, locationId: string) {
+  const locationPolicy = await prisma.cancellationPolicy.findUnique({ where: { locationId } });
+  if (locationPolicy) return locationPolicy;
+  return prisma.cancellationPolicy.findFirst({ where: { teacherId, locationId: null } });
+}
+
 export async function markAbsentMakeUpAction(
   lessonId: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState's required signature
@@ -165,6 +179,7 @@ export async function markAbsentMakeUpAction(
   if (!lesson.subscriptionId) {
     return "This lesson has no subscription attached — nothing to bank a make-up credit against.";
   }
+  if (lesson.noShowConfirmed) return "Attendance already marked for this lesson.";
 
   const alreadyMarked = await prisma.ledgerEntry.findFirst({
     where: { subscriptionId: lesson.subscriptionId, note: attendanceNoteTag(lessonId) },
@@ -172,16 +187,33 @@ export async function markAbsentMakeUpAction(
   if (alreadyMarked) return "Attendance already marked for this lesson.";
 
   const noShowReason = (formData.get("noShowReason") as string) || null;
+  const informedAtRaw = formData.get("informedAt") as string;
+  const informedAt = informedAtRaw ? new Date(informedAtRaw) : new Date();
 
-  await postMakeUpCreditIssued(lesson.subscriptionId, attendanceNoteTag(lessonId));
+  const policy = await resolveApplicablePolicy(session.user.id, lesson.locationId);
+  const outcome = resolveCancellationOutcome(policy, lesson.scheduledAt, informedAt);
+
+  if (outcome.action === "FULL_CHARGE" || outcome.action === "PARTIAL_CHARGE") {
+    const lessonValue = await deriveLessonValue(lesson.subscriptionId, {
+      durationMins: lesson.durationMins,
+      locationId: lesson.locationId,
+    });
+    await postLateCancellationCharge(
+      lesson.subscriptionId,
+      lessonValue * outcome.chargeFraction,
+      attendanceNoteTag(lessonId)
+    );
+  } else if (outcome.action === "CREDIT") {
+    await postMakeUpCreditIssued(lesson.subscriptionId, attendanceNoteTag(lessonId));
+    await prisma.makeUpLesson.create({
+      data: { originalLessonId: lessonId, studentId: lesson.studentId },
+    });
+  }
+  // FORFEIT: no ledger entry, no make-up owed — the student simply loses the slot.
 
   await prisma.lesson.update({
     where: { id: lessonId },
     data: { noShowConfirmed: true, noShowReason },
-  });
-
-  await prisma.makeUpLesson.create({
-    data: { originalLessonId: lessonId, studentId: lesson.studentId },
   });
 
   revalidatePath(`/dashboard/lessons/${lessonId}`);
