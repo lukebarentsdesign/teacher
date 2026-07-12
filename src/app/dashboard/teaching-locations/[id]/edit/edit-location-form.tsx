@@ -15,9 +15,18 @@ type Location = {
   secondaryColor: string | null;
   locationType: string;
   accessNotes: string | null;
+  termCalendarId: string | null;
 };
 
-export function EditLocationForm({ location }: { location: Location }) {
+type TermCalendar = { id: string; name: string };
+
+export function EditLocationForm({
+  location,
+  termCalendars,
+}: {
+  location: Location;
+  termCalendars: TermCalendar[];
+}) {
   const [error, formAction, pending] = useActionState(
     updateSchoolAction.bind(null, location.id),
     undefined
@@ -110,8 +119,28 @@ export function EditLocationForm({ location }: { location: Location }) {
         </div>
       </div>
       <p className="text-xs text-neutral-500">
-        Needed for the timetable generator to know how many weeks to schedule.
+        Simple fallback term dates. Assign a term calendar below for full term/holiday handling —
+        it supersedes these when set.
       </p>
+
+      <div>
+        <label htmlFor="termCalendarId" className="block text-sm font-medium text-neutral-700">
+          Term calendar (optional)
+        </label>
+        <select
+          id="termCalendarId"
+          name="termCalendarId"
+          defaultValue={location.termCalendarId ?? ""}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        >
+          <option value="">Use the simple term dates above</option>
+          {termCalendars.map((cal) => (
+            <option key={cal.id} value={cal.id}>
+              {cal.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <label htmlFor="logoUrl" className="block text-sm font-medium text-neutral-700">

@@ -18,7 +18,10 @@ export default async function LocationDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  const location = await prisma.teachingLocation.findUnique({ where: { id } });
+  const location = await prisma.teachingLocation.findUnique({
+    where: { id },
+    include: { termCalendar: { include: { _count: { select: { terms: true, holidays: true } } } } },
+  });
   if (!location) notFound();
 
   const links = await prisma.teacherLocationLink.findMany({
@@ -64,9 +67,22 @@ export default async function LocationDetailPage({
           <h1 className="text-2xl font-semibold text-neutral-900">{location.name}</h1>
           <p className="mt-1 text-sm text-neutral-500">
             {location.address ?? "No address on file"} · Invoicing: {location.invoicingTarget}
-            {location.termStart && location.termEnd
-              ? ` · Term: ${location.termStart.toLocaleDateString("en-GB")}–${location.termEnd.toLocaleDateString("en-GB")}`
-              : " · No term dates set"}
+            {location.termCalendar ? (
+              <>
+                {" · Calendar: "}
+                <Link
+                  href={`/dashboard/term-calendars/${location.termCalendar.id}`}
+                  className="underline hover:text-neutral-800"
+                >
+                  {location.termCalendar.name}
+                </Link>
+                {` (${location.termCalendar._count.terms} terms)`}
+              </>
+            ) : location.termStart && location.termEnd ? (
+              ` · Term: ${location.termStart.toLocaleDateString("en-GB")}–${location.termEnd.toLocaleDateString("en-GB")}`
+            ) : (
+              " · No term dates set"
+            )}
           </p>
         </div>
         <Link

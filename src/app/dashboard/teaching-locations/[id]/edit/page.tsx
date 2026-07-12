@@ -16,6 +16,12 @@ export default async function EditLocationPage({ params }: { params: Promise<{ i
   const location = await prisma.teachingLocation.findUnique({ where: { id } });
   if (!location) notFound();
 
+  const termCalendars = await prisma.termCalendar.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   return (
     <div className="max-w-lg">
       <div className="mb-6">
@@ -37,7 +43,9 @@ export default async function EditLocationPage({ params }: { params: Promise<{ i
           secondaryColor: location.secondaryColor,
           locationType: location.locationType,
           accessNotes: location.accessNotes,
+          termCalendarId: location.termCalendarId,
         }}
+        termCalendars={termCalendars}
       />
     </div>
   );

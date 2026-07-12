@@ -205,6 +205,7 @@ model Teacher {
   addOns                 AddOn[]
   subjects                Subject[]
   lessonTypes             LessonType[]
+  termCalendars           TermCalendar[]
 }
 
 model TeachingLocation {
@@ -213,8 +214,17 @@ model TeachingLocation {
   locationType    LocationType    @default(SCHOOL)
   address         String?
   invoicingTarget InvoicingTarget
+  /// Legacy single-term scalars, kept as a fallback for locations with no TermCalendar assigned.
+  /// The richer TermCalendar (below) supersedes these when set — the bulk timetable generator
+  /// prefers a TermCalendar's TermPeriods (so half-terms/holidays are excluded) and only falls
+  /// back to termStart/termEnd when no calendar is attached.
   termStart       DateTime?
   termEnd         DateTime?
+  /// Optional assigned term calendar. "Inherit a default" = point at a shared TermCalendar reused
+  /// across locations; "its own override" (spec 4.5) = point at a location-specific TermCalendar.
+  /// Modeled as an assignment rather than a diff-on-top of a base, since merge semantics (which
+  /// dates win) would be ambiguous — a location with adjusted dates simply gets its own calendar.
+  termCalendarId  String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -241,6 +251,53 @@ model TeachingLocation {
   lessonTypes    LessonType[]
   venueFeeArrangements VenueFeeArrangement[]
   lessonTypePricing    LessonTypeLocationPricing[]
+  termCalendar   TermCalendar? @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
+}
+
+/// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
+/// set per Local Authority (and independently by private schools) with no single national feed, so
+/// this is teacher-entered configuration, not pulled from an API. One TermCalendar can be shared
+/// across many TeachingLocations, or a location can have its own (see TeachingLocation.termCalendar).
+model TermCalendar {
+  id        String   @id @default(cuid())
+  teacherId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher   Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  terms     TermPeriod[]
+  holidays  HolidayPeriod[]
+  locations TeachingLocation[]
+
+  @@index([teacherId])
+}
+
+/// One teaching term within a TermCalendar (Autumn/Spring/Summer). The bulk generator schedules
+/// within [startDate, endDate], minus any HolidayPeriod that overlaps.
+model TermPeriod {
+  id             String   @id @default(cuid())
+  termCalendarId String
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+
+  termCalendar TermCalendar @relation(fields: [termCalendarId], references: [id], onDelete: Cascade)
+
+  @@index([termCalendarId])
+}
+
+/// A half-term / holiday / inset window excluded from candidate lesson dates.
+model HolidayPeriod {
+  id             String   @id @default(cuid())
+  termCalendarId String
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+
+  termCalendar TermCalendar @relation(fields: [termCalendarId], references: [id], onDelete: Cascade)
+
+  @@index([termCalendarId])
 }
 
 /// A teacher-defined "menu" of what they teach (e.g. "Flute — Beginner", "Flute — Grade 3+") —

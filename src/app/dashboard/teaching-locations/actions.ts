@@ -79,7 +79,17 @@ export async function updateSchoolAction(
     return parsed.error.issues[0]?.message ?? "Invalid input";
   }
 
-  const { termStart, termEnd, ...rest } = parsed.data;
+  const { termStart, termEnd, termCalendarId, ...rest } = parsed.data;
+
+  // Only accept a term calendar the teacher actually owns; empty selection clears it.
+  let resolvedCalendarId: string | null = null;
+  if (termCalendarId) {
+    const owned = await prisma.termCalendar.findFirst({
+      where: { id: termCalendarId, teacherId: session.user.id },
+    });
+    if (!owned) return "Term calendar not found";
+    resolvedCalendarId = owned.id;
+  }
 
   await prisma.teachingLocation.update({
     where: { id: locationId },
@@ -87,6 +97,7 @@ export async function updateSchoolAction(
       ...rest,
       termStart: termStart ? new Date(termStart) : null,
       termEnd: termEnd ? new Date(termEnd) : null,
+      termCalendarId: resolvedCalendarId,
     },
   });
 

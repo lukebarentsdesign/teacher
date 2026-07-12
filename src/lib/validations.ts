@@ -19,6 +19,7 @@ export const teachingLocationSchema = z.object({
     .enum(["SCHOOL", "STUDENT_HOME", "TEACHER_BASE", "HIRED_VENUE", "OTHER"])
     .default("SCHOOL"),
   accessNotes: z.string().optional(),
+  termCalendarId: z.string().optional(),
 });
 
 export const teacherBrandSchema = z.object({

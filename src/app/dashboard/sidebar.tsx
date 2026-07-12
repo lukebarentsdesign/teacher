@@ -9,6 +9,7 @@ import {
   BookOpen,
   CalendarX,
   CalendarOff,
+  CalendarRange,
   ScanLine,
   Tag,
   Music,
@@ -39,6 +40,7 @@ type NavLink = { href: string; label: string; icon: LucideIcon };
 // Operations: daily-use surface — schedule, day-to-day money, equipment.
 const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
+  { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
   { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
   { href: "/dashboard/students", label: "Students", icon: Users },
