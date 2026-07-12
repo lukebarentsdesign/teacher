@@ -248,6 +248,7 @@ model Teacher {
   cancellationPolicies    CancellationPolicy[]
   giftCards               GiftCard[]
   promoCodes              PromoCode[]
+  embedConfigs            EmbedConfig[]
 }
 
 model TeachingLocation {
@@ -300,6 +301,7 @@ model TeachingLocation {
   lessonTypePricing    LessonTypeLocationPricing[]
   termCalendar   TermCalendar? @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
   cancellationPolicy CancellationPolicy?
+  embedConfigs   EmbedConfig[]
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -371,6 +373,7 @@ model LessonType {
   locationPricing LessonTypeLocationPricing[]
   curriculumTemplates CurriculumTemplate[]
   promoCodes PromoCode[]
+  embedConfigs EmbedConfig[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -1319,6 +1322,29 @@ model PromoCode {
   lessonType LessonType? @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
 
   @@unique([teacherId, code])
+  @@index([teacherId])
+}
+
+/// A named, shareable configuration for the public self-serve onboarding flow
+/// (src/app/onboard/[teacherId]/) — same submission logic, reused end to end, just pre-scoped and
+/// re-branded. Generates both a plain link and a copy-paste <iframe> snippet from the same config
+/// (src/app/onboard/embed/[token]/) so a teacher can post either to their own website or a
+/// Facebook bio link without maintaining two separate setups.
+model EmbedConfig {
+  id                   String   @id @default(cuid())
+  teacherId            String
+  label                String // teacher's own name for this embed, e.g. "Facebook bio link"
+  locationId           String?
+  brandColor           String?
+  embedToken           String   @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  teacher   Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location  TeachingLocation?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  /// Empty = every active LessonType the location scoping already allows; non-empty narrows further.
+  allowedLessonTypes LessonType[]
+
   @@index([teacherId])
 }
 

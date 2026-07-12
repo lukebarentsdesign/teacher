@@ -36,6 +36,7 @@ import {
   Gift,
   Percent,
   FileSpreadsheet,
+  Code2,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -51,6 +52,7 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
   { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
   { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
+  { href: "/dashboard/embeds", label: "Onboarding widget", icon: Code2 },
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
