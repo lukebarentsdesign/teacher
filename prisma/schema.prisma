@@ -139,6 +139,12 @@ enum ContactPref {
   EMAIL
 }
 
+enum MedicalNoteSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 enum GroupBookingStatus {
   CONFIRMED
   WAITLISTED
@@ -226,6 +232,8 @@ model Teacher {
   termCalendars           TermCalendar[]
   curriculumTemplates     CurriculumTemplate[]
   sessionPlanTemplates    SessionPlanTemplate[]
+  certifications          InstructorCertification[]
+  incidentLogs            IncidentLog[]
 }
 
 model TeachingLocation {
@@ -513,6 +521,8 @@ model Student {
   subjects          Subject[]
   curricula         StudentCurriculum[]
   groupSessionBookings GroupSessionBooking[]
+  medicalNotes      StudentMedicalNote[]
+  incidentLogs      IncidentLog[]
 
   @@index([teacherId])
 }
@@ -781,6 +791,7 @@ model Lesson {
   makeUpLessonAsOriginal MakeUpLesson? @relation("OriginalLesson")
   makeUpLessonAsMakeUp   MakeUpLesson? @relation("MakeUpLessonSlot")
   sessionPlan        SessionPlan?
+  incidentLogs       IncidentLog[]
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])
@@ -1141,6 +1152,64 @@ model StudentCurriculumSection {
   lessonNotes       LessonNote[]
 
   @@index([studentCurriculumId])
+}
+
+/// The teacher's own professional certification/qualification record (first-aid, safeguarding,
+/// instrument-specific teaching qualifications, DBS/background check, etc.) — becomes more
+/// important once multi-instructor support exists (Part 6e, not yet built — see CLAUDE.md), but
+/// useful standalone as a renewal-date tracker even for a single teacher.
+model InstructorCertification {
+  id                String   @id @default(cuid())
+  teacherId         String
+  certType          String
+  certNumber        String?
+  issuedDate        DateTime
+  expiryDate        DateTime?
+  reminderDaysBefore Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+/// Deliberately NOT surfaced on the general Student card or any /parent microsite view — same
+/// "teacher-only, never exposed" treatment as TeachingLocation.accessNotes. Kept as its own model
+/// (rather than a Student field) so future multi-instructor visibility scoping (Part 6e) has
+/// somewhere to attach without a schema change.
+model StudentMedicalNote {
+  id        String                    @id @default(cuid())
+  studentId String
+  note      String
+  severity  MedicalNoteSeverity       @default(LOW)
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+}
+
+/// A safeguarding/liability record, separate from LessonNote (which is teaching content, shared
+/// with the guardian) — never shown to a parent/student, mirrors StudentMedicalNote's visibility.
+model IncidentLog {
+  id             String    @id @default(cuid())
+  teacherId      String
+  studentId      String?
+  lessonId       String?
+  date           DateTime
+  description    String
+  actionTaken    String?
+  reportedToWhom String?
+  createdAt      DateTime  @default(now())
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  lesson  Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  @@index([teacherId, date])
+  @@index([studentId])
 }
 
 /// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain

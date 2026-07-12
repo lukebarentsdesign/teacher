@@ -10,6 +10,7 @@ import { SubjectsSettings } from "./subjects-settings";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
 import { CurriculumPanel } from "./curriculum-panel";
+import { MedicalNotesPanel } from "./medical-notes-panel";
 
 export default async function StudentDetailPage({
   params,
@@ -31,6 +32,7 @@ export default async function StudentDetailPage({
         orderBy: { createdAt: "desc" },
         include: { sections: { orderBy: { order: "asc" } } },
       },
+      medicalNotes: { orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -250,6 +252,19 @@ export default async function StudentDetailPage({
           }))}
           templates={curriculumTemplates}
           otherStudents={otherStudents}
+        />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Medical notes</h2>
+        <MedicalNotesPanel
+          studentId={student.id}
+          notes={student.medicalNotes.map((n) => ({
+            id: n.id,
+            note: n.note,
+            severity: n.severity,
+            createdAt: n.createdAt.toISOString(),
+          }))}
         />
       </section>
 

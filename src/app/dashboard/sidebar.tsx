@@ -31,6 +31,8 @@ import {
   Menu as MenuIcon,
   X,
   Wifi,
+  ShieldCheck,
+  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -50,6 +52,7 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
+  { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/dashboard/billing", label: "Billing", icon: Settings },
 ];
 
@@ -62,6 +65,7 @@ const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
   { href: "/dashboard/group-classes", label: "Group classes", icon: Users2 },
   { href: "/dashboard/absences", label: "Absences", icon: CalendarX },
+  { href: "/dashboard/incidents", label: "Incidents", icon: AlertTriangle },
   { href: "/dashboard/unavailability", label: "Unavailability", icon: CalendarOff },
   { href: "/dashboard/loans", label: "Loans", icon: Package },
   { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },

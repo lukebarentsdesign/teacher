@@ -217,6 +217,12 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **Waitlist promotion logic is a pure, unit-tested pair of functions** ([src/lib/group-booking.ts](src/lib/group-booking.ts), `__tests__/group-booking.test.ts`): `resolveBookingStatus` (CONFIRMED vs WAITLISTED at booking time) and `pickPromotionCandidate` (earliest-booked waitlisted entry promoted when a CONFIRMED booking is cancelled) — kept separate from the Prisma-touching server action ([src/app/dashboard/group-classes/[id]/booking-actions.ts](src/app/dashboard/group-classes/[id]/booking-actions.ts)) for the same testability reason as `bulk-timetable.ts`.
 - **Booking UI is teacher-facing only for now**, on the GroupClass detail page — the roadmap doc frames this as eventual "self-service" (implying a parent/student-facing microsite widget), but that's a larger addition (needs a booking view scoped to a student's own enrolled classes) and was deliberately scoped out of this pass, same reasoning as Part 5a.
 
+## Compliance & Safety (roadmap v2 Part 6c)
+
+- **`InstructorCertification`** ([src/app/dashboard/certifications/](src/app/dashboard/certifications/)) is scoped to the teacher even pre-multi-instructor — useful standalone as a renewal-date tracker (first aid, safeguarding, DBS, instrument-specific qualifications). `expiryBadge()` in the page itself flags "Expired" or "Expires in Nd" once within `reminderDaysBefore` of the expiry date; no background job/email reminder yet, it's a page-view-time computation only.
+- **`StudentMedicalNote` is deliberately never surfaced outside `/dashboard`** — same treatment as `TeachingLocation.accessNotes`: a labeled amber "Teacher-only" banner on the Student detail panel, no field/route reachable from any `/parent` microsite page. Modeled as its own table (not a `Student` column) specifically so future multi-instructor visibility scoping (Part 6e, not yet built) has somewhere to attach without a schema change.
+- **`IncidentLog` is separate from `LessonNote`** — a safeguarding/liability record (what happened, action taken, who it was reported to), not teaching content. Optionally linked to a `Student` and/or `Lesson` (both nullable, `onDelete: SetNull` so deleting a lesson never silently deletes the incident record) but works standalone too — the "log an incident" form at `/dashboard/incidents` doesn't require either.
+
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 
 The harness that runs this project's dev server preview can't invoke bare `npm`/`next` via PATH
