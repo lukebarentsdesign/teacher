@@ -10,6 +10,7 @@ const TAB_LABELS: { segment: string; label: string }[] = [
   { segment: "ledger", label: "Ledger" },
   { segment: "resources", label: "Resources" },
   { segment: "extras", label: "Extras" },
+  { segment: "courses", label: "Courses" },
   { segment: "assignments", label: "Assignments" },
   { segment: "maintenance", label: "Maintenance" },
   { segment: "notes", label: "Lesson notes" },

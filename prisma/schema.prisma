@@ -250,6 +250,8 @@ model Teacher {
   giftCards               GiftCard[]
   promoCodes              PromoCode[]
   embedConfigs            EmbedConfig[]
+  courses                 Course[]
+  courseItems             CourseItem[]
 }
 
 model TeachingLocation {
@@ -375,6 +377,7 @@ model LessonType {
   curriculumTemplates CurriculumTemplate[]
   promoCodes PromoCode[]
   embedConfigs EmbedConfig[]
+  courseItems CourseItem[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -619,6 +622,7 @@ model Payer {
   contractAcceptances ContractAcceptance[]
   lessonFeedback      LessonFeedback[]
   giftCardsPurchased  GiftCard[]
+  coursePurchases     CoursePurchase[]
 
   @@index([teacherId])
 }
@@ -1352,6 +1356,72 @@ model EmbedConfig {
   allowedLessonTypes LessonType[]
 
   @@index([teacherId])
+}
+
+enum CourseItemMediaType {
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+/// Teacher-uploaded media (a link to wherever it's actually hosted — no file storage of its own
+/// in this app). `courseId` null = free-standing library content (e.g. linked to a LessonType,
+/// just reference material), not part of any priced Course.
+model CourseItem {
+  id           String              @id @default(cuid())
+  teacherId    String
+  title        String
+  description  String?
+  mediaType    CourseItemMediaType
+  mediaUrl     String
+  lessonTypeId String?
+  courseId     String?
+  order        Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  teacher    Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonType LessonType? @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
+  course     Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([teacherId])
+  @@index([courseId])
+}
+
+/// Standalone sellable content, distinct from the free CurriculumTemplate/Resource library.
+/// **Deviates from the roadmap doc's own suggestion** of posting CoursePurchase to the ledger —
+/// LedgerEntry.subscriptionId is required, but a payer buying a standalone course may have no
+/// Subscription to attach it to. Follows the AddOn precedent instead (see "Add-on Decisions" in
+/// CLAUDE.md): CoursePurchase.amountPaid is a snapshot, collection is a manual out-of-band teacher
+/// action, same as AddOnBooking.priceAtTime.
+model Course {
+  id          String   @id @default(cuid())
+  teacherId   String
+  title       String
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher   Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  items     CourseItem[]
+  purchases CoursePurchase[]
+
+  @@index([teacherId])
+}
+
+model CoursePurchase {
+  id          String   @id @default(cuid())
+  courseId    String
+  payerId     String
+  purchasedAt DateTime @default(now())
+  amountPaid  Decimal  @db.Decimal(10, 2)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  payer  Payer  @relation(fields: [payerId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, payerId])
 }
 
 /// Reusable starting point for a SessionPlan ("save as template" on a recurring class) — a plain
