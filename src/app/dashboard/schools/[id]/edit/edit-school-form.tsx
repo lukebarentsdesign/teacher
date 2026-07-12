@@ -1,0 +1,149 @@
+"use client";
+
+import { useActionState } from "react";
+import { updateSchoolAction } from "../../actions";
+
+type School = {
+  id: string;
+  name: string;
+  address: string | null;
+  invoicingTarget: string;
+  termStart: string | null;
+  termEnd: string | null;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+};
+
+export function EditSchoolForm({ school }: { school: School }) {
+  const [error, formAction, pending] = useActionState(
+    updateSchoolAction.bind(null, school.id),
+    undefined
+  );
+
+  return (
+    <form action={formAction} className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-neutral-700">
+          Name
+        </label>
+        <input
+          id="name"
+          name="name"
+          required
+          defaultValue={school.name}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="address" className="block text-sm font-medium text-neutral-700">
+          Address (optional)
+        </label>
+        <input
+          id="address"
+          name="address"
+          defaultValue={school.address ?? ""}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="invoicingTarget" className="block text-sm font-medium text-neutral-700">
+          Who gets billed for lessons here?
+        </label>
+        <select
+          id="invoicingTarget"
+          name="invoicingTarget"
+          defaultValue={school.invoicingTarget}
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        >
+          <option value="PARENT">Parent</option>
+          <option value="SCHOOL">School</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="termStart" className="block text-sm font-medium text-neutral-700">
+            Term start (optional)
+          </label>
+          <input
+            id="termStart"
+            name="termStart"
+            type="date"
+            defaultValue={school.termStart ?? ""}
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="termEnd" className="block text-sm font-medium text-neutral-700">
+            Term end (optional)
+          </label>
+          <input
+            id="termEnd"
+            name="termEnd"
+            type="date"
+            defaultValue={school.termEnd ?? ""}
+            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-neutral-500">
+        Needed for the timetable generator to know how many weeks to schedule.
+      </p>
+
+      <div>
+        <label htmlFor="logoUrl" className="block text-sm font-medium text-neutral-700">
+          Logo URL (optional)
+        </label>
+        <input
+          id="logoUrl"
+          name="logoUrl"
+          type="url"
+          defaultValue={school.logoUrl ?? ""}
+          placeholder="https://…"
+          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="flex gap-6">
+        <div>
+          <label htmlFor="primaryColor" className="block text-sm font-medium text-neutral-700">
+            Brand color (optional)
+          </label>
+          <input
+            id="primaryColor"
+            name="primaryColor"
+            type="color"
+            defaultValue={school.primaryColor ?? "#2a78d6"}
+            className="mt-1 h-10 w-16 rounded-lg border border-neutral-300"
+          />
+        </div>
+        <div>
+          <label htmlFor="secondaryColor" className="block text-sm font-medium text-neutral-700">
+            Secondary color (optional)
+          </label>
+          <input
+            id="secondaryColor"
+            name="secondaryColor"
+            type="color"
+            defaultValue={school.secondaryColor ?? "#2a78d6"}
+            className="mt-1 h-10 w-16 rounded-lg border border-neutral-300"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-neutral-500">Colors this school&apos;s lessons on your calendar views.</p>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700 disabled:opacity-50"
+      >
+        {pending ? "Saving…" : "Save changes"}
+      </button>
+    </form>
+  );
+}

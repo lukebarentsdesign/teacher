@@ -48,11 +48,22 @@ export default async function SchoolDetailPage({
 
   return (
     <div className="max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-neutral-900">{school.name}</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {school.address ?? "No address on file"} · Invoicing: {school.invoicingTarget}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">{school.name}</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {school.address ?? "No address on file"} · Invoicing: {school.invoicingTarget}
+            {school.termStart && school.termEnd
+              ? ` · Term: ${school.termStart.toLocaleDateString("en-GB")}–${school.termEnd.toLocaleDateString("en-GB")}`
+              : " · No term dates set"}
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/schools/${school.id}/edit`}
+          className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors duration-150 hover:bg-neutral-100"
+        >
+          Edit
+        </Link>
       </div>
 
       <section>
