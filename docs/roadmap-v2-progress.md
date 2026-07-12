@@ -28,13 +28,13 @@ Built in the roadmap doc's own recommended order, one part per commit, each veri
 | 6b | Group class capacity + waitlist | ✅ **done** | `63bf421` |
 | 6c | Compliance & safety (certifications, medical notes, incidents) | ✅ **done** | `37d02d3` |
 | 6d | Configurable cancellation policy | ✅ **done** | `4ebf4bd` |
-| 6e | Multi-instructor support | ⬜ **not built** — needs its own design pass | — |
+| 6e | Multi-instructor support (`Organisation`) | ✅ **done** | `c8e93db` |
 | 6f | Lesson feedback | ✅ **done** | `b8dd8d6` |
 | 7 | Gift cards, promo codes, accounting export | ✅ **done** | `d53bccd` |
 
-**Every part of the roadmap doc is now built except Part 6e**, which the doc itself explicitly
-flags as needing its own design pass (what becomes the tenancy boundary above `Teacher`?) rather
-than a shape to build blind — correctly left alone.
+**The entire roadmap doc is now built.** Part 6e was the last item, held back until the user
+confirmed the design decision it explicitly called for (see below) — every other part had a clear,
+safe design and was built without needing that kind of check-in first.
 
 Every completed stage passes `tsc --noEmit`, `eslint src`, `jest` (89 tests across 12 suites as of
 the last commit), and a full `next build`. All migrations are applied to the live Supabase DB.
@@ -121,15 +121,23 @@ free-standing library content, optionally linked to a `LessonType` (the `Curricu
 of the original "free vs paid" framing wasn't built). Microsite "Courses" tab is guardian-only,
 same reasoning as `LessonFeedback`.
 
----
+### Multi-instructor support (Part 6e, `c8e93db`)
+The one part the roadmap doc itself flagged as needing "its own design pass" — the user was asked
+directly (AskUserQuestion) and confirmed: `Organisation` as a new tenancy layer above `Teacher`
+(not a `role`/`reportsToId` field bolted onto `Teacher` directly). `Teacher.organisationId` is
+nullable, unset by default — every existing teacher is unaffected.
 
-## What's deliberately not built, and why
+**Deliberately conservative scope**: grouping `Teacher` accounts under an `Organisation` does
+**not** change the existing per-`Teacher` tenancy boundary on `Student`/`Payer`/`Subscription`/etc.
+— those stay scoped to a single `teacherId` everywhere, unchanged. A full shared-roster model (any
+instructor in the org sees all org students) would touch dozens of `teacherId`-scoped queries
+across the codebase and was judged out of scope for this pass. What's actually built: account
+grouping/membership, and `CoverAssignment` (a record of one instructor covering another's lesson,
+no ownership transfer of the underlying `Lesson`/`Student`/`Subscription`).
 
-- **Part 6e (multi-instructor support)** — the roadmap doc explicitly flags this as needing "its
-  own design pass" (what the tenancy boundary becomes — an `Organisation` above `Teacher`? a
-  `role` field?) rather than a shape to build blind. Correctly left alone; several other pieces
-  built in this pass (`InstructorCertification`, `IncidentLog`) are structured so they'll still
-  make sense once multi-instructor support is eventually designed, without needing rework.
+Consent-based join via a shareable invite link (`OrganisationInvite.token`), same pattern as the
+embed/onboarding links — an OWNER can't unilaterally attach another account; the invitee accepts
+it themselves while authenticated as their own `Teacher`. `/dashboard/organisation`.
 
 ---
 
