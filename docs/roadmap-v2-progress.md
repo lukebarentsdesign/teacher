@@ -7,6 +7,12 @@ roadmap doc (location generalization, lesson catalog, term calendars) and the qu
 of Part 4 (self-serve onboarding) were already built in the prior spec pass — this doc picks up
 from there.
 
+A revised version of the doc (`learnio-roadmap-v2(1).md`) arrived later the same day, adding two
+new parts on top of the original 7: **Part 8** (invoice PDFs + accounting export — the CSV export
+half was already done as the original Part 7) and **Part 9** (freelancer-specific pain points: tax
+pack, mileage, batch-cancel, lone-worker safety, waitlist, referral tracking, progress summaries,
+route feasibility). Both revisions are tracked in the single table below.
+
 Built in the roadmap doc's own recommended order, one part per commit, each verified with
 `tsc --noEmit`, `eslint`, `next build`, and `jest` before committing.
 
@@ -30,13 +36,20 @@ Built in the roadmap doc's own recommended order, one part per commit, each veri
 | 6d | Configurable cancellation policy | ✅ **done** | `4ebf4bd` |
 | 6e | Multi-instructor support (`Organisation`) | ✅ **done** | `c8e93db` |
 | 6f | Lesson feedback | ✅ **done** | `b8dd8d6` |
-| 7 | Gift cards, promo codes, accounting export | ✅ **done** | `d53bccd` |
+| 7 | Gift cards, promo codes, accounting export (CSV) | ✅ **done** | `d53bccd` |
+| 8a | Invoice PDF generation | ✅ **done** | `7f91ca5` |
+| 8b | Accounting export | ✅ **done** (= Part 7's CSV export) | `d53bccd` |
+| 9a | Tax pack + mileage tracking | ✅ **done** | `ee4669c` |
+| 9b | Batch-cancel + notify, lone-worker check-in | ✅ **done** | `e3e672e` |
+| 9c | Waitlist, referral tracking, progress summaries | ✅ **done** | `59de3d7` |
+| 9d | Multi-location route feasibility | ✅ **done** | `832ab79` |
 
-**The entire roadmap doc is now built.** Part 6e was the last item, held back until the user
+**The entire roadmap doc (both revisions) is now built.** Part 6e was the last item from the
+original 7-part doc, held back until the user
 confirmed the design decision it explicitly called for (see below) — every other part had a clear,
 safe design and was built without needing that kind of check-in first.
 
-Every completed stage passes `tsc --noEmit`, `eslint src`, `jest` (89 tests across 12 suites as of
+Every completed stage passes `tsc --noEmit`, `eslint src`, `jest` (106 tests across 15 suites as of
 the last commit), and a full `next build`. All migrations are applied to the live Supabase DB.
 
 ---
@@ -138,6 +151,47 @@ no ownership transfer of the underlying `Lesson`/`Student`/`Subscription`).
 Consent-based join via a shareable invite link (`OrganisationInvite.token`), same pattern as the
 embed/onboarding links — an OWNER can't unilaterally attach another account; the invitee accepts
 it themselves while authenticated as their own `Teacher`. `/dashboard/organisation`.
+
+### Invoice PDF generation (Part 8a, `7f91ca5`)
+`GET /api/subscriptions/[id]/invoice` renders a formatted document directly from `LedgerEntry`
+data (optional `?from=&to=`) — no new billing entity, a document layer only. Available to either
+the owning teacher (Subscription detail page) or the subscription's own payer on the microsite
+ledger page. `src/lib/invoice-pdf.ts` uses `pdf-lib` like the existing `contract-pdf.ts` but
+deliberately doesn't share code with it (different-enough layouts: tabular vs. flowing text).
+
+### Tax pack + mileage tracking (Part 9a, `ee4669c`)
+`MileageLog` is manually logged (no geocoding/distance-matrix API exists in this app — same honest
+manual-entry pattern as `TermCalendar`). `calculateMileageAllowance` (pure, unit-tested,
+`src/lib/mileage.ts`) applies HMRC's cumulative tiered rate correctly across a trip that straddles
+the 10,000-mile threshold. `taxYearRange`/`taxYearForDate` (6 April–5 April) is shared by both the
+`/dashboard/tax-pack` report view and its `GET /api/tax-pack` CSV export. The tax pack itself rolls
+up data that already exists (`LedgerEntry` `PAYMENT`s, `Expense`, `MileageLog`) — a reporting view,
+not new income/expense capture.
+
+### Batch-cancel + lone-worker safety (Part 9b, `e3e672e`)
+Batch-cancel-today is a thin link into the *existing* `Unavailability` preview/confirm flow with
+`start`/`end`/`reason` pre-filled — no new cancellation logic was written. `LoneWorkerCheckIn` is
+scoped to `STUDENT_HOME` lessons only; the overdue-checkout alert is a lazy sweep triggered from
+`GET /api/today` (`checkAndSendLoneWorkerAlerts`) rather than a real scheduled job — no cron infra
+exists in this app, so this is an honest best-effort heuristic, not a guaranteed real-time alert.
+`Teacher.emergencyContact*` (Billing settings) is a separate contact from anything guardian-facing.
+
+### Waitlist, referrals, progress summaries (Part 9c, `59de3d7`)
+`TimetableWaitlist` is a manual pipeline (WAITING/CONTACTED/CONVERTED/CANCELLED) against an
+optional `LessonType`/`TeachingLocation` — no automatic slot-matching, that's real scheduling-engine
+work left for later. `Student.referredBy` is deliberately free text, not FK'd to `Payer` (the
+referrer is often not a billing party at all). The termly progress summary
+(`/dashboard/students/[id]/progress-summary`) is generated fresh on every page load from
+`StudentCurriculumSection` completions, `Assessment`s, and `LessonNote`s already in range — nothing
+new is persisted; "Send to guardian(s)" reuses the existing Gmail-send infra.
+
+### Multi-location route feasibility (Part 9d, `832ab79`)
+`LocationTravelTime` is manually entered (directional minutes between two locations) — same
+no-live-API honesty as `MileageLog`. `checkDayFeasibility` (pure, unit-tested,
+`src/lib/route-check.ts`) flags a scheduled gap shorter than the known travel time between two
+consecutive same-day bookings — distinct from the existing `splitConflicts` double-booking check,
+a genuinely different failure mode. A location pair with no travel time entered simply isn't
+checked, never guessed at.
 
 ---
 
