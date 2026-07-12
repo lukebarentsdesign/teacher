@@ -18,12 +18,12 @@ Built in the roadmap doc's own recommended order, one part per commit, each veri
 |---|---|---|---|
 | 1 | `TeachingLocation` generalization | ✅ pre-existing (prior spec) | `6c166e3` |
 | 2 | `LessonType` catalog | ✅ pre-existing (prior spec) | `96751b1` |
-| 1b/1c | Online lessons (`meetingUrl`, `.ics`) + safeguarding policy | ⬜ **not built** | — |
+| 1b/1c | Online lessons (`meetingUrl`, `.ics`) + safeguarding policy | ✅ **done** | `147a780` |
 | 3 | `TermCalendar` templates | ✅ pre-existing (prior spec) | `d9d4d03` |
 | 4 (questionnaire) | Self-serve onboarding | ✅ pre-existing (prior spec) | `75ad249` |
 | 4 (widget) | Embeddable onboarding widget (`EmbedConfig`) | ✅ **done** | `25b3662` |
 | 5 | Curriculum templates | ✅ **done** | `c75728e` |
-| 5a | Sellable course content (`Course`/`CourseItem`/`CoursePurchase`) | ⬜ **not built** | — |
+| 5a | Sellable course content (`Course`/`CourseItem`/`CoursePurchase`) | ✅ **done** | `3cf7fc2` |
 | 6a | Session plans + public Now/Next display | ✅ **done** | `010e9b9` |
 | 6b | Group class capacity + waitlist | ✅ **done** | `63bf421` |
 | 6c | Compliance & safety (certifications, medical notes, incidents) | ✅ **done** | `37d02d3` |
@@ -32,7 +32,11 @@ Built in the roadmap doc's own recommended order, one part per commit, each veri
 | 6f | Lesson feedback | ✅ **done** | `b8dd8d6` |
 | 7 | Gift cards, promo codes, accounting export | ✅ **done** | `d53bccd` |
 
-Every completed stage passes `tsc --noEmit`, `eslint src`, `jest` (87 tests across 11 suites as of
+**Every part of the roadmap doc is now built except Part 6e**, which the doc itself explicitly
+flags as needing its own design pass (what becomes the tenancy boundary above `Teacher`?) rather
+than a shape to build blind — correctly left alone.
+
+Every completed stage passes `tsc --noEmit`, `eslint src`, `jest` (89 tests across 12 suites as of
 the last commit), and a full `next build`. All migrations are applied to the live Supabase DB.
 
 ---
@@ -97,21 +101,30 @@ flow — pre-scoped to a location and/or lesson-type allowlist, lightly re-brand
 as `/onboard/[teacherId]`, so there's only ever one onboarding pipeline. One config produces both
 a plain shareable link and a copy-paste `<iframe>` snippet.
 
+### Online lessons (Part 1b/1c, `147a780`)
+`Lesson.meetingUrl` is a teacher-supplied link (MVP skips Zoom/Meet API integration — no OAuth/API
+setup overhead until there's real usage to justify it). `LocationType` gained `ONLINE`.
+`GET /api/lessons/[id]/ics` serves a one-off, one-way `.ics` export (pure/unit-tested generation in
+`src/lib/ics.ts`), available to either the owning teacher or a guardian/student with microsite
+access. Safeguarding guidance (waiting room, host-present, recording retention) is a policy
+callout on the Lesson detail page for `ONLINE`-location lessons — explicitly not enforced, since
+the platform doesn't control a teacher's own meeting link.
+
+### Sellable course content (Part 5a, `3cf7fc2`)
+`Course`/`CourseItem`/`CoursePurchase` — **deliberately deviates from the roadmap doc's own
+suggestion** of posting `CoursePurchase` to the ledger. `LedgerEntry.subscriptionId` is required
+non-null, but a payer buying a standalone course may have no `Subscription` to attach it to.
+Follows the established `AddOn`/`AddOnBooking` precedent instead (see "Add-on Decisions" in
+`CLAUDE.md`): `amountPaid` is a price snapshot, collection is a manual out-of-band teacher action
+(`recordCoursePurchaseAction`), not automated. `CourseItem.courseId` is nullable — `null` means
+free-standing library content, optionally linked to a `LessonType` (the `CurriculumSection` half
+of the original "free vs paid" framing wasn't built). Microsite "Courses" tab is guardian-only,
+same reasoning as `LessonFeedback`.
+
 ---
 
 ## What's deliberately not built, and why
 
-- **Part 1b/1c (online lessons + safeguarding policy)** — cheap-in-principle (`meetingUrl` field +
-  `.ics` export) but wasn't reached in this pass; genuinely low-risk to pick up later, no
-  architectural blocker.
-- **Part 5a (sellable course content)** — `Course`/`CourseItem`/`CoursePurchase` were scoped out
-  twice during this pass. The roadmap doc's own suggestion ("`CoursePurchase` generates its own
-  `LedgerEntry`") runs into a real schema constraint: `LedgerEntry.subscriptionId` is required
-  non-null, but a payer buying a standalone course may have no `Subscription` to attach it to. The
-  established precedent in this codebase for exactly this situation is `AddOn`/`AddOnBooking` (see
-  "Add-on Decisions" in `CLAUDE.md`) — deliberately **not** posting to the ledger, snapshotting
-  price at booking time instead, and leaving collection as a manual out-of-band teacher action.
-  Revisit with that same pattern rather than the roadmap doc's literal ledger suggestion.
 - **Part 6e (multi-instructor support)** — the roadmap doc explicitly flags this as needing "its
   own design pass" (what the tenancy boundary becomes — an `Organisation` above `Teacher`? a
   `role` field?) rather than a shape to build blind. Correctly left alone; several other pieces
