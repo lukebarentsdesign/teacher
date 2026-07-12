@@ -36,9 +36,18 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 **Multi-tenant, not single-teacher:** originally scoped as one solo teacher's private tool, but
 Stripe requiring per-teacher payment collection (parents pay the teacher directly, not Learnio)
 made this a real multi-tenant SaaS product instead — any teacher can register (`/register`) and
-gets isolated data. `Student.teacherId` and `Payer.teacherId` are the tenancy boundary; `School` is
-shared reference data, scoped per-teacher via `TeacherSchoolLink`. Every list/detail query and
-server action must filter by `session.user.id` — see the retrofit commit for the full pattern.
+gets isolated data. `Student.teacherId` and `Payer.teacherId` are the tenancy boundary;
+`TeachingLocation` is shared reference data, scoped per-teacher via `TeacherLocationLink`. Every
+list/detail query and server action must filter by `session.user.id` — see the retrofit commit for
+the full pattern.
+
+**`School` was renamed to `TeachingLocation` (spec Part 4.3)** — and `TeacherSchoolLink` →
+`TeacherLocationLink`, `schoolId` → `locationId` everywhere, route `/dashboard/schools` →
+`/dashboard/teaching-locations`. It generalizes beyond schools (home visits, hired halls, the
+teacher's own base) via a `locationType` enum. Anywhere this file still says "School"/"school" in
+prose, read "TeachingLocation"/"location" unless it's the `InvoicingTarget.SCHOOL` enum value (which
+kept its name). See "Onboarding & Timetabling additions" below and
+[docs/onboarding-timetabling-progress.md](docs/onboarding-timetabling-progress.md).
 
 **Next.js 15 / React 19, not 14/18:** started on Next 14 + React 18 (matching YourBarber), but
 `useActionState` (used in every form) is a React 19 API — Next 14.2's internally vendored React
@@ -171,6 +180,17 @@ re-checked server-side, ends in `redirect` back to the detail/list page it edits
   scoped to the student's own core fields (name/dob/discipline/source/schoolId). Payer
   relationships, subject tags, and IG Card ID already had their own dedicated management UI
   elsewhere on the detail page and weren't duplicated here.
+
+## Onboarding & Timetabling additions (spec doc "Relational Model, Onboarding & Timetabling", Part 4)
+
+Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onboarding-timetabling-progress.md). Key decisions worth knowing before touching these:
+
+- **`School` → `TeachingLocation` (4.3)** — see the tenancy note near the top. `locationType` enum (SCHOOL/STUDENT_HOME/TEACHER_BASE/HIRED_VENUE/OTHER); `accessNotes` free-text is teacher-only (shown on the location detail card + edit form, **never** in any `/parent` view — keep it that way).
+- **`LessonType` (4.1)** is the teacher's "menu" ([src/app/dashboard/lesson-types/](src/app/dashboard/lesson-types/)). Its `locations` m2m: **empty = offered everywhere**, non-empty = scoped to those venues. `LessonTypeLocationPricing` overrides `defaultFee` per location; the teacher sets it directly (nothing derives it from `VenueFeeArrangement`).
+- **Self-serve onboarding (4.2)**: public `/onboard/[teacherId]` (outside the `/dashboard` middleware matcher). Always creates `Student.status = PENDING_REVIEW`; teacher approves/declines at [/dashboard/students/pending](src/app/dashboard/students/pending/). The Students list and location "enrolled" queries filter to `status: ACTIVE` — remember that filter when adding new student queries, or pending submissions leak into live views.
+- **`VenueFeeArrangement` (4.4)** is the teacher's own cost, forecast-only by default (`ABSORBED_INTO_FEE`). Only `ITEMISED_TO_PAYER` posts a ledger line — `postVenueFeeIfItemised` in [src/lib/ledger.ts](src/lib/ledger.ts), called after `postLessonDelivered` in both the manual attendance action and CheckIn sign-in. `PERIOD_RENTAL` is excluded from itemisation (not a per-lesson cost). New `LedgerReason.VENUE_FEE_ITEMISED`.
+- **`TermCalendar` (4.5)** is teacher-owned, reusable, holds `TermPeriod` + `HolidayPeriod` rows. Assigned to a location via `TeachingLocation.termCalendarId` — "override" is modeled as **assigning a different calendar**, not a diff-on-top of a base (merge semantics would be ambiguous). The legacy `TeachingLocation.termStart/termEnd` scalars remain as a fallback when no calendar is assigned; the bulk generator prefers the calendar's TermPeriods and excludes its holidays.
+- **Bulk timetable generation (4.6)**: pure planner in [src/lib/bulk-timetable.ts](src/lib/bulk-timetable.ts) (unit-tested, `__tests__/bulk-timetable.test.ts`), driven from [/dashboard/timetable/bulk](src/app/dashboard/timetable/bulk/). Greedy fair packing (fewest-first, one-lesson-per-day-per-student, each concrete slot used once so the teacher is never double-booked, existing HELD lessons avoided), flags anyone who can't reach the target rather than under-booking. **Student ↔ LessonType has no durable enrollment link** — bulk matches ACTIVE students by `locationId`, defaults selection by `requestedLessonTypeId`, and lets the teacher deselect; LessonType only drives duration/fee. The confirm action recomputes the plan server-side (never trusts the client's preview).
 
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 

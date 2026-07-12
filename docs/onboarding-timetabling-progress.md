@@ -19,9 +19,11 @@ and build **all of Part 4 in the spec's recommended build order**, committing at
 | 4.1 | `LessonType` catalog | ✅ **done** | `96751b1` |
 | 4.2 | Self-serve onboarding questionnaire | ✅ **done** | `75ad249` |
 | 4.4 | `VenueFeeArrangement` + `LessonTypeLocationPricing` + itemised ledger | ✅ **done** | `f115b6f` |
-| 4.5 | `TermCalendar` / `TermPeriod` / `HolidayPeriod` + per-location override | ⬜ **not started** | — |
-| 4.6 | Term-based bulk timetable generation (LessonType + Location) | ⬜ **not started** | — |
-| 4.7 | Cross-referencing on TeachingLocation / LessonType cards | 🟡 **partial** | (LessonType card done; TeachingLocation card needs 4.5's TermCalendarOverride display) |
+| 4.5 | `TermCalendar` / `TermPeriod` / `HolidayPeriod` + per-location override | ✅ **done** | `d9d4d03` |
+| 4.6 | Term-based bulk timetable generation (LessonType + Location) | ✅ **done** | `76899d8` |
+| 4.7 | Cross-referencing on TeachingLocation / LessonType cards | ✅ **done** | `d9d4d03` + access-notes on card |
+
+**The whole spec (Parts 1–4) is now implemented.**
 
 Every completed stage passes `tsc --noEmit`, `eslint src`, and a full `next build`. All migrations are
 applied to the live Supabase DB.

@@ -93,6 +93,13 @@ export default async function LocationDetailPage({
         </Link>
       </div>
 
+      {location.accessNotes && (
+        <section className="rounded-xl bg-amber-50 p-4">
+          <h2 className="mb-1 text-sm font-semibold text-amber-900">Access notes (private to you)</h2>
+          <p className="whitespace-pre-wrap text-sm text-amber-800">{location.accessNotes}</p>
+        </section>
+      )}
+
       <section>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Your engagement here</h2>
         {links.length === 0 ? (
