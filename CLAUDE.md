@@ -14,7 +14,7 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 
 **Deferred to v2+:** full IG Card account linking, WhatsApp messaging, multi-currency, multi-teacher commission splitting, Google Calendar/Drive sync. **Explicitly excluded, do not revisit:** Google Classroom (see spec section 4 for why).
 
-**In scope for v1:** card-based sign-in/out for attendance (`CheckIn` model) — reuses IG Card wallet-pass infra, not full account linking.
+**In scope for v1:** card-based sign-in/out for attendance (`CheckIn` model) — reuses IG Card wallet-pass infra, not full account linking. Built: [src/lib/checkin.ts](src/lib/checkin.ts) + [src/app/dashboard/checkin/](src/app/dashboard/checkin/) (scan by `Student.igCardId`, set via the student detail page's "Check-in" section). Signing in to a lesson auto-fires `LESSON_DELIVERED` and replaces manual attendance marking; group-class check-ins are attendance-only (no dated instance to bill).
 
 ---
 
@@ -94,7 +94,7 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 - **School now has termStart/termEnd fields on the create form** — required for the generator to know how many weeks to schedule. Existing schools created before this will need them added via the (not yet built) edit form, or directly in the DB.
 - **FLUID mode algorithm:** round-robins one lesson per term-week through the teacher's chosen candidate slots (`slot[weekIndex % N]`). This guarantees each slot is used `floor(weeks/N)` or `ceil(weeks/N)` times — off by at most one lesson — which is how "equal total teaching time" is satisfied. It's a defensible interpretation of a deliberately loose spec requirement, not the only possible one; revisit if it doesn't match what a real term looks like in practice.
 - **Conflict detection compares exact `scheduledAt` timestamps** for the same teacher, not overlapping time ranges — fine while lesson durations are short and slots are hand-picked from already-protected-block-filtered availability, but revisit if two different-length lessons could overlap without sharing a start time.
-- **Not yet built:** the lesson-history "ghost overlay" calendar visual, and Room-aware conflict checking (Room CRUD is deferred to build step 9 per the spec's own ordering).
+- The ghost-overlay calendar visual and Room-aware conflict checking are both now built (see build step 4 above) — this line previously said otherwise; it was stale.
 
 ## Stripe Decisions
 
