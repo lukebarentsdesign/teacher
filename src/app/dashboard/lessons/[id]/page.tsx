@@ -6,6 +6,7 @@ import { AttendanceButtons } from "./attendance-buttons";
 import { AddOnBookings } from "./addon-bookings";
 import { LessonSessionPlanPanel } from "../../session-plans/lesson-session-plan-panel";
 import { MeetingUrlForm } from "./meeting-url-form";
+import { CoverAssignmentPanel } from "./cover-assignment-panel";
 
 export default async function LessonDetailPage({
   params,
@@ -24,6 +25,7 @@ export default async function LessonDetailPage({
       location: true,
       addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
       feedback: { include: { payer: true }, orderBy: { submittedAt: "desc" } },
+      coverAssignments: { include: { coveringInstructor: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -38,6 +40,15 @@ export default async function LessonDetailPage({
     where: { teacherId: session!.user.id },
     orderBy: { title: "asc" },
   });
+
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session!.user.id } });
+  const orgMembers = teacher.organisationId
+    ? await prisma.teacher.findMany({
+        where: { organisationId: teacher.organisationId, id: { not: session!.user.id } },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      })
+    : [];
 
   return (
     <div className="max-w-lg space-y-6">
@@ -141,6 +152,24 @@ export default async function LessonDetailPage({
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {orgMembers.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-medium text-neutral-900">Cover</h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            Doesn&apos;t transfer ownership of this lesson — just a record of who actually taught it.
+          </p>
+          <CoverAssignmentPanel
+            lessonId={lesson.id}
+            orgMembers={orgMembers}
+            covers={lesson.coverAssignments.map((c) => ({
+              id: c.id,
+              reason: c.reason,
+              coveringInstructorName: c.coveringInstructor.name,
+            }))}
+          />
         </section>
       )}
     </div>

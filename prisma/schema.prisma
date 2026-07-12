@@ -183,6 +183,61 @@ enum LocationType {
   OTHER
 }
 
+enum TeacherRole {
+  OWNER
+  INSTRUCTOR
+}
+
+/// The tenancy boundary above Teacher (roadmap v2 Part 6e) — deliberately conservative in scope.
+/// Grouping Teacher accounts under one Organisation does NOT change the existing per-Teacher
+/// tenancy boundary on Student/Payer/etc. (still `teacherId`, unchanged everywhere) — a
+/// full shared-roster model (any instructor in the org sees all org students) is a much bigger
+/// change than this pass makes, deliberately not attempted. What Organisation adds: account
+/// grouping, and CoverAssignment for one instructor to cover another's lesson without any
+/// ownership transfer of the underlying Student/Payer/Subscription records.
+model Organisation {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teachers Teacher[]
+  invites  OrganisationInvite[]
+}
+
+/// Consent-based join — same "generate a link, the other person actively accepts" pattern as
+/// self-serve onboarding/embed links elsewhere in this app, rather than an OWNER unilaterally
+/// attaching another Teacher's account. Only acceptable while the invitee has no organisation yet.
+model OrganisationInvite {
+  id                String    @id @default(cuid())
+  organisationId    String
+  invitedByTeacherId String
+  token             String    @unique
+  createdAt         DateTime  @default(now())
+  acceptedAt        DateTime?
+
+  organisation    Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  invitedByTeacher Teacher     @relation(fields: [invitedByTeacherId], references: [id], onDelete: Cascade)
+}
+
+/// Substitute/cover for a specific Lesson — the covering instructor must be in the same
+/// Organisation as the original. Doesn't transfer ownership of the Lesson/Student/Subscription;
+/// purely a record of who actually taught it, for the org's own reference.
+model CoverAssignment {
+  id                    String    @id @default(cuid())
+  originalInstructorId  String
+  coveringInstructorId  String
+  lessonId              String?
+  reason                String?
+  createdAt             DateTime  @default(now())
+
+  originalInstructor Teacher @relation("CoverOriginal", fields: [originalInstructorId], references: [id], onDelete: Cascade)
+  coveringInstructor Teacher @relation("CoverCovering", fields: [coveringInstructorId], references: [id], onDelete: Cascade)
+  lesson             Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  @@index([lessonId])
+}
+
 // ---------------------------------------------------------------------------
 // Teacher / TeachingLocation / scheduling
 // ---------------------------------------------------------------------------
@@ -208,6 +263,17 @@ model Teacher {
   /// Used for home-sourced students' calendar events, when no TeachingLocation.primaryColor applies.
   personalBrandLogoUrl String?
   personalBrandColor   String?
+
+  /// Multi-instructor grouping (roadmap v2 Part 6e) — null organisationId is the default and
+  /// normal state (a standalone teacher, exactly today's behavior). role only means something once
+  /// organisationId is set; OWNER is the default so a Teacher who starts an Organisation is
+  /// automatically its owner rather than needing a separate promotion step.
+  organisationId String?
+  role           TeacherRole @default(OWNER)
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  sentOrganisationInvites OrganisationInvite[]
+  coverAssignmentsAsOriginal CoverAssignment[] @relation("CoverOriginal")
+  coverAssignmentsAsCovering CoverAssignment[] @relation("CoverCovering")
 
   /// Whether a Subscription's banked creditAppliedNextPeriod auto-reduces the suggested amount
   /// on the next manually-generated payment request, or is only displayed for the teacher to
@@ -824,6 +890,7 @@ model Lesson {
   sessionPlan        SessionPlan?
   incidentLogs       IncidentLog[]
   feedback           LessonFeedback[]
+  coverAssignments   CoverAssignment[]
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])

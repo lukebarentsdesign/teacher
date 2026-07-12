@@ -19,6 +19,53 @@ const noteSchema = z.object({
   content: z.string().trim().min(1, "Note can't be empty"),
 });
 
+/**
+ * The covering instructor must be in the same Organisation as the lesson's own teacher — this
+ * doesn't transfer ownership of the Lesson (still owned by the original teacherId), it's purely a
+ * record of who actually taught it. See "Multi-Instructor Support" in CLAUDE.md.
+ */
+export async function addCoverAssignmentAction(
+  lessonId: string,
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, teacherId: session.user.id } });
+  if (!lesson) return "Lesson not found";
+
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session.user.id } });
+  if (!teacher.organisationId) return "Not part of an organisation";
+
+  const coveringInstructorId = formData.get("coveringInstructorId") as string;
+  if (!coveringInstructorId) return "Pick a covering instructor";
+
+  const covering = await prisma.teacher.findFirst({
+    where: { id: coveringInstructorId, organisationId: teacher.organisationId },
+  });
+  if (!covering) return "That instructor isn't in your organisation";
+
+  const reason = (formData.get("reason") as string)?.trim() || null;
+
+  await prisma.coverAssignment.create({
+    data: { lessonId, originalInstructorId: session.user.id, coveringInstructorId, reason },
+  });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
+export async function deleteCoverAssignmentAction(coverAssignmentId: string, lessonId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  await prisma.coverAssignment.deleteMany({
+    where: { id: coverAssignmentId, lessonId, originalInstructorId: session.user.id },
+  });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
 export async function saveMeetingUrlAction(
   lessonId: string,
   _prevState: string | undefined,

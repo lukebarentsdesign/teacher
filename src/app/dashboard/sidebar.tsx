@@ -38,6 +38,7 @@ import {
   FileSpreadsheet,
   Code2,
   PlayCircle,
+  Building,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -63,6 +64,7 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/accounting-export", label: "Accounting export", icon: FileSpreadsheet },
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
   { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
+  { href: "/dashboard/organisation", label: "Organisation", icon: Building },
   { href: "/dashboard/billing", label: "Billing", icon: Settings },
 ];
 
