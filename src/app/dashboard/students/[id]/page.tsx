@@ -9,6 +9,7 @@ import { IgCardSettings } from "./ig-card-settings";
 import { SubjectsSettings } from "./subjects-settings";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
+import { CurriculumPanel } from "./curriculum-panel";
 
 export default async function StudentDetailPage({
   params,
@@ -26,6 +27,10 @@ export default async function StudentDetailPage({
       subscriptions: { include: { payer: true }, orderBy: { startDate: "desc" } },
       assessments: { orderBy: { date: "desc" } },
       subjects: true,
+      curricula: {
+        orderBy: { createdAt: "desc" },
+        include: { sections: { orderBy: { order: "asc" } } },
+      },
     },
   });
 
@@ -49,6 +54,17 @@ export default async function StudentDetailPage({
   const pendingPrivateTuitionRequest = student.locationId
     ? await prisma.privateTuitionRequest.findFirst({ where: { studentId: student.id, status: "PENDING" } })
     : null;
+
+  const curriculumTemplates = await prisma.curriculumTemplate.findMany({
+    where: { teacherId: session!.user.id },
+    orderBy: { title: "asc" },
+    select: { id: true, title: true, subject: true },
+  });
+  const otherStudents = await prisma.student.findMany({
+    where: { teacherId: session!.user.id, status: "ACTIVE", id: { not: student.id } },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -212,6 +228,28 @@ export default async function StudentDetailPage({
           studentId={student.id}
           allSubjects={allSubjects}
           selectedIds={student.subjects.map((s) => s.id)}
+        />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Curriculum</h2>
+        <CurriculumPanel
+          studentId={student.id}
+          curricula={student.curricula.map((c) => ({
+            id: c.id,
+            title: c.title,
+            subject: c.subject,
+            status: c.status,
+            sections: c.sections.map((s) => ({
+              id: s.id,
+              order: s.order,
+              title: s.title,
+              description: s.description,
+              status: s.status,
+            })),
+          }))}
+          templates={curriculumTemplates}
+          otherStudents={otherStudents}
         />
       </section>
 

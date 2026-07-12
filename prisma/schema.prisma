@@ -139,6 +139,18 @@ enum ContactPref {
   EMAIL
 }
 
+enum StudentCurriculumStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+enum StudentCurriculumSectionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
 enum LocationType {
   SCHOOL
   STUDENT_HOME
@@ -206,6 +218,7 @@ model Teacher {
   subjects                Subject[]
   lessonTypes             LessonType[]
   termCalendars           TermCalendar[]
+  curriculumTemplates     CurriculumTemplate[]
 }
 
 model TeachingLocation {
@@ -321,6 +334,7 @@ model LessonType {
   locations TeachingLocation[]
   requestedByStudents Student[]
   locationPricing LessonTypeLocationPricing[]
+  curriculumTemplates CurriculumTemplate[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -485,6 +499,7 @@ model Student {
   /// the original single-value description shown throughout the app. Lets a student span more
   /// than one subject (e.g. Piano + Music Theory) and be grouped/filtered by any of them.
   subjects          Subject[]
+  curricula         StudentCurriculum[]
 
   @@index([teacherId])
 }
@@ -787,7 +802,12 @@ model LessonNote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  /// Optional link to the curriculum section this lesson's note relates to — lets a note say
+  /// "worked on Section 3" without requiring a curriculum to exist at all.
+  studentCurriculumSectionId String?
+
+  lesson                  Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentCurriculumSection StudentCurriculumSection? @relation(fields: [studentCurriculumSectionId], references: [id], onDelete: SetNull)
 }
 
 model GroupClass {
@@ -1000,4 +1020,81 @@ model MaintenanceReminder {
 
   teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   loanableItem LoanableItem? @relation(fields: [loanableItemId], references: [id])
+}
+
+/// Teacher's own reusable syllabus (e.g. "Flute Grade 1 — standard"), built once and applied to any
+/// student following that path. Purely a template — importing onto a student (see StudentCurriculum)
+/// takes an independent snapshot, so editing the template later never retroactively changes a
+/// student already partway through (same principle as Contract/ContractAcceptance snapshotting).
+model CurriculumTemplate {
+  id          String   @id @default(cuid())
+  teacherId   String
+  title       String
+  subject     String? // free text, e.g. "Flute", "Yoga" — not FK'd to Subject to keep this standalone
+  description String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// Optional link so the right template is suggested automatically when a LessonType is chosen
+  /// (e.g. importing curriculum for a "Flute Grade 1" LessonType suggests this template first).
+  lessonTypeId String?
+
+  teacher    Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonType LessonType?          @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
+  sections   CurriculumSection[]
+  imports    StudentCurriculum[]
+
+  @@index([teacherId])
+}
+
+model CurriculumSection {
+  id               String  @id @default(cuid())
+  templateId       String
+  order            Int
+  title            String
+  description      String?
+  estimatedLessons Int? // guide only, not enforced by any scheduling logic
+
+  template CurriculumTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
+/// Created at import time as an independent snapshot copy of a CurriculumTemplate — own title/
+/// subject/section rows, not a live reference. A teacher can also build a plan from scratch
+/// directly on a student (templateId left null) and "Save as Template" afterwards.
+model StudentCurriculum {
+  id          String                @id @default(cuid())
+  studentId   String
+  templateId  String? // the template this was imported from, if any — informational only
+  title       String
+  subject     String?
+  startedDate DateTime              @default(now())
+  status      StudentCurriculumStatus @default(ACTIVE)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  student  Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  template CurriculumTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  sections StudentCurriculumSection[]
+
+  @@index([studentId])
+}
+
+model StudentCurriculumSection {
+  id                  String   @id @default(cuid())
+  studentCurriculumId String
+  order               Int
+  title               String
+  description         String?
+  estimatedLessons    Int?
+  status              StudentCurriculumSectionStatus @default(NOT_STARTED)
+  completedDate       DateTime?
+  notes               String?
+
+  studentCurriculum StudentCurriculum @relation(fields: [studentCurriculumId], references: [id], onDelete: Cascade)
+  lessonNotes       LessonNote[]
+
+  @@index([studentCurriculumId])
 }
