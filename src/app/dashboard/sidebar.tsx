@@ -10,6 +10,7 @@ import {
   CalendarX,
   CalendarOff,
   ScanLine,
+  Tag,
   Package,
   Wrench,
   Banknote,
@@ -37,6 +38,7 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/schools", label: "Schools", icon: Building2 },
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
+  { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
   { href: "/dashboard/billing", label: "Billing", icon: Settings },
 ];

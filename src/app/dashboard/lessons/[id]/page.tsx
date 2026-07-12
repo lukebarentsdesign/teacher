@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { LessonNoteForm } from "./lesson-note-form";
 import { AttendanceButtons } from "./attendance-buttons";
+import { AddOnBookings } from "./addon-bookings";
 
 export default async function LessonDetailPage({
   params,
@@ -14,10 +15,19 @@ export default async function LessonDetailPage({
 
   const lesson = await prisma.lesson.findFirst({
     where: { id, teacherId: session!.user.id },
-    include: { student: true, note: true },
+    include: {
+      student: true,
+      note: true,
+      addOnBookings: { include: { addOn: true }, orderBy: { createdAt: "asc" } },
+    },
   });
 
   if (!lesson) notFound();
+
+  const addOns = await prisma.addOn.findMany({
+    where: { teacherId: session!.user.id, archivedAt: null },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div className="max-w-lg space-y-6">
@@ -37,6 +47,28 @@ export default async function LessonDetailPage({
           make-up credit with no cash impact.
         </p>
         <AttendanceButtons lessonId={lesson.id} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-medium text-neutral-900">Add-ons</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          Extras like instrument hire or sheet music, billed separately from the subscription.
+        </p>
+        <AddOnBookings
+          lessonId={lesson.id}
+          addOns={addOns.map((a) => ({
+            id: a.id,
+            name: a.name,
+            price: a.price.toString(),
+            chargeUnit: a.chargeUnit,
+          }))}
+          bookings={lesson.addOnBookings.map((b) => ({
+            id: b.id,
+            quantity: b.quantity,
+            priceAtTime: b.priceAtTime.toString(),
+            addOn: { name: b.addOn.name },
+          }))}
+        />
       </section>
 
       <section>

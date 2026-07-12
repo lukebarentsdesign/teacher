@@ -173,6 +173,7 @@ model Teacher {
   maintenanceReminders  MaintenanceReminder[]
   expenses              Expense[]
   privateTuitionRequests PrivateTuitionRequest[]
+  addOns                 AddOn[]
 }
 
 model School {
@@ -655,14 +656,19 @@ model CheckIn {
 
 model AddOn {
   id         String     @id @default(cuid())
+  teacherId  String
   name       String
   price      Decimal    @db.Decimal(10, 2)
   chargeUnit ChargeUnit
   visibility Visibility @default(PUBLIC)
+  archivedAt DateTime?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
+  teacher  Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   bookings AddOnBooking[]
+
+  @@index([teacherId])
 }
 
 /// Attaches an AddOn to a Lesson or GroupClass booking without touching the core billing model.

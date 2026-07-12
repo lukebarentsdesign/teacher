@@ -97,6 +97,53 @@ export async function markPresentAction(
   revalidatePath("/dashboard/absences");
 }
 
+/**
+ * Books an Add-on onto a lesson. `priceAtTime` snapshots the AddOn's current price so a later
+ * price change never retroactively alters an already-booked charge (same pattern as
+ * ContractAcceptance.contractSnapshot). Deliberately does not touch the ledger — per spec this
+ * sits outside the core Subscription/billing model; the teacher collects/invoices for it
+ * separately.
+ */
+export async function addAddOnBookingAction(
+  lessonId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature
+  _prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const addOnId = formData.get("addOnId") as string;
+  const quantity = Number(formData.get("quantity")) || 1;
+  if (!addOnId) return "Choose an add-on.";
+  if (quantity < 1) return "Quantity must be at least 1.";
+
+  const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, teacherId: session.user.id } });
+  if (!lesson) return "Lesson not found";
+
+  const addOn = await prisma.addOn.findFirst({ where: { id: addOnId, teacherId: session.user.id } });
+  if (!addOn) return "Add-on not found";
+
+  await prisma.addOnBooking.create({
+    data: { addOnId, lessonId, quantity, priceAtTime: addOn.price },
+  });
+
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
+export async function removeAddOnBookingAction(lessonId: string, bookingId: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) return;
+
+  const booking = await prisma.addOnBooking.findFirst({
+    where: { id: bookingId, lessonId, lesson: { teacherId: session.user.id } },
+  });
+  if (!booking) return;
+
+  await prisma.addOnBooking.delete({ where: { id: bookingId } });
+  revalidatePath(`/dashboard/lessons/${lessonId}`);
+}
+
 export async function markAbsentMakeUpAction(
   lessonId: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState's required signature
