@@ -7,6 +7,7 @@ import { MicrositeTabs } from "./microsite-tabs";
 const TAB_LABELS: { segment: string; label: string }[] = [
   { segment: "", label: "Overview" },
   { segment: "calendar", label: "Calendar" },
+  { segment: "classes", label: "Classes" },
   { segment: "ledger", label: "Ledger" },
   { segment: "resources", label: "Resources" },
   { segment: "extras", label: "Extras" },

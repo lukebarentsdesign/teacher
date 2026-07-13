@@ -50,7 +50,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   if (session.mode === "subscription") {
     await handlePlatformCheckoutCompleted(session);
   } else if (session.mode === "payment") {
-    await handleParentPaymentCheckoutCompleted(session);
+    // Two different "payment" mode Checkout flows share this endpoint — courseId in metadata
+    // distinguishes a Course purchase from an ordinary parent-pays-the-ledger payment.
+    if (session.metadata?.courseId) {
+      await handleCoursePurchaseCheckoutCompleted(session);
+    } else {
+      await handleParentPaymentCheckoutCompleted(session);
+    }
   }
 }
 
@@ -91,6 +97,29 @@ async function handleParentPaymentCheckoutCompleted(session: Stripe.Checkout.Ses
   });
 
   await postPayment(subscriptionId, amount, "Parent payment via Stripe Checkout");
+}
+
+/**
+ * A guardian buying a Course via Stripe — creates CoursePurchase directly (not via the ledger;
+ * see "Sellable Course Content" in CLAUDE.md for why CoursePurchase deliberately doesn't touch
+ * LedgerEntry). Idempotent via the same unique (courseId, payerId) constraint the manual
+ * teacher-recorded path already relies on.
+ */
+async function handleCoursePurchaseCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const courseId = session.metadata?.courseId;
+  const payerId = session.metadata?.payerId;
+  if (!courseId || !payerId) return;
+
+  const existing = await prisma.coursePurchase.findUnique({
+    where: { courseId_payerId: { courseId, payerId } },
+  });
+  if (existing) return; // webhook retry — already recorded
+
+  const amountPaid = (session.amount_total ?? 0) / 100;
+
+  await prisma.coursePurchase.create({
+    data: { courseId, payerId, amountPaid },
+  });
 }
 
 async function handlePlatformSubscriptionChange(subscription: Stripe.Subscription) {

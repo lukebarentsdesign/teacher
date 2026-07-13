@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAuthorizedStudentView } from "@/lib/microsite-access";
+import { BuyCourseButton } from "./buy-course-button";
 
 const MEDIA_LABEL: Record<string, string> = { VIDEO: "Video", AUDIO: "Audio", DOCUMENT: "Document" };
 
@@ -28,6 +29,18 @@ export default async function StudentCoursesPage({
     where: { payerId: context.payerId },
     include: { course: { include: { items: { orderBy: { order: "asc" } } } } },
     orderBy: { purchasedAt: "desc" },
+  });
+  const purchasedCourseIds = new Set(purchases.map((p) => p.courseId));
+
+  const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+  const availableCourses = await prisma.course.findMany({
+    where: {
+      teacherId: student.teacherId,
+      isPublished: true,
+      price: { not: null },
+      id: { notIn: [...purchasedCourseIds] },
+    },
+    orderBy: { title: "asc" },
   });
 
   return (
@@ -61,6 +74,23 @@ export default async function StudentCoursesPage({
               </ul>
             </div>
           ))}
+        </div>
+      )}
+
+      {availableCourses.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-medium text-neutral-900">Available to buy</h2>
+          <div className="space-y-3">
+            {availableCourses.map((course) => (
+              <div key={course.id} className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">{course.title}</p>
+                  {course.description && <p className="mt-1 text-sm text-neutral-600">{course.description}</p>}
+                </div>
+                <BuyCourseButton studentId={studentId} courseId={course.id} price={course.price!.toString()} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
