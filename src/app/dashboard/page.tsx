@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { TeacherCalendar } from "./teacher-calendar";
+import { DashboardCards } from "./dashboard-cards";
 
 export default async function DashboardHomePage() {
   const session = await auth();
@@ -40,6 +41,7 @@ export default async function DashboardHomePage() {
     <div>
       <h1 className="mb-1 text-2xl font-semibold text-neutral-900">Overview</h1>
       <p className="mb-6 text-sm text-neutral-500">Your week at a glance.</p>
+      <DashboardCards teacherId={teacherId} />
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <SummaryCard label="Teaching locations" value={locationCount} />
         <SummaryCard label="Students" value={studentCount} />

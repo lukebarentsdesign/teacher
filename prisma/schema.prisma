@@ -188,6 +188,15 @@ enum TeacherRole {
   INSTRUCTOR
 }
 
+/// Derived from Teacher.teachesGroups + controlsOwnSchedule, never asked directly (onboarding-ux-
+/// spec Section 1). GROUP_INDEPENDENT = groups + self-controlled schedule. Groups + venue-
+/// controlled is explicitly out of scope (see OutOfScopeSignup) — this enum only has the two
+/// in-scope outcomes; 1:1 + venue-controlled folds into SOLO per the spec's own table.
+enum TeacherArchetype {
+  SOLO
+  GROUP_INDEPENDENT
+}
+
 /// The tenancy boundary above Teacher (roadmap v2 Part 6e) — deliberately conservative in scope.
 /// Grouping Teacher accounts under one Organisation does NOT change the existing per-Teacher
 /// tenancy boundary on Student/Payer/etc. (still `teacherId`, unchanged everywhere) — a
@@ -283,6 +292,24 @@ model Teacher {
   personalBrandLogoUrl String?
   personalBrandColor   String?
 
+  /// Onboarding archetype (onboarding-ux-spec Section 1) — teachesGroups/controlsOwnSchedule are
+  /// the two raw answers; archetype is DERIVED from that pair, never asked directly (keeps the
+  /// questions feeling like a quick conversation, not a form). Both null = hasn't been through the
+  /// archetype question yet (pre-existing accounts from before this spec, or mid-onboarding).
+  teachesGroups        Boolean?
+  controlsOwnSchedule  Boolean?
+  archetype            TeacherArchetype?
+  /// Set once Screen 6 (dashboard) is reached, regardless of how much of Screens 3-5 was filled
+  /// in — onboarding is "complete" the moment they land on a working dashboard, not when every
+  /// optional step is done. Null = still mid-onboarding (or a pre-existing account, same as above).
+  onboardingCompletedAt DateTime?
+  /// Phase 2 contextual dashboard cards the teacher has dismissed — JSON map of cardId → ISO
+  /// dismissal timestamp (not a plain string list) because some cards resurface after a cooldown
+  /// if their underlying condition is still true (e.g. "connect Stripe" comes back weekly), so the
+  /// dismissal time itself has to be tracked, not just the fact of dismissal. See
+  /// src/lib/onboarding.ts for the cooldown logic.
+  dismissedCards        Json @default("{}")
+
   /// Lone-worker safety (roadmap v2 Part 9b) — who gets alerted if a home-visit check-out doesn't
   /// happen within the expected window. Deliberately separate from the guardian-facing Payer
   /// contact fields; this is the teacher's own safety contact, never shown to a parent/student.
@@ -346,6 +373,7 @@ model Teacher {
   courseItems             CourseItem[]
   mileageLogs             MileageLog[]
   timetableWaitlist       TimetableWaitlist[]
+  outOfScopeSignups       OutOfScopeSignup[]
   locationTravelTimes     LocationTravelTime[]
 }
 
@@ -1642,4 +1670,21 @@ model SessionPlan {
   groupClass GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
 
   @@index([groupClassId, createdAt])
+}
+
+/// Captures the onboarding-ux-spec Section 1a "not a fit yet" path — a signup who answers
+/// Groups + venue-controls-the-schedule (a gym/studio/school employee), which this product isn't
+/// built for. Deliberately just email + free text, matching the spec exactly, so it's cheap to
+/// periodically review whether "employed-instructor side-hustle tracking" is a real second
+/// product worth building later. teacherId is set since Screen 1 (account creation) already ran
+/// by the time this question is reached, but kept optional/SetNull — this row should survive even
+/// if the abandoned account is later deleted.
+model OutOfScopeSignup {
+  id             String   @id @default(cuid())
+  teacherId      String?
+  email          String
+  freeTextAnswer String?
+  createdAt      DateTime @default(now())
+
+  teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 }

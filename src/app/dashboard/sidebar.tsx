@@ -45,16 +45,46 @@ import {
   Handshake,
   Route,
   Signpost,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
 import { GlobalSearch } from "@/components/ui/global-search";
 
 type NavLink = { href: string; label: string; icon: LucideIcon };
+export type Archetype = "SOLO" | "GROUP_INDEPENDENT" | null;
 
-// Setup: occasional, guided configuration — schools, students, contracts, account-level billing.
-// Operations: daily-use surface — schedule, day-to-day money, equipment.
-const SETUP_LINKS: NavLink[] = [
+// Onboarding-ux-spec Section 5: a genuinely shorter nav per archetype, not everything with items
+// greyed out. CORE is the always-visible short list; PHASE3 items are added dynamically once
+// their usage-signal trigger fires (see src/app/dashboard/layout.tsx for the trigger checks);
+// everything else lives in a collapsible "More" section — nothing built becomes unreachable, but
+// the primary nav a fresh teacher sees stays short.
+const CORE_SOLO: NavLink[] = [
+  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
+  { href: "/dashboard/students", label: "Students", icon: Users },
+  { href: "/dashboard/forecast", label: "Income", icon: TrendingUp },
+  { href: "/dashboard/billing", label: "Settings", icon: Settings },
+];
+
+const CORE_GROUP: NavLink[] = [
+  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
+  { href: "/dashboard/group-classes", label: "Classes", icon: Users2 },
+  { href: "/dashboard/students", label: "Members", icon: Users },
+  { href: "/dashboard/forecast", label: "Income", icon: TrendingUp },
+  { href: "/dashboard/billing", label: "Settings", icon: Settings },
+];
+
+const PHASE3_LINKS: Record<string, NavLink> = {
+  curriculum: { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
+  termCalendar: { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
+  waitlist: { href: "/dashboard/waitlist", label: "Waitlist", icon: ListPlus },
+  certifications: { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
+  taxSeasonMileage: { href: "/dashboard/mileage", label: "Mileage", icon: Car },
+  taxSeasonPack: { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
+};
+
+// Everything else — always reachable, just not in the short primary list until earned above.
+const ALL_LINKS: NavLink[] = [
   { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
   { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
@@ -74,9 +104,6 @@ const SETUP_LINKS: NavLink[] = [
   { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/dashboard/organisation", label: "Organisation", icon: Building },
   { href: "/dashboard/billing", label: "Billing", icon: Settings },
-];
-
-const OPERATIONS_LINKS: NavLink[] = [
   { href: "/dashboard", label: "Calendar", icon: CalendarDays },
   { href: "/dashboard/today", label: "Today", icon: Wifi },
   { href: "/dashboard/route-check", label: "Route check", icon: Route },
@@ -104,6 +131,24 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function NavLinkItem({ link, pathname, onNavigate }: { link: NavLink; pathname: string; onNavigate?: () => void }) {
+  const active = isActive(pathname, link.href);
+  const Icon = link.icon;
+  return (
+    <Link
+      href={link.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
+        active ? "bg-brand-50 font-medium text-brand-700" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+      }`}
+    >
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-brand-600" : "text-neutral-400"}`} />
+      {link.label}
+    </Link>
+  );
+}
+
 function NavGroup({
   label,
   links,
@@ -115,33 +160,40 @@ function NavGroup({
   pathname: string;
   onNavigate?: () => void;
 }) {
+  if (links.length === 0) return null;
   return (
     <div>
-      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-        {label}
-      </p>
+      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{label}</p>
       <div className="space-y-0.5">
-        {links.map((link) => {
-          const active = isActive(pathname, link.href);
-          const Icon = link.icon;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
-                active
-                  ? "bg-brand-50 font-medium text-brand-700"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-              }`}
-            >
-              <Icon className={`h-4 w-4 shrink-0 ${active ? "text-brand-600" : "text-neutral-400"}`} />
-              {link.label}
-            </Link>
-          );
-        })}
+        {links.map((link) => (
+          <NavLinkItem key={link.href} link={link} pathname={pathname} onNavigate={onNavigate} />
+        ))}
       </div>
+    </div>
+  );
+}
+
+function MoreSection({ links, pathname, onNavigate }: { links: NavLink[]; pathname: string; onNavigate?: () => void }) {
+  const [open, setOpen] = useState(false);
+  if (links.length === 0) return null;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="mb-1.5 flex w-full items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-600"
+      >
+        More
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="space-y-0.5">
+          {links.map((link) => (
+            <NavLinkItem key={link.href} link={link} pathname={pathname} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -157,19 +209,58 @@ function BrandMark() {
   );
 }
 
-function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function SidebarContent({
+  pathname,
+  archetype,
+  earnedPhase3Keys,
+  onNavigate,
+}: {
+  pathname: string;
+  archetype: Archetype;
+  earnedPhase3Keys: string[];
+  onNavigate?: () => void;
+}) {
+  // No archetype recorded (a pre-existing account from before this onboarding flow, or someone
+  // mid-onboarding) — fall back to the full historical list rather than guessing a short nav for
+  // an archetype we don't actually know, so existing usage habits aren't disrupted.
+  if (!archetype) {
+    return (
+      <div className="flex h-full flex-col gap-6 overflow-y-auto px-3 py-5">
+        <Link href="/dashboard" className="px-1">
+          <BrandMark />
+        </Link>
+        <NavGroup label="Everything" links={ALL_LINKS} pathname={pathname} onNavigate={onNavigate} />
+      </div>
+    );
+  }
+
+  const core = archetype === "GROUP_INDEPENDENT" ? CORE_GROUP : CORE_SOLO;
+  const phase3Links = earnedPhase3Keys.map((key) => PHASE3_LINKS[key]).filter((l): l is NavLink => !!l);
+  const primaryHrefs = new Set([...core, ...phase3Links].map((l) => l.href));
+  const moreLinks = ALL_LINKS.filter((l) => !primaryHrefs.has(l.href));
+
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto px-3 py-5">
       <Link href="/dashboard" className="px-1">
         <BrandMark />
       </Link>
-      <NavGroup label="Operations" links={OPERATIONS_LINKS} pathname={pathname} onNavigate={onNavigate} />
-      <NavGroup label="Setup" links={SETUP_LINKS} pathname={pathname} onNavigate={onNavigate} />
+      <NavGroup label="Menu" links={[...core, ...phase3Links]} pathname={pathname} onNavigate={onNavigate} />
+      <MoreSection links={moreLinks} pathname={pathname} onNavigate={onNavigate} />
     </div>
   );
 }
 
-export function DashboardChrome({ userName, children }: { userName: string; children: React.ReactNode }) {
+export function DashboardChrome({
+  userName,
+  archetype,
+  earnedPhase3Keys,
+  children,
+}: {
+  userName: string;
+  archetype: Archetype;
+  earnedPhase3Keys: string[];
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -177,7 +268,7 @@ export function DashboardChrome({ userName, children }: { userName: string; chil
     <div className="flex min-h-screen bg-neutral-50">
       {/* Desktop: persistent sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-neutral-200 bg-white sm:block">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} archetype={archetype} earnedPhase3Keys={earnedPhase3Keys} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -221,7 +312,12 @@ export function DashboardChrome({ userName, children }: { userName: string; chil
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <SidebarContent pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+            <SidebarContent
+              pathname={pathname}
+              archetype={archetype}
+              earnedPhase3Keys={earnedPhase3Keys}
+              onNavigate={() => setMobileOpen(false)}
+            />
           </div>
         </div>
       )}
