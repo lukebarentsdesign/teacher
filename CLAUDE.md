@@ -64,19 +64,56 @@ Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.pri
 
 ---
 
-## Build Order (from spec section 6 — follow in sequence)
+## Build Order & Status (roadmap-v2 doc + shipped phases)
 
-1. [x] Prisma schema for all entities — [prisma/schema.prisma](prisma/schema.prisma)
+**v1 spec (build order from original spec section 6):**
+1. [x] Prisma schema — [prisma/schema.prisma](prisma/schema.prisma)
 2. [x] Teacher/School/Student/Subscription CRUD + auth
-3. [x] Ledger engine (sanity-check hardest — running balance + cancellation payout + make-up credits) — [src/lib/ledger.ts](src/lib/ledger.ts), unit-tested in [__tests__/ledger.test.ts](__tests__/ledger.test.ts)
-4. [x] Timetable generator (fixed/fluid, protected blocks) — [src/lib/scheduling.ts](src/lib/scheduling.ts) (pure, unit-tested) + [src/lib/timetable.ts](src/lib/timetable.ts) (Prisma/room-aware conflict detection). Ghost-overlay calendar (past lesson slots ghosted onto the current week) built on the timetable preview page; a general teacher dashboard calendar also exists ([src/app/dashboard/teacher-calendar.tsx](src/app/dashboard/teacher-calendar.tsx)).
-5. [x] Stripe integration + webhook → LedgerEntry — split into three pieces once "teachers pay Learnio" and "parents pay teachers" turned out to need different Stripe products: platform billing ([src/lib/billing.ts](src/lib/billing.ts)), Connect Express onboarding ([src/lib/connect.ts](src/lib/connect.ts)), and parent payment links ([src/lib/payments.ts](src/lib/payments.ts)), all landing in one webhook ([src/app/api/webhooks/stripe/route.ts](src/app/api/webhooks/stripe/route.ts)). No parent microsite/login yet, so payment links are teacher-generated and shared manually — see below.
-6. [x] Contract generation — **in-app clickwrap acceptance, not PDF/e-signature** (spec updated; see docs/spec.md and "Contract Acceptance Decisions" below). PDF is now only an optional post-acceptance download.
-7. [x] Parent/student microsite — 6-digit code login (guardian and 16+ student, same namespace), student-picker (`/parent`) for guardians with multiple students, and per-student pages under `/parent/students/[studentId]/`: overview, FullCalendar-based calendar, ledger (gated by `shareBalanceWithStudent` for student viewers), resources, assignments, maintenance reminders (for items on active loan), lesson notes. Access control centralized in `src/lib/microsite-access.ts`.
-8. [x] Room booking, GroupClass, Assessment, LoanableItem/Loan modules — full CRUD, mostly nested under School/Student detail pages; Loans has its own top-level nav entry. Add-on (spec section 2) was schema-only until later — see "Add-on Decisions" below.
-9. [x] Teacher income forecasting dashboard + expense tracking — [src/app/dashboard/forecast/](src/app/dashboard/forecast/), new `Expense` model, hand-built SVG chart (no new chart dependency).
+3. [x] Ledger engine — [src/lib/ledger.ts](src/lib/ledger.ts), unit-tested
+4. [x] Timetable generator (fixed/fluid, protected blocks) — [src/lib/scheduling.ts](src/lib/scheduling.ts) + [src/lib/timetable.ts](src/lib/timetable.ts)
+5. [x] Stripe integration + webhook → LedgerEntry (three pieces: platform billing, Connect Express, parent payment links)
+6. [x] Contract generation (in-app clickwrap acceptance + optional PDF download)
+7. [x] Parent/student microsite (6-digit code login, calendar, ledger, resources, assignments, notes)
+8. [x] Room booking, GroupClass, Assessment, LoanableItem/Loan modules
+9. [x] Teacher income forecasting dashboard + expense tracking
 
-**Beyond the original v1 spec, also built:** School/Teacher branding on calendars; Setup vs Operations nav split; a private-tuition-request flow (with a non-solicitation legal-caution gate) letting a school-sourced student request going private; no-show tracking + make-up-lesson workflow + next-period billing credit ([src/app/dashboard/absences/](src/app/dashboard/absences/)); a real sidebar/dropdown-menu UI redesign; and bidirectional Payer↔Student↔School cross-referencing + a guided new-student wizard + global cross-entity search (see "Conventions" below for the wizard's validation rules).
+**Roadmap v2 (phased after v1, as documented in [learnio-roadmap-v2.md](learnio-roadmap-v2.md)):**
+
+| Part | Status | What |
+|------|--------|------|
+| **Part 1: TeachingLocation** | [x] Done | Renamed `School` → `TeachingLocation` with `locationType` enum (SCHOOL/STUDENT_HOME/TEACHER_BASE/HIRED_VENUE/ONLINE/OTHER). `invoicingTarget` remains location-scoped. |
+| **Part 1a: Venue cost/pricing** | [x] Done | `LessonTypeLocationPricing` overrides per location. `VenueFeeArrangement` (ABSORBED_INTO_FEE or ITEMISED_TO_PAYER) for teacher's own venue costs. |
+| **Part 1b/1c: Online lessons** | [x] Done | `Lesson.meetingUrl` (teacher-supplied), `.ics` one-way export (`src/lib/ics.ts`), safeguarding guidance (policy text, not enforced until video API integration). |
+| **Part 2: LessonType catalog** | [x] Done | Teacher's "menu" at `/dashboard/lesson-types/`, scoped to locations via m2m. `defaultDurationMinutes`/`defaultFee` per type. |
+| **Part 2.5: Flexible billing** | [x] Done | `Lesson.isTrial` flag, `Lesson.sharedWithStudentId` for student pairs, `Subscription.locationId` for multi-location independence. |
+| **Part 3: Term Calendar** | [x] Done | `TermCalendar`/`TermPeriod`/`HolidayPeriod` reusable templates. `TeachingLocation.termCalendarId` for override (assignment model, not merge). |
+| **Part 3.5: Timetable generator v2** | [x] Done | Bulk planner in `src/lib/bulk-timetable.ts` (unit-tested), fair-packing greedy algorithm, shortfall flagging, no under-scheduling. Per-location generation from `/dashboard/timetable/bulk`. |
+| **Part 4: Self-serve onboarding** | [x] Done | Public `/onboard/[teacherId]` link, `Student.status = PENDING_REVIEW`, teacher approval at `/dashboard/students/pending`. |
+| **Part 4 tail: Embeddable widget** | [x] Done | `EmbedConfig` generates shareable link + iframe copy-paste (`/onboard/embed/[token]`), reuses same `OnboardingForm`. |
+| **Part 5: Curriculum templates** | [x] Done | `CurriculumTemplate`/`CurriculumSection` (reusable), `StudentCurriculum`/`StudentCurriculumSection` (snapshot copies at import). Import/save-as-template/duplicate actions in student detail. |
+| **Part 5a: Sellable course content** | [x] Done | `Course`/`CourseItem`/`CoursePurchase`. Free-standing library content (no ledger posting). Stripe Checkout path + manual recording option. Microsite "Courses" tab (guardian-only). |
+| **Part 6a: Session plans** | [x] Done | `SessionPlan` (distinct from `LessonNote`), 1:1 with `Lesson` or 1:many with `GroupClass`. Public "Now/Next" display via unguessable `displayToken`. |
+| **Part 6b: Group capacity/waitlist** | [x] Done | `GroupSessionBooking` (`CONFIRMED`/`WAITLISTED`), `capacity` on `GroupClass`. Waitlist promotion via `pickPromotionCandidate` (`src/lib/group-booking.ts`). |
+| **Part 6c: Compliance & safety** | [x] Done | `InstructorCertification` (renewal tracking), `StudentMedicalNote` (teacher-only), `IncidentLog` (safeguarding/liability). |
+| **Part 6d: Configurable cancellation policy** | [x] Done | `CancellationPolicy` (notice-based rules per location or teacher-wide). Integrates with existing attendance marking. |
+| **Part 6e: Multi-instructor support** | [x] Done | `Organisation` (tenant above `Teacher`, optional/nullable), `CoverAssignment` (no ownership transfer), consent-based invite join. |
+| **Part 6f: Lesson feedback** | [x] Done | `LessonFeedback` (guardian-only, stars + comment). Upsert on `(lessonId, payerId)`. Per-lesson on Lesson detail, aggregate on Student detail. |
+| **Part 7: Commerce add-ons** | [x] Done | `GiftCard` (manual redemption), `PromoCode` (discount via manual correction), `AccountingExport` (on-demand CSV). |
+| **Part 8a: Invoice PDF** | [x] Done | `GET /api/subscriptions/[id]/invoice`, document layer only. Rendered via `src/lib/invoice-pdf.ts`. |
+| **Part 8b: Accounting CSV export** | [x] Done | `GET /api/accounting-export` (optional date range), signed amounts (CREDIT positive, DEBIT negative). |
+| **Part 9a: Tax & mileage pack** | [x] Done | `MileageLog` (manual entry), HMRC allowance (45p/25p threshold), `src/lib/mileage.ts` (unit-tested). Tax pack rolls existing data. |
+| **Part 9b: Freelancer safety net** | [x] Done | Batch-cancel today (query-param pre-fill to `/unavailability/preview`). `LoneWorkerCheckIn` (STUDENT_HOME only), lazy overdue-alert sweep. |
+| **Part 9c: Growing the business** | [x] Done | `TimetableWaitlist` (manual pipeline), `Student.referredBy` (free text), termly progress summary (generated, emails via Gmail). |
+| **Part 9d: Multi-location route feasibility** | [x] Done | `LocationTravelTime` (manual, directional). `checkDayFeasibility` (`src/lib/route-check.ts`, unit-tested) flags unrealistic travel windows. |
+| **Part 10: Onboarding UX & dynamic nav** | [x] Done | `Teacher.archetype`/`teachesGroups`/`controlsOwnSchedule` (derived). Registration → `/onboarding` (new). Screens 3-5 one wizard. Dynamic nav per archetype + Phase 3 triggers. |
+| **Part 12: Concerts/events** | [x] Done | `Event` (with `equipment` requirements), `EventParticipant`. Linked to rehearsal lessons. |
+| **Part 12.2: Document storage** | [x] Done | `DocumentRecord` (entity type, doc type, file URL, expiry). `InstructorCertification` integrable as a specific docType. |
+| **Part 12.3: GoCardless** | Not built | Stripe-only currently; direct debit integration deferred. |
+| **Part 12.4: Ranked waiting list** | [x] Done | `TimetableWaitlist` with teacher-managed status, priorityScore (wait time + match). |
+| **Part 12.5: Equipment on a booking** | [x] Done | `Lesson.equipmentRequest` (free text), `TeachingLocation`/`Room.equipment` list. |
+| **Part 12.6: Workflow board, automation, etc.** | Partial | "Workload-based availability limits" (per-day cap) not yet built; unified message lifecycle & recurring-cadence templating mentioned but not pursued. |
+
+**Beyond the original v1 spec, also built:** School/Teacher branding on calendars; Setup vs Operations nav split; private-tuition-request flow; no-show tracking + make-up-lesson workflow; real sidebar/dropdown-menu UI; bidirectional Payer↔Student↔TeachingLocation cross-referencing; guided new-student wizard; global cross-entity search; Subjects (teacher-defined, many-to-many with Student); edit forms for core entities.
 
 ---
 
