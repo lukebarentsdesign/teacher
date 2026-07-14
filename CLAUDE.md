@@ -3,6 +3,8 @@
 This file is the source of truth for any AI assistant working on this codebase. Read this before making decisions.
 
 > **Full build spec:** [docs/spec.md](docs/spec.md) — read it before writing any code. It defines every entity, business rule, and the required build order.
+>
+> **Frontend/design guide:** [docs/design-system.md](docs/design-system.md) — read it before changing UI, layout, typography, colors, component styling, or frontend interaction patterns.
 
 ---
 
@@ -61,6 +63,8 @@ providers, used directly by `middleware.ts`; `auth.ts` adds the Credentials prov
 bcrypt) on top, used by API routes and server actions. Don't merge these back into one file.
 
 Prisma 7 note: connection config lives in `prisma.config.ts`, not in `schema.prisma`'s `datasource` block. Runtime `PrismaClient` requires a driver adapter — see [src/lib/db.ts](src/lib/db.ts).
+
+Supabase connectivity note: the direct database host for this project can resolve IPv6-only unless the paid dedicated IPv4 add-on is enabled. On ordinary IPv4-only networks, use Supabase's Shared Pooler URI in `.env` for local development (template below in "Environment Variables"). Do not commit real database passwords.
 
 ---
 
@@ -346,7 +350,7 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 
 ## Onboarding & Dynamic Nav (learnio-onboarding-ux-spec.md)
 
-- **⚠️ Migration written but not yet applied** — `prisma/migrations/20260713100000_add_onboarding_ux_fields` was hand-written (not generated via `prisma migrate diff`) because the live Supabase DB was unreachable (DNS resolution failure for `db.igumekduyhipcevkpiwe.supabase.co` from this environment, unrelated to any code change) for the whole rest of this session. Run `npx prisma migrate deploy` once connectivity is confirmed (`node -e "require('dns').lookup('db.igumekduyhipcevkpiwe.supabase.co', console.log)"`) — until then, `Teacher.archetype`/`teachesGroups`/`controlsOwnSchedule`/`onboardingCompletedAt`/`dismissedCards` and the `OutOfScopeSignup` table don't exist in the live DB, so the onboarding wizard, dashboard cards, and dynamic nav will error at runtime despite typechecking cleanly (`prisma generate` only needs the schema file, not a live connection, which is why the code compiles but can't actually run yet).
+- **Onboarding migration is applied in Supabase** — `prisma/migrations/20260713100000_add_onboarding_ux_fields` was hand-written (not generated via `prisma migrate diff`) and was applied successfully on 2026-07-14 using the Supabase Shared Pooler plus the local Prisma CLI (`node_modules\.bin\prisma.cmd migrate deploy`). `node_modules\.bin\prisma.cmd migrate status` reported "Database schema is up to date!" afterward. If a fresh/rotated database is used later, re-run the local Prisma CLI form rather than relying on `npx.cmd`, which previously printed a blank `Schema engine error` even though the pooler connection itself worked.
 - **`Teacher.archetype` is derived, never asked directly** (`deriveArchetype` in `src/lib/onboarding.ts`, pure/unit-tested) — 1:1 always folds to `SOLO` regardless of who controls the schedule; groups+venue-controlled has no archetype value at all (returns `null`), routing to the `OutOfScopeSignup` capture path instead of forcing a bad-fit archetype onto someone the product doesn't serve.
 - **Registration now lands on `/onboarding`, not `/dashboard`** — only for *new* signups (`src/app/register/actions.ts`); the existing `/login` action still goes straight to `/dashboard`, so current users' habits are completely unaffected. `/onboarding` was added to the middleware matcher alongside `/dashboard` so it gets the same auth gate.
 - **Onboarding Screens 3-5 (LessonType, Location, first Student) are one client-side multi-step wizard with a single set of per-step server actions, not five separately-persisted steps** — a deliberate simplification of the spec's screen-by-screen framing: the user experience (skippable, back-and-forth within the flow) is the same, but there's no intermediate "half-onboarded" DB state to reason about beyond what each action call itself creates. `completeOnboardingAction` (setting `onboardingCompletedAt`) is what actually marks Screen 6 reached — called regardless of how much of 3-5 was filled in, matching the spec's "land here regardless" framing exactly.
@@ -416,4 +420,17 @@ function correctly), check the compiled CSS for utility classes before assuming 
 
 ## Environment Variables
 
-See [.env.example](.env.example). Key ones: `DATABASE_URL` (Supabase direct connection, port 5432 — not the pooled one, for migrations), `AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+See [.env.example](.env.example). Key ones: `DATABASE_URL`, `AUTH_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+
+### Supabase Local Database Setup
+
+- **Do not commit secrets.** `.env` should hold the real password locally only. The password was pasted into chat during setup, so rotate it in Supabase and update `.env` afterward.
+- **Direct connection is preferred when reachable**: `postgresql://postgres:[PASSWORD]@db.igumekduyhipcevkpiwe.supabase.co:5432/postgres`. Supabase direct DB endpoints are IPv6-only by default unless the paid dedicated IPv4 add-on is enabled.
+- **At home / IPv4-only networks, use the Shared Pooler**: `postgresql://postgres.igumekduyhipcevkpiwe:[PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres`. This is the free path that worked from this environment. Use the Supabase "Shared Pooler" URI, not the direct URI, if direct TCP checks fail.
+- **Use the local Prisma CLI on Windows** for migration checks/deploys:
+  - `node_modules\.bin\prisma.cmd migrate status`
+  - `node_modules\.bin\prisma.cmd migrate deploy`
+  - `node_modules\.bin\prisma.cmd generate`
+- **Seed login account**: `npm.cmd run db:seed` creates/keeps `teacher@example.com` with password `changeme123` unless `SEED_TEACHER_EMAIL` / `SEED_TEACHER_PASSWORD` are set.
+- **Restart Next after changing `.env`**: stop the visible dev-server window with `Ctrl+C`, then run `node.exe scripts\run-next-dev.js`.
+- Supabase's `npx skills add supabase/agent-skills` prompt is optional agent guidance only; it is not required for this app to connect or migrate.
