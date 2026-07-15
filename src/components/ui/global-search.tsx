@@ -54,7 +54,6 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div ref={containerRef} className="relative w-full max-w-xs">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           value={q}
           onChange={(e) => {
@@ -63,8 +62,13 @@ export function GlobalSearch({ onNavigate }: { onNavigate?: () => void }) {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search students, payers, teaching locations…"
-          className="w-full rounded-lg border border-neutral-300 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none"
+          className="w-full rounded-lg border border-neutral-300 bg-white py-1.5 pl-3 pr-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none"
         />
+        <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded bg-brand-700 text-white cursor-pointer hover:bg-brand-850 transition-colors">
+            <Search className="h-3.5 w-3.5" />
+          </span>
+        </div>
       </div>
 
       {open && q.trim().length >= 2 && (

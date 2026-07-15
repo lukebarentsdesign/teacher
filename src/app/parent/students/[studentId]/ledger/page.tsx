@@ -48,7 +48,7 @@ export default async function StudentLedgerPage({
               >
                 Download invoice PDF
               </a>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="rounded-xl bg-white p-6 shadow-sm">
                   <p className="text-sm text-neutral-500">Balance</p>
                   <p

@@ -46,6 +46,8 @@ import {
   Route,
   Signpost,
   ChevronDown,
+  MessageSquare,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -54,26 +56,7 @@ import { GlobalSearch } from "@/components/ui/global-search";
 type NavLink = { href: string; label: string; icon: LucideIcon };
 export type Archetype = "SOLO" | "GROUP_INDEPENDENT" | null;
 
-// Onboarding-ux-spec Section 5: a genuinely shorter nav per archetype, not everything with items
-// greyed out. CORE is the always-visible short list; PHASE3 items are added dynamically once
-// their usage-signal trigger fires (see src/app/dashboard/layout.tsx for the trigger checks);
-// everything else lives in a collapsible "More" section — nothing built becomes unreachable, but
-// the primary nav a fresh teacher sees stays short.
-const CORE_SOLO: NavLink[] = [
-  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
-  { href: "/dashboard/students", label: "Students", icon: Users },
-  { href: "/dashboard/forecast", label: "Income", icon: TrendingUp },
-  { href: "/dashboard/billing", label: "Settings", icon: Settings },
-];
-
-const CORE_GROUP: NavLink[] = [
-  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
-  { href: "/dashboard/group-classes", label: "Classes", icon: Users2 },
-  { href: "/dashboard/students", label: "Members", icon: Users },
-  { href: "/dashboard/forecast", label: "Income", icon: TrendingUp },
-  { href: "/dashboard/billing", label: "Settings", icon: Settings },
-];
-
+// Onboarding-ux-spec Section 5: Dynamic categorized link lists.
 const PHASE3_LINKS: Record<string, NavLink> = {
   curriculum: { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
   termCalendar: { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
@@ -83,19 +66,49 @@ const PHASE3_LINKS: Record<string, NavLink> = {
   taxSeasonPack: { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
 };
 
-// Everything else — always reachable, just not in the short primary list until earned above.
-const ALL_LINKS: NavLink[] = [
-  { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
-  { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
-  { href: "/dashboard/subjects", label: "Subjects", icon: Music },
-  { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
-  { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
-  { href: "/dashboard/courses", label: "Courses", icon: PlayCircle },
-  { href: "/dashboard/embeds", label: "Onboarding widget", icon: Code2 },
+const CAT_OPERATIONS_LIST: NavLink[] = [
+  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
+  { href: "/dashboard/today", label: "Today", icon: Wifi },
+  { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
+  { href: "/dashboard/group-classes", label: "Group classes", icon: Users2 },
+  { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
+  { href: "/dashboard/absences", label: "Absences", icon: CalendarX },
+  { href: "/dashboard/incidents", label: "Incidents", icon: AlertTriangle },
+  { href: "/dashboard/unavailability", label: "Unavailability", icon: CalendarOff },
+];
+
+const CAT_CLIENTS_LIST: NavLink[] = [
   { href: "/dashboard/students", label: "Students", icon: Users },
+  { href: "/dashboard/payers", label: "Payers", icon: Wallet },
   { href: "/dashboard/waitlist", label: "Waitlist", icon: ListPlus },
   { href: "/dashboard/referrals", label: "Referrals", icon: Handshake },
-  { href: "/dashboard/payers", label: "Payers", icon: Wallet },
+];
+
+const CAT_LOCATIONS_LIST: NavLink[] = [
+  { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
+  { href: "/dashboard/travel-times", label: "Travel times", icon: Signpost },
+  { href: "/dashboard/route-check", label: "Route check", icon: Route },
+  { href: "/dashboard/checkin", label: "Check in", icon: ScanLine },
+];
+
+const CAT_SETUP_LIST: NavLink[] = [
+  { href: "/dashboard/subjects", label: "Subjects", icon: Music },
+  { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
+  { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
+  { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
+  { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
+  { href: "/dashboard/timetable/bulk", label: "Bulk timetable", icon: CalendarClock },
+  { href: "/dashboard/embeds", label: "Onboarding widget", icon: Code2 },
+  { href: "/dashboard/courses", label: "Courses", icon: PlayCircle },
+  { href: "/dashboard/resources", label: "Resources", icon: FolderOpen },
+  { href: "/dashboard/loans", label: "Loans", icon: Package },
+  { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
+];
+
+const CAT_BUSINESS_LIST: NavLink[] = [
+  { href: "/dashboard/payments", label: "Get paid", icon: Banknote },
+  { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
+  { href: "/dashboard/billing", label: "Billing", icon: Settings },
   { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
   { href: "/dashboard/gift-cards", label: "Gift cards", icon: Gift },
   { href: "/dashboard/promo-codes", label: "Promo codes", icon: Percent },
@@ -103,28 +116,11 @@ const ALL_LINKS: NavLink[] = [
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
   { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/dashboard/organisation", label: "Organisation", icon: Building },
-  { href: "/dashboard/billing", label: "Billing", icon: Settings },
-  { href: "/dashboard", label: "Calendar", icon: CalendarDays },
-  { href: "/dashboard/today", label: "Today", icon: Wifi },
-  { href: "/dashboard/route-check", label: "Route check", icon: Route },
-  { href: "/dashboard/checkin", label: "Check in", icon: ScanLine },
-  { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
-  { href: "/dashboard/timetable/bulk", label: "Bulk timetable", icon: CalendarClock },
-  { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
-  { href: "/dashboard/group-classes", label: "Group classes", icon: Users2 },
-  { href: "/dashboard/absences", label: "Absences", icon: CalendarX },
-  { href: "/dashboard/incidents", label: "Incidents", icon: AlertTriangle },
-  { href: "/dashboard/unavailability", label: "Unavailability", icon: CalendarOff },
-  { href: "/dashboard/loans", label: "Loans", icon: Package },
-  { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
-  { href: "/dashboard/payments", label: "Get paid", icon: Banknote },
-  { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
   { href: "/dashboard/mileage", label: "Mileage", icon: Car },
-  { href: "/dashboard/travel-times", label: "Travel times", icon: Signpost },
   { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
-  { href: "/dashboard/resources", label: "Resources", icon: FolderOpen },
-  { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
 ];
+
+
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -140,58 +136,76 @@ function NavLinkItem({ link, pathname, onNavigate }: { link: NavLink; pathname: 
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
-        active ? "bg-brand-50 font-medium text-brand-700" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+        active
+          ? "bg-white/15 text-white font-medium shadow-sm"
+          : "text-white/70 hover:bg-white/5 hover:text-white"
       }`}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-brand-600" : "text-neutral-400"}`} />
+      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-white/50"}`} />
       {link.label}
     </Link>
   );
 }
 
-function NavGroup({
+function SidebarCategory({
   label,
   links,
+  coreHrefs,
   pathname,
   onNavigate,
+  defaultOpen = false,
 }: {
   label: string;
   links: NavLink[];
+  coreHrefs: Set<string>;
   pathname: string;
   onNavigate?: () => void;
+  defaultOpen?: boolean;
 }) {
-  if (links.length === 0) return null;
-  return (
-    <div>
-      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{label}</p>
-      <div className="space-y-0.5">
-        {links.map((link) => (
-          <NavLinkItem key={link.href} link={link} pathname={pathname} onNavigate={onNavigate} />
-        ))}
-      </div>
-    </div>
-  );
-}
+  const coreLinks = links.filter((l) => coreHrefs.has(l.href));
+  const moreLinks = links.filter((l) => !coreHrefs.has(l.href));
 
-function MoreSection({ links, pathname, onNavigate }: { links: NavLink[]; pathname: string; onNavigate?: () => void }) {
-  const [open, setOpen] = useState(false);
+  // Determine if any link in this category is currently active
+  const isAnyActive = links.some((l) => isActive(pathname, l.href));
+  const [open, setOpen] = useState(defaultOpen || isAnyActive);
+  const [showMore, setShowMore] = useState(moreLinks.some((l) => isActive(pathname, l.href)));
+
   if (links.length === 0) return null;
 
   return (
-    <div>
+    <div className="space-y-1">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="mb-1.5 flex w-full items-center justify-between px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 hover:text-neutral-600"
+        className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40 hover:text-white/60 transition-colors"
       >
-        More
+        <span>{label}</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
       </button>
+
       {open && (
-        <div className="space-y-0.5">
-          {links.map((link) => (
+        <div className="space-y-0.5 pl-1.5 border-l border-white/5 ml-3">
+          {coreLinks.map((link) => (
             <NavLinkItem key={link.href} link={link} pathname={pathname} onNavigate={onNavigate} />
           ))}
+
+          {moreLinks.length > 0 && (
+            <div className="space-y-0.5">
+              <button
+                type="button"
+                onClick={() => setShowMore((s) => !s)}
+                className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-semibold text-white/45 hover:text-white/70 transition-colors"
+              >
+                <span>{showMore ? "Show less" : "Show more"}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${showMore ? "rotate-180" : ""}`} />
+              </button>
+              
+              {showMore &&
+                moreLinks.map((link) => (
+                  <NavLinkItem key={link.href} link={link} pathname={pathname} onNavigate={onNavigate} />
+                ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -200,8 +214,8 @@ function MoreSection({ links, pathname, onNavigate }: { links: NavLink[]; pathna
 
 function BrandMark() {
   return (
-    <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-neutral-900">
-      <span className="grid h-6 w-6 place-items-center rounded-md bg-brand-600 text-xs font-bold text-white">
+    <span className="flex items-center gap-2.5 text-base font-bold tracking-tight text-white">
+      <span className="grid h-7 w-7 place-items-center rounded-lg bg-white text-sm font-black text-brand-650 shadow-sm">
         L
       </span>
       Learnio
@@ -220,32 +234,85 @@ function SidebarContent({
   earnedPhase3Keys: string[];
   onNavigate?: () => void;
 }) {
-  // No archetype recorded (a pre-existing account from before this onboarding flow, or someone
-  // mid-onboarding) — fall back to the full historical list rather than guessing a short nav for
-  // an archetype we don't actually know, so existing usage habits aren't disrupted.
-  if (!archetype) {
-    return (
-      <div className="flex h-full flex-col gap-6 overflow-y-auto px-3 py-5">
-        <Link href="/dashboard" className="px-1">
-          <BrandMark />
-        </Link>
-        <NavGroup label="Everything" links={ALL_LINKS} pathname={pathname} onNavigate={onNavigate} />
-      </div>
-    );
+  const coreHrefs = new Set<string>();
+  
+  // Base Core links always shown:
+  coreHrefs.add("/dashboard"); // Calendar
+  coreHrefs.add("/dashboard/students"); // Students
+  coreHrefs.add("/dashboard/teaching-locations"); // Teaching Locations
+  coreHrefs.add("/dashboard/subjects"); // Subjects
+  coreHrefs.add("/dashboard/lesson-types"); // Lesson types
+  coreHrefs.add("/dashboard/forecast"); // Forecast
+  coreHrefs.add("/dashboard/billing"); // Billing
+
+  if (archetype === "GROUP_INDEPENDENT") {
+    coreHrefs.add("/dashboard/group-classes"); // Classes for group
   }
 
-  const core = archetype === "GROUP_INDEPENDENT" ? CORE_GROUP : CORE_SOLO;
-  const phase3Links = earnedPhase3Keys.map((key) => PHASE3_LINKS[key]).filter((l): l is NavLink => !!l);
-  const primaryHrefs = new Set([...core, ...phase3Links].map((l) => l.href));
-  const moreLinks = ALL_LINKS.filter((l) => !primaryHrefs.has(l.href));
+  // Add dynamically earned phase 3 keys
+  earnedPhase3Keys.forEach((key) => {
+    const link = PHASE3_LINKS[key];
+    if (link) coreHrefs.add(link.href);
+  });
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto px-3 py-5">
       <Link href="/dashboard" className="px-1">
         <BrandMark />
       </Link>
-      <NavGroup label="Menu" links={[...core, ...phase3Links]} pathname={pathname} onNavigate={onNavigate} />
-      <MoreSection links={moreLinks} pathname={pathname} onNavigate={onNavigate} />
+
+      <div className="space-y-4 flex-1">
+        <SidebarCategory
+          label="Operations"
+          links={CAT_OPERATIONS_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+          defaultOpen={true}
+        />
+        <SidebarCategory
+          label="Students & Families"
+          links={CAT_CLIENTS_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+        <SidebarCategory
+          label="Locations & Venues"
+          links={CAT_LOCATIONS_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+        <SidebarCategory
+          label="Setup & Config"
+          links={CAT_SETUP_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+        <SidebarCategory
+          label="Business & Admin"
+          links={CAT_BUSINESS_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+      </div>
+
+      {/* Assistance Banner */}
+      <div className="mt-auto px-1 pt-4 border-t border-white/10">
+        <div className="relative overflow-hidden rounded-xl bg-white/10 p-4 border border-white/5 shadow-inner">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold text-white/90">Need assistance?</span>
+            <span className="text-[10px] text-white/60 leading-normal">Access resources, class setups, and guides instantly.</span>
+            <Link href="/dashboard/resources" onClick={onNavigate} className="mt-2 text-center text-[10px] font-bold text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors">
+              Open Resources
+            </Link>
+          </div>
+          <div className="absolute -right-3 -bottom-3 h-12 w-12 rounded-full bg-white/5 pointer-events-none" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -265,30 +332,48 @@ export function DashboardChrome({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
+    <div className="flex min-h-screen bg-[#faf9f7]">
       {/* Desktop: persistent sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-neutral-200 bg-white sm:block">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 bg-gradient-to-b from-[#1b4bbd] to-[#12368c] text-white border-r border-[#10308c] sm:block">
         <SidebarContent pathname={pathname} archetype={archetype} earnedPhase3Keys={earnedPhase3Keys} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Full-width top bar: hamburger+brand (mobile only), global search, user menu. */}
+        {/* Full-width top bar: hamburger+brand (mobile only), school switcher, search, help widgets, user menu. */}
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-neutral-200 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-6">
           <div className="flex items-center gap-3 sm:hidden">
             <button
-              type="button"
+              type="button; opacity: 0.9"
               onClick={() => setMobileOpen(true)}
               className="rounded-lg border border-neutral-300 p-2 text-neutral-700"
               aria-label="Open menu"
             >
               <MenuIcon className="h-4 w-4" />
             </button>
-            <BrandMark />
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#1b4bbd] text-sm font-black text-white shadow-sm">L</span>
           </div>
-          <div className="hidden flex-1 sm:block">
+
+          <div className="hidden items-center gap-3 sm:flex mr-4 shrink-0">
+            <button className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-bold text-neutral-800 hover:bg-neutral-50 transition-colors shadow-sm">
+              <span>ABC School</span>
+              <span className="text-neutral-400 font-normal text-xs">⇄</span>
+            </button>
+          </div>
+
+          <div className="hidden flex-1 sm:block max-w-xs">
             <GlobalSearch />
           </div>
-          <UserMenu name={userName} />
+
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Help & Support bubbles */}
+            <button className="hidden sm:grid h-9 w-9 place-items-center rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors" title="Messages">
+              <MessageSquare className="h-4 w-4" />
+            </button>
+            <button className="hidden sm:grid h-9 w-9 place-items-center rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors" title="Help Centre">
+              <HelpCircle className="h-4 w-4" />
+            </button>
+            <UserMenu name={userName} />
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
@@ -298,15 +383,15 @@ export function DashboardChrome({
       {mobileOpen && (
         <div className="fixed inset-0 z-40 sm:hidden">
           <div className="absolute inset-0 bg-neutral-900/30" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-card">
-            <div className="flex items-center gap-2 px-3 pt-3">
+          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-gradient-to-b from-[#1b4bbd] to-[#12368c] text-white shadow-card animate-slide-in">
+            <div className="flex items-center gap-2 px-3 pt-3 border-b border-white/10 pb-3">
               <div className="flex-1">
                 <GlobalSearch onNavigate={() => setMobileOpen(false)} />
               </div>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100"
+                className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />

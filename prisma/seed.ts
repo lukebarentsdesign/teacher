@@ -124,6 +124,10 @@ async function main() {
 
   await purgeTeacherData(teacher.id);
 
+  // Clear existing organizations and invites to allow seed re-runs
+  await prisma.organisationInvite.deleteMany({});
+  await prisma.organisation.deleteMany({});
+
   const coverPasswordHash = await bcrypt.hash("cover12345", 10);
   const coverTeacher = await prisma.teacher.upsert({
     where: { email: "cover.teacher@example.com" },

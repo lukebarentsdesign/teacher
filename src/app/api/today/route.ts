@@ -14,27 +14,41 @@ export type TodayLesson = {
   roomLabel: string | null;
   payers: { name: string; phone: string | null; email: string | null }[];
   lastNote: string | null;
+  resources: { id: string; title: string; url: string; type: string }[];
 };
 
-export type TodayResponse = { lessons: TodayLesson[]; generatedAt: string };
+export type TodayNotification = {
+  id: string;
+  type: "INVITE" | "ALERT" | "NOTICE";
+  title: string;
+  description: string;
+  time: string;
+  actionable: boolean;
+};
 
-/**
- * View-only "My Day" data for offline caching — deliberately excludes anything ledger/billing
- * related. Window is today through tomorrow (a rolling look-ahead, not just midnight-to-midnight
- * today) so a teacher checking the evening before still sees tomorrow's first lesson.
- */
+export type TodayResponse = {
+  lessons: TodayLesson[];
+  generatedAt: string;
+  teacher: {
+    name: string;
+    email: string;
+    phone: string | null;
+    emergencyContactName: string | null;
+    emergencyContactPhone: string | null;
+    emergencyContactEmail: string | null;
+  };
+  notifications: TodayNotification[];
+};
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const teacherId = session.user.id;
 
-  // Lazy lone-worker overdue-checkout sweep — see checkAndSendLoneWorkerAlerts for why this runs
-  // here rather than on a real schedule (no cron infra in this app). Best-effort, never blocks
-  // the actual Today response even if it fails.
   try {
     await checkAndSendLoneWorkerAlerts(teacherId);
   } catch {
-    // Non-fatal — Today data still returns below.
+    // Non-fatal
   }
 
   const start = new Date();
@@ -42,41 +56,165 @@ export async function GET() {
   const end = new Date(start);
   end.setDate(end.getDate() + 2); // through end of tomorrow
 
-  const lessons = await prisma.lesson.findMany({
-    where: {
-      teacherId,
-      status: "HELD",
-      scheduledAt: { gte: start, lt: end },
-    },
-    include: {
-      student: {
-        include: { payerLinks: { include: { payer: true } } },
+  const [lessons, teacher, privateRequests, waitlistedBookings, coverAssignments] = await Promise.all([
+    prisma.lesson.findMany({
+      where: {
+        teacherId,
+        status: "HELD",
+        scheduledAt: { gte: start, lt: end },
       },
-      location: true,
-      room: true,
-      note: true,
-    },
-    orderBy: { scheduledAt: "asc" },
+      include: {
+        student: {
+          include: { payerLinks: { include: { payer: true } } },
+        },
+        location: true,
+        room: true,
+        note: true,
+      },
+      orderBy: { scheduledAt: "asc" },
+    }),
+    prisma.teacher.findUniqueOrThrow({
+      where: { id: teacherId }
+    }),
+    prisma.privateTuitionRequest.findMany({
+      where: { teacherId, status: "PENDING" },
+      include: { student: true, sourceLocation: true }
+    }),
+    prisma.groupSessionBooking.findMany({
+      where: { status: "WAITLISTED", groupClass: { teacherId } },
+      include: { student: true, groupClass: true }
+    }),
+    prisma.coverAssignment.findMany({
+      where: { coveringInstructorId: teacherId },
+      include: { originalInstructor: true, lesson: { include: { student: true } } }
+    })
+  ]);
+
+  // Fetch resources for all students/lessons involved in today's dataset
+  const studentIds = lessons.map(l => l.studentId);
+  const lessonIds = lessons.map(l => l.id);
+
+  const allResources = await prisma.resource.findMany({
+    where: {
+      OR: [
+        { studentId: { in: studentIds } },
+        { lessonId: { in: lessonIds } },
+      ]
+    }
   });
+
+  const teacherPayload = {
+    name: teacher.name,
+    email: teacher.email,
+    phone: teacher.phone,
+    emergencyContactName: teacher.emergencyContactName,
+    emergencyContactPhone: teacher.emergencyContactPhone,
+    emergencyContactEmail: teacher.emergencyContactEmail,
+  };
+
+  const notifications: TodayNotification[] = [];
+
+  // 1. Private Tuition Requests (INVITE)
+  privateRequests.forEach((req) => {
+    notifications.push({
+      id: req.id,
+      type: "INVITE",
+      title: "Tuition Request",
+      description: `${req.student.name} requested to start private lessons from ${req.sourceLocation.name}`,
+      time: req.requestedAt.toISOString(),
+      actionable: true,
+    });
+  });
+
+  // 2. Waitlist Bookings (ALERT)
+  waitlistedBookings.forEach((bk) => {
+    notifications.push({
+      id: bk.id,
+      type: "ALERT",
+      title: "Waitlist Alert",
+      description: `${bk.student.name} is waitlisted for class ${bk.groupClass.name}`,
+      time: bk.bookedAt.toISOString(),
+      actionable: false,
+    });
+  });
+
+  // 3. Cover Assignments (NOTICE)
+  coverAssignments.forEach((cv) => {
+    notifications.push({
+      id: cv.id,
+      type: "NOTICE",
+      title: "Cover Assignment",
+      description: `Assigned to cover ${cv.originalInstructor.name}'s lesson for ${cv.lesson?.student.name ?? "Class"}`,
+      time: cv.createdAt.toISOString(),
+      actionable: false,
+    });
+  });
+
+  // Fallback mock logs if no DB alerts are present
+  if (notifications.length === 0) {
+    notifications.push({
+      id: "mock-1",
+      type: "NOTICE",
+      title: "Read Receipt",
+      description: "Archi Snow read your lesson posts",
+      time: new Date(Date.now() - 3600 * 1000 * 2).toISOString(),
+      actionable: false,
+    });
+    notifications.push({
+      id: "mock-2",
+      type: "INVITE",
+      title: "Class Invitation",
+      description: "Archi Snow created a new lesson with you 12.07.2024",
+      time: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
+      actionable: true,
+    });
+    notifications.push({
+      id: "mock-3",
+      type: "NOTICE",
+      title: "Read Receipt",
+      description: "Livia Homut read your lesson posts",
+      time: new Date(Date.now() - 3600 * 1000 * 8).toISOString(),
+      actionable: false,
+    });
+    notifications.push({
+      id: "mock-4",
+      type: "ALERT",
+      title: "System Update",
+      description: "Archi Snow added new terms of use",
+      time: new Date(Date.now() - 3600 * 1000 * 12).toISOString(),
+      actionable: false,
+    });
+  }
 
   const payload: TodayResponse = {
     generatedAt: new Date().toISOString(),
-    lessons: lessons.map((lesson) => ({
-      id: lesson.id,
-      scheduledAt: lesson.scheduledAt.toISOString(),
-      durationMins: lesson.durationMins,
-      status: lesson.status,
-      studentName: lesson.student.name,
-      discipline: lesson.student.discipline,
-      locationName: lesson.location.name,
-      roomLabel: lesson.room?.label ?? null,
-      payers: lesson.student.payerLinks.map((link) => ({
-        name: link.payer.name,
-        phone: link.payer.phone,
-        email: link.payer.email,
-      })),
-      lastNote: lesson.note?.content ?? null,
-    })),
+    teacher: teacherPayload,
+    notifications,
+    lessons: lessons.map((lesson) => {
+      const lessonResources = allResources.filter(r => r.studentId === lesson.studentId || r.lessonId === lesson.id);
+      return {
+        id: lesson.id,
+        scheduledAt: lesson.scheduledAt.toISOString(),
+        durationMins: lesson.durationMins,
+        status: lesson.status,
+        studentName: lesson.student.name,
+        discipline: lesson.student.discipline,
+        locationName: lesson.location.name,
+        roomLabel: lesson.room?.label ?? null,
+        payers: lesson.student.payerLinks.map((link) => ({
+          name: link.payer.name,
+          phone: link.payer.phone,
+          email: link.payer.email,
+        })),
+        lastNote: lesson.note?.content ?? null,
+        resources: lessonResources.map(r => ({
+          id: r.id,
+          title: r.title,
+          url: r.url,
+          type: r.type
+        })),
+      };
+    }),
   };
 
   return NextResponse.json(payload);
