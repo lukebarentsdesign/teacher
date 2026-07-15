@@ -4,15 +4,24 @@ import { NewResourceForm } from "./new-resource-form";
 
 export default async function NewResourcePage() {
   const session = await auth();
-  const students = await prisma.student.findMany({
-    where: { teacherId: session!.user.id },
-    orderBy: { name: "asc" },
-  });
+  const [students, existingFolders] = await Promise.all([
+    prisma.student.findMany({
+      where: { teacherId: session!.user.id },
+      orderBy: { name: "asc" },
+    }),
+    prisma.resource.findMany({
+      where: { teacherId: session!.user.id, folder: { not: null } },
+      distinct: ["folder"],
+      orderBy: { folder: "asc" },
+      select: { folder: true },
+    }),
+  ]);
+  const folders = existingFolders.map((resource) => resource.folder).filter((folder): folder is string => Boolean(folder));
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-2xl">
       <h1 className="mb-6 text-2xl font-semibold text-neutral-900">Add resource</h1>
-      <NewResourceForm students={students} />
+      <NewResourceForm students={students} folders={folders} />
     </div>
   );
 }

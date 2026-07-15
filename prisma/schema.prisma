@@ -130,6 +130,7 @@ enum ResourceType {
   DOCUMENT
   AUDIO
   VIDEO
+  IMAGE
 }
 
 enum AssignmentStatus {
@@ -343,6 +344,8 @@ model Teacher {
   gmailTokenUpdatedAt        DateTime?
 
   locationLinks         TeacherLocationLink[]
+  locationTypeOptions   LocationTypeOption[]
+  invoicingTargetOptions InvoicingTargetOption[]
   unavailability        Unavailability[]
   lessons               Lesson[]
   groupClasses          GroupClass[]
@@ -381,8 +384,10 @@ model TeachingLocation {
   id              String          @id @default(cuid())
   name            String
   locationType    LocationType    @default(SCHOOL)
+  customLocationType String?
   address         String?
   invoicingTarget InvoicingTarget
+  customInvoicingTarget String?
   /// Legacy single-term scalars, kept as a fallback for locations with no TermCalendar assigned.
   /// The richer TermCalendar (below) supersedes these when set — the bulk timetable generator
   /// prefers a TermCalendar's TermPeriods (so half-terms/holidays are excluded) and only falls
@@ -433,6 +438,42 @@ model TeachingLocation {
   timetableWaitlist TimetableWaitlist[]
   travelTimesFrom LocationTravelTime[] @relation("TravelFrom")
   travelTimesTo   LocationTravelTime[] @relation("TravelTo")
+}
+
+/// Teacher-managed labels for the TeachingLocation type dropdown. The enum category remains so
+/// school-specific features, online lessons, and home-visit safety logic can still branch safely.
+model LocationTypeOption {
+  id           String       @id @default(cuid())
+  teacherId    String
+  label        String
+  locationType LocationType @default(OTHER)
+  sortOrder    Int          @default(0)
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, label])
+  @@index([teacherId, active, sortOrder])
+}
+
+/// Teacher-managed labels for the "who gets billed" dropdown. The enum category remains so
+/// existing billing code can still route school/venue billing separately from parent/student payers.
+model InvoicingTargetOption {
+  id              String          @id @default(cuid())
+  teacherId       String
+  label           String
+  invoicingTarget InvoicingTarget @default(PARENT)
+  sortOrder       Int             @default(0)
+  active          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, label])
+  @@index([teacherId, active, sortOrder])
 }
 
 /// A reusable term-dates template (e.g. "Standard England LA terms 2026/27"). UK term dates are
@@ -1239,6 +1280,11 @@ model Resource {
   title       String
   url         String
   description String?
+  folder      String?
+  sourceLabel String?
+  tags        String?
+  thumbnailUrl String?
+  pinned      Boolean      @default(false)
   studentId   String?
   lessonId    String?
   createdAt   DateTime     @default(now())

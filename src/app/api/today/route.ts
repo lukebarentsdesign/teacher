@@ -14,7 +14,7 @@ export type TodayLesson = {
   roomLabel: string | null;
   payers: { name: string; phone: string | null; email: string | null }[];
   lastNote: string | null;
-  resources: { id: string; title: string; url: string; type: string }[];
+  resources: { id: string; title: string; url: string; type: string; sourceLabel: string | null; folder: string | null; tags: string | null; thumbnailUrl: string | null }[];
 };
 
 export type TodayNotification = {
@@ -211,7 +211,11 @@ export async function GET() {
           id: r.id,
           title: r.title,
           url: r.url,
-          type: r.type
+          type: r.type,
+          sourceLabel: r.sourceLabel,
+          folder: r.folder,
+          tags: r.tags,
+          thumbnailUrl: r.thumbnailUrl
         })),
       };
     }),

@@ -48,6 +48,7 @@ import {
   ChevronDown,
   MessageSquare,
   HelpCircle,
+  SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -94,6 +95,7 @@ const CAT_LOCATIONS_LIST: NavLink[] = [
 const CAT_SETUP_LIST: NavLink[] = [
   { href: "/dashboard/subjects", label: "Subjects", icon: Music },
   { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
+  { href: "/dashboard/menu-choices", label: "Menu choices", icon: SlidersHorizontal },
   { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
   { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
   { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
@@ -343,7 +345,7 @@ export function DashboardChrome({
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-neutral-200 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-6">
           <div className="flex items-center gap-3 sm:hidden">
             <button
-              type="button; opacity: 0.9"
+              type="button"
               onClick={() => setMobileOpen(true)}
               className="rounded-lg border border-neutral-300 p-2 text-neutral-700"
               aria-label="Open menu"

@@ -1,6 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
+import {
+  BUILT_IN_INVOICING_TARGET_OPTIONS,
+  BUILT_IN_LOCATION_TYPE_OPTIONS,
+  invoicingTargetSelectValue,
+  locationTypeSelectValue,
+  type InvoicingTargetOptionChoice,
+  type LocationTypeOptionChoice,
+} from "@/lib/location-types";
 import { updateSchoolAction } from "../../actions";
 
 type Location = {
@@ -14,6 +23,8 @@ type Location = {
   primaryColor: string | null;
   secondaryColor: string | null;
   locationType: string;
+  customLocationType: string | null;
+  customInvoicingTarget: string | null;
   accessNotes: string | null;
   termCalendarId: string | null;
 };
@@ -23,14 +34,22 @@ type TermCalendar = { id: string; name: string };
 export function EditLocationForm({
   location,
   termCalendars,
+  locationTypeOptions,
+  invoicingTargetOptions,
 }: {
   location: Location;
   termCalendars: TermCalendar[];
+  locationTypeOptions: LocationTypeOptionChoice[];
+  invoicingTargetOptions: InvoicingTargetOptionChoice[];
 }) {
   const [error, formAction, pending] = useActionState(
     updateSchoolAction.bind(null, location.id),
     undefined
   );
+  const selectedLocationType = locationTypeSelectValue(location, locationTypeOptions);
+  const selectedInvoicingTarget = invoicingTargetSelectValue(location, invoicingTargetOptions);
+  const currentOptionIsMissing = selectedLocationType.startsWith("current:");
+  const currentBillingOptionIsMissing = selectedInvoicingTarget.startsWith("current:");
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
@@ -48,21 +67,39 @@ export function EditLocationForm({
       </div>
 
       <div>
-        <label htmlFor="locationType" className="block text-sm font-medium text-neutral-700">
-          Type
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="locationType" className="block text-sm font-medium text-neutral-700">
+            Type
+          </label>
+          <Link href="/dashboard/menu-choices" className="text-xs font-medium text-brand-650 hover:text-brand-700">
+            Edit choices
+          </Link>
+        </div>
         <select
           id="locationType"
           name="locationType"
-          defaultValue={location.locationType}
+          defaultValue={selectedLocationType}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
-          <option value="SCHOOL">School</option>
-          <option value="STUDENT_HOME">Student&apos;s home</option>
-          <option value="TEACHER_BASE">My own base</option>
-          <option value="HIRED_VENUE">Hired venue</option>
-          <option value="ONLINE">Online</option>
-          <option value="OTHER">Other</option>
+          {BUILT_IN_LOCATION_TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          {locationTypeOptions.length > 0 && (
+            <optgroup label="Your choices">
+              {locationTypeOptions.map((option) => (
+                <option key={option.id} value={`custom:${option.id}`}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {currentOptionIsMissing && location.customLocationType && (
+            <optgroup label="Current saved value">
+              <option value={selectedLocationType}>{location.customLocationType}</option>
+            </optgroup>
+          )}
         </select>
       </div>
 
@@ -85,15 +122,32 @@ export function EditLocationForm({
         <select
           id="invoicingTarget"
           name="invoicingTarget"
-          defaultValue={location.invoicingTarget}
+          defaultValue={selectedInvoicingTarget}
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
-          <option value="PARENT">Parent</option>
-          <option value="SCHOOL">School</option>
+          {BUILT_IN_INVOICING_TARGET_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          {invoicingTargetOptions.length > 0 && (
+            <optgroup label="Your choices">
+              {invoicingTargetOptions.map((option) => (
+                <option key={option.id} value={`custom:${option.id}`}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {currentBillingOptionIsMissing && location.customInvoicingTarget && (
+            <optgroup label="Current saved value">
+              <option value={selectedInvoicingTarget}>{location.customInvoicingTarget}</option>
+            </optgroup>
+          )}
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="termStart" className="block text-sm font-medium text-neutral-700">
             Term start (optional)
@@ -120,8 +174,7 @@ export function EditLocationForm({
         </div>
       </div>
       <p className="text-xs text-neutral-500">
-        Simple fallback term dates. Assign a term calendar below for full term/holiday handling —
-        it supersedes these when set.
+        Simple fallback term dates. Assign a term calendar below for full term/holiday handling - it supersedes these when set.
       </p>
 
       <div>
@@ -152,7 +205,7 @@ export function EditLocationForm({
           name="logoUrl"
           type="url"
           defaultValue={location.logoUrl ?? ""}
-          placeholder="https://…"
+          placeholder="https://..."
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
@@ -187,7 +240,7 @@ export function EditLocationForm({
 
       <div>
         <label htmlFor="accessNotes" className="block text-sm font-medium text-neutral-700">
-          Access notes (WiFi, door codes, parking — private to you)
+          Access notes (WiFi, door codes, parking - private to you)
         </label>
         <textarea
           id="accessNotes"
@@ -205,7 +258,7 @@ export function EditLocationForm({
         disabled={pending}
         className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Save changes"}
+        {pending ? "Saving..." : "Save changes"}
       </button>
     </form>
   );

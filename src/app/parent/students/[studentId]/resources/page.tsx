@@ -6,6 +6,7 @@ const TYPE_LABELS: Record<string, string> = {
   DOCUMENT: "Document",
   AUDIO: "Audio",
   VIDEO: "Video",
+  IMAGE: "Image",
 };
 
 export default async function StudentResourcesPage({
@@ -59,7 +60,8 @@ export default async function StudentResourcesPage({
               <p className="font-medium text-neutral-900">{resource.title}</p>
               <p className="mt-1 text-xs text-neutral-500">
                 {TYPE_LABELS[resource.type]}
-                {resource.description && ` · ${resource.description}`}
+                {resource.sourceLabel && ` - ${resource.sourceLabel}`}
+                {resource.description && ` - ${resource.description}`}
               </p>
             </a>
           ))}

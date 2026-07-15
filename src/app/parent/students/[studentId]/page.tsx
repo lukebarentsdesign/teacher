@@ -226,7 +226,7 @@ export default async function StudentOverviewPage({
                     <div className="min-w-0">
                       <h4 className="text-xs font-bold text-neutral-950 truncate">{res.title}</h4>
                       <p className="text-[9px] text-neutral-400 font-semibold uppercase tracking-wider mt-0.5">
-                        {res.type}
+                        {res.sourceLabel || res.folder || res.type}
                       </p>
                     </div>
                   </a>
@@ -331,7 +331,7 @@ export default async function StudentOverviewPage({
                       </div>
                       
                       <div className="text-xs font-semibold text-neutral-800">
-                        {lesson.discipline} · {lesson.location.name}
+                        {student.discipline} - {lesson.location.name}
                       </div>
 
                       {lesson.note?.content && (

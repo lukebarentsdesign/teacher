@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { invoicingTargetDisplayName, locationTypeDisplayName } from "@/lib/location-types";
 
 export default async function TeachingLocationsPage() {
   const session = await auth();
@@ -31,6 +32,7 @@ export default async function TeachingLocationsPage() {
             <thead className="border-b border-neutral-200 text-left text-neutral-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Address</th>
                 <th className="px-4 py-3 font-medium">Invoicing target</th>
               </tr>
@@ -46,8 +48,9 @@ export default async function TeachingLocationsPage() {
                       {location.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-neutral-500">{location.address ?? "—"}</td>
-                  <td className="px-4 py-3 text-neutral-500">{location.invoicingTarget}</td>
+                  <td className="px-4 py-3 text-neutral-500">{locationTypeDisplayName(location)}</td>
+                  <td className="px-4 py-3 text-neutral-500">{location.address ?? "-"}</td>
+                  <td className="px-4 py-3 text-neutral-500">{invoicingTargetDisplayName(location)}</td>
                 </tr>
               ))}
             </tbody>

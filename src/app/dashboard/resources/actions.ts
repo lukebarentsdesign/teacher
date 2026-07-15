@@ -7,10 +7,15 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 
 const resourceSchema = z.object({
-  type: z.enum(["DOCUMENT", "AUDIO", "VIDEO"]),
+  type: z.enum(["DOCUMENT", "AUDIO", "VIDEO", "IMAGE"]),
   title: z.string().trim().min(1, "Title is required"),
   url: z.string().trim().url("Enter a valid URL"),
   description: z.string().trim().optional(),
+  folder: z.string().trim().optional(),
+  sourceLabel: z.string().trim().optional(),
+  tags: z.string().trim().optional(),
+  thumbnailUrl: z.string().trim().url("Enter a valid thumbnail URL").optional().or(z.literal("")),
+  pinned: z.coerce.boolean().optional(),
   studentId: z.string().optional(),
 });
 
@@ -26,6 +31,11 @@ export async function createResourceAction(
     title: formData.get("title"),
     url: formData.get("url"),
     description: formData.get("description") || undefined,
+    folder: formData.get("folder") || undefined,
+    sourceLabel: formData.get("sourceLabel") || undefined,
+    tags: formData.get("tags") || undefined,
+    thumbnailUrl: formData.get("thumbnailUrl") || undefined,
+    pinned: formData.get("pinned") === "on",
     studentId: formData.get("studentId") || undefined,
   });
 
@@ -41,9 +51,14 @@ export async function createResourceAction(
   }
 
   await prisma.resource.create({
-    data: { ...parsed.data, teacherId: session.user.id },
+    data: {
+      ...parsed.data,
+      thumbnailUrl: parsed.data.thumbnailUrl || undefined,
+      teacherId: session.user.id,
+    },
   });
 
   revalidatePath("/dashboard/resources");
+  revalidatePath("/dashboard/today");
   redirect("/dashboard/resources");
 }

@@ -1,9 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
+import {
+  BUILT_IN_INVOICING_TARGET_OPTIONS,
+  BUILT_IN_LOCATION_TYPE_OPTIONS,
+  type InvoicingTargetOptionChoice,
+  type LocationTypeOptionChoice,
+} from "@/lib/location-types";
 import { createSchoolAction } from "../actions";
 
-export function NewLocationForm() {
+export function NewLocationForm({
+  locationTypeOptions,
+  invoicingTargetOptions,
+}: {
+  locationTypeOptions: LocationTypeOptionChoice[];
+  invoicingTargetOptions: InvoicingTargetOptionChoice[];
+}) {
   const [error, formAction, pending] = useActionState(createSchoolAction, undefined);
 
   return (
@@ -21,21 +34,34 @@ export function NewLocationForm() {
       </div>
 
       <div>
-        <label htmlFor="locationType" className="block text-sm font-medium text-neutral-700">
-          Type
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="locationType" className="block text-sm font-medium text-neutral-700">
+            Type
+          </label>
+          <Link href="/dashboard/menu-choices" className="text-xs font-medium text-brand-650 hover:text-brand-700">
+            Edit choices
+          </Link>
+        </div>
         <select
           id="locationType"
           name="locationType"
           defaultValue="SCHOOL"
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
-          <option value="SCHOOL">School</option>
-          <option value="STUDENT_HOME">Student&apos;s home</option>
-          <option value="TEACHER_BASE">My own base</option>
-          <option value="HIRED_VENUE">Hired venue</option>
-          <option value="ONLINE">Online</option>
-          <option value="OTHER">Other</option>
+          {BUILT_IN_LOCATION_TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          {locationTypeOptions.length > 0 && (
+            <optgroup label="Your choices">
+              {locationTypeOptions.map((option) => (
+                <option key={option.id} value={`custom:${option.id}`}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </div>
 
@@ -60,12 +86,24 @@ export function NewLocationForm() {
           defaultValue="PARENT"
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         >
-          <option value="PARENT">Parent</option>
-          <option value="SCHOOL">School</option>
+          {BUILT_IN_INVOICING_TARGET_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          {invoicingTargetOptions.length > 0 && (
+            <optgroup label="Your choices">
+              {invoicingTargetOptions.map((option) => (
+                <option key={option.id} value={`custom:${option.id}`}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="termStart" className="block text-sm font-medium text-neutral-700">
             Term start (optional)
@@ -111,7 +149,7 @@ export function NewLocationForm() {
 
       <div>
         <label htmlFor="accessNotes" className="block text-sm font-medium text-neutral-700">
-          Access notes (WiFi, door codes, parking — private to you)
+          Access notes (WiFi, door codes, parking - private to you)
         </label>
         <textarea
           id="accessNotes"
@@ -128,7 +166,7 @@ export function NewLocationForm() {
         disabled={pending}
         className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Save teaching location"}
+        {pending ? "Saving..." : "Save teaching location"}
       </button>
     </form>
   );

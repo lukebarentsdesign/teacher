@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
   Clock, Check, Phone, ShieldCheck, RefreshCw,
-  Download, Play, AlertCircle
+  Download, Play, AlertCircle, TimerReset, FileText, Headphones, Image as ImageIcon, Video
 } from "lucide-react";
 import type { TodayResponse, TodayLesson, TodayNotification } from "@/app/api/today/route";
 import { saveTodaySnapshot, loadTodaySnapshot } from "@/lib/offline-cache";
@@ -26,6 +26,8 @@ export function TodayView({ teacherId }: { teacherId: string }) {
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [endCueEnabled, setEndCueEnabled] = useState(false);
 
   // Accept/Reject loading state
   const [handlingNotif, setHandlingNotif] = useState<Record<string, "accepted" | "rejected" | null>>({});
@@ -71,9 +73,23 @@ export function TodayView({ teacherId }: { teacherId: string }) {
   }, [teacherId]);
 
   const isLessonCompleted = (lesson: TodayLesson) => {
-    return new Date(lesson.scheduledAt).getTime() + lesson.durationMins * 60_000 < Date.now();
+    return new Date(lesson.scheduledAt).getTime() + lesson.durationMins * 60_000 < nowMs;
   };
 
+
+  useEffect(() => {
+    setEndCueEnabled(window.localStorage.getItem("todayEndCueEnabled") === "true");
+    const interval = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const toggleEndCue = () => {
+    setEndCueEnabled((enabled) => {
+      const next = !enabled;
+      window.localStorage.setItem("todayEndCueEnabled", String(next));
+      return next;
+    });
+  };
   const handleNotificationAction = (id: string, action: "accepted" | "rejected") => {
     setHandlingNotif(prev => ({ ...prev, [id]: action }));
     setTimeout(() => {
@@ -97,9 +113,24 @@ export function TodayView({ teacherId }: { teacherId: string }) {
 
   // Timeline list (all excluding the current active one)
   const timelineLessons = lessonsList.filter(l => l.id !== activeLesson?.id);
+  const activeLessonStartMs = activeLesson ? new Date(activeLesson.scheduledAt).getTime() : 0;
+  const activeLessonEndMs = activeLessonStartMs + (activeLesson?.durationMins ?? 0) * 60_000;
+  const activeLessonRemainingMs = activeLessonEndMs - nowMs;
+  const isActiveLessonInProgress = Boolean(activeLesson && nowMs >= activeLessonStartMs && nowMs < activeLessonEndMs);
+  const showEndCue = endCueEnabled && isActiveLessonInProgress && activeLessonRemainingMs <= 5 * 60_000;
+  const countdownMinutes = Math.max(0, Math.floor(activeLessonRemainingMs / 60_000));
+  const countdownSeconds = Math.max(0, Math.floor((activeLessonRemainingMs % 60_000) / 1000));
+  const countdownText = `${countdownMinutes}:${countdownSeconds.toString().padStart(2, "0")}`;
 
 
 
+
+  const getResourceMeta = (type: string) => {
+    if (type === "AUDIO") return { label: "Audio", icon: Headphones };
+    if (type === "VIDEO") return { label: "Video", icon: Video };
+    if (type === "IMAGE") return { label: "Image", icon: ImageIcon };
+    return { label: "Doc", icon: FileText };
+  };
   const getFormattedTime = (scheduledAt: string) => {
     const d = new Date(scheduledAt);
     return d.toLocaleTimeString("en-US", {
@@ -171,10 +202,30 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                     <span className="h-1.5 w-1.5 bg-brand-600 rounded-full" />
                     Lesson Active
                   </span>
-                  <span className="text-xs font-bold text-neutral-400 flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {getFormattedTime(activeLesson.scheduledAt)} ({activeLesson.durationMins} mins)
-                  </span>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {showEndCue && (
+                      <span className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black text-amber-700 shadow-sm">
+                        <TimerReset className="h-3.5 w-3.5" />
+                        {countdownText} left
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={toggleEndCue}
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors ${
+                        endCueEnabled
+                          ? "border-brand-200 bg-brand-50 text-brand-700"
+                          : "border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600"
+                      }`}
+                      title="Show a subtle countdown during the last five minutes"
+                    >
+                      5-min end cue
+                    </button>
+                    <span className="text-xs font-bold text-neutral-400 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {getFormattedTime(activeLesson.scheduledAt)} ({activeLesson.durationMins} mins)
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-100 pb-4 mb-4">
@@ -213,29 +264,46 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                   {/* Materials / Resources shared */}
                   <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-100 text-xs flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-[10px] text-neutral-400 uppercase tracking-wide mb-2">
-                        Lesson Materials
-                      </h3>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <h3 className="font-bold text-[10px] text-neutral-400 uppercase tracking-wide">
+                          Lesson Materials
+                        </h3>
+                        <Link href="/dashboard/resources" className="text-[10px] font-black text-brand-600 hover:text-brand-700">
+                          Open centre
+                        </Link>
+                      </div>
                       {activeLesson.resources.length === 0 ? (
                         <p className="text-neutral-400 font-medium italic">
                           No resources currently shared with student.
                         </p>
                       ) : (
                         <div className="space-y-1.5">
-                          {activeLesson.resources.map((res) => (
-                            <a
-                              key={res.id}
-                              href={res.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center justify-between p-2 rounded-lg bg-white border border-neutral-200/60 hover:border-brand-300 transition-all font-semibold"
-                            >
-                              <span className="truncate pr-2 font-bold text-neutral-800 text-[11px]">
-                                {res.title}
-                              </span>
-                              <Download className="h-3.5 w-3.5 text-brand-600 shrink-0" />
-                            </a>
-                          ))}
+                          {activeLesson.resources.map((res) => {
+                            const meta = getResourceMeta(res.type);
+                            const Icon = meta.icon;
+                            return (
+                              <a
+                                key={res.id}
+                                href={res.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200/60 bg-white p-2 font-semibold transition-all hover:border-brand-300"
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-neutral-100 text-neutral-500">
+                                    <Icon className="h-3.5 w-3.5" />
+                                  </span>
+                                  <span className="min-w-0">
+                                    <span className="block truncate pr-2 text-[11px] font-bold text-neutral-800">{res.title}</span>
+                                    <span className="block truncate text-[9px] font-bold uppercase tracking-wide text-neutral-400">
+                                      {res.sourceLabel || res.folder || meta.label}
+                                    </span>
+                                  </span>
+                                </span>
+                                <Download className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+                              </a>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
