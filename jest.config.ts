@@ -7,6 +7,14 @@ const config: Config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  transformIgnorePatterns: [
+    "/node_modules/(?!better-auth)/"
+  ],
+  transform: {
+    "^.+\\.(t|j)sx?$": "ts-jest",
+    "^.+\\.mjs$": "ts-jest",
+  },
+  setupFiles: ["dotenv/config"],
 };
 
 export default config;

@@ -1,32 +1,52 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/db";
-import { authConfig } from "@/auth.config";
+import { admin, organization } from "better-auth/plugins";
+import bcrypt from "bcryptjs";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      credentials: {
-        email: {},
-        password: {},
+const bAuth = betterAuth({
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  emailAndPassword: {
+    enabled: true,
+    password: {
+      hash: async (password: string) => {
+        return bcrypt.hash(password, 10);
       },
-      authorize: async (credentials) => {
-        const email = credentials?.email;
-        const password = credentials?.password;
-        if (typeof email !== "string" || typeof password !== "string") {
-          return null;
-        }
-
-        const teacher = await prisma.teacher.findUnique({ where: { email } });
-        if (!teacher) return null;
-
-        const passwordValid = await bcrypt.compare(password, teacher.passwordHash);
-        if (!passwordValid) return null;
-
-        return { id: teacher.id, name: teacher.name, email: teacher.email };
+      verify: async ({ hash, password }) => {
+        return bcrypt.compare(password, hash);
       },
-    }),
-  ],
+    }
+  },
+  plugins: [
+    admin(),
+    organization()
+  ]
 });
+
+export type LegacyAuthSession = Awaited<ReturnType<typeof bAuth.api.getSession>>;
+
+/**
+ * Temporary Better Auth migration bridge for legacy NextAuth-style `await auth()` call sites.
+ *
+ * Return shape is exactly Better Auth's `api.getSession` result:
+ * - authenticated: `{ user, session }`
+ * - unauthenticated, expired, or revoked: `null`
+ *
+ * The `user` object carries Better Auth user fields such as `id`, `name`, `email`,
+ * `emailVerified`, optional `image`, and admin plugin fields such as `role`, `banned`,
+ * `banReason`, and `banExpires`. The `session` object carries Better Auth session fields
+ * such as `id`, `token`, `userId`, `expiresAt`, `createdAt`, `updatedAt`, optional
+ * `ipAddress`, `userAgent`, and organization plugin `activeOrganizationId`.
+ */
+export async function getLegacyAuthSession(): Promise<LegacyAuthSession> {
+  const { headers } = await import("next/headers");
+  return bAuth.api.getSession({ headers: await headers() });
+}
+
+// Create a callable wrapper for legacy NextAuth `await auth()` compatibility.
+export const auth = Object.assign(
+  getLegacyAuthSession,
+  bAuth
+);

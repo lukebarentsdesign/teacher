@@ -39,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const end = new Date(lesson.scheduledAt.getTime() + lesson.durationMins * 60_000);
   const description = [
-    `Lesson with ${lesson.student.name} at ${lesson.location.name}`,
+    `Lesson at ${lesson.location.name}`,
     lesson.meetingUrl ? `Join: ${lesson.meetingUrl}` : null,
   ]
     .filter(Boolean)
@@ -47,7 +47,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const ics = generateLessonIcs({
     uid: `lesson-${lesson.id}@learnio`,
-    title: `Lesson: ${lesson.student.name}`,
+    title: "Lesson",
     description,
     start: lesson.scheduledAt,
     end,
@@ -57,6 +57,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     headers: {
       "Content-Type": "text/calendar",
       "Content-Disposition": `attachment; filename="lesson-${lesson.id}.ics"`,
+      "Cache-Control": "private, no-store",
     },
   });
 }

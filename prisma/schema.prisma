@@ -206,10 +206,11 @@ enum TeacherArchetype {
 /// grouping, and CoverAssignment for one instructor to cover another's lesson without any
 /// ownership transfer of the underlying Student/Payer/Subscription records.
 model Organisation {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  authOrganizationId String?  @unique
+  name               String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   teachers Teacher[]
   invites  OrganisationInvite[]
@@ -279,6 +280,9 @@ model Teacher {
   phone        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// Learnio's own SaaS billing of the teacher — separate from lesson/ledger billing.
   stripeCustomerId       String?                    @unique
@@ -673,6 +677,9 @@ model Student {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   /// PENDING_REVIEW = created via the self-serve onboarding questionnaire, not yet a confirmed
   /// enrolment — the teacher must approve before it's ACTIVE. Directly-created (wizard) students
   /// skip straight to ACTIVE. DECLINED is a soft-reject, kept for record rather than deleted.
@@ -773,6 +780,9 @@ model Payer {
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// Persistent unique 6-digit microsite access code (unique per family, not shared globally)
   accessCode          String   @unique
@@ -1733,4 +1743,129 @@ model OutOfScopeSignup {
   createdAt      DateTime @default(now())
 
   teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth Core & Plugin Models
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  
+  // admin plugin
+  role       String?
+  banned     Boolean?
+  banReason  String?
+  banExpires DateTime?
+  
+  sessions      Session[]
+  accounts      Account[]
+  
+  // Domain Model Links (Profiles)
+  teacherProfiles Teacher[]
+  payerProfiles   Payer[]
+  studentProfiles Student[]
+  
+  // Organization plugin
+  members     AuthMember[]
+  invitations AuthInvitation[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Organization plugin
+  activeOrganizationId String?
+  
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+// Organization Plugin Models
+model AuthOrganization {
+  id        String    @id
+  name      String
+  slug      String?
+  logo      String?
+  createdAt DateTime
+  metadata  String?
+
+  members     AuthMember[]
+  invitations AuthInvitation[]
+  
+  @@unique([slug])
+  @@map("auth_organization")
+}
+
+model AuthMember {
+  id             String           @id
+  organizationId String
+  organization   AuthOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+  
+  @@map("auth_member")
+}
+
+model AuthInvitation {
+  id             String           @id
+  organizationId String
+  organization   AuthOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           User             @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  @@map("auth_invitation")
 }

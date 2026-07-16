@@ -1,16 +1,19 @@
-import NextAuth from "next-auth";
-import { NextResponse } from "next/server";
-import { authConfig } from "@/auth.config";
+import { NextResponse, type NextRequest } from "next/server";
 
-const { auth } = NextAuth(authConfig);
+export async function middleware(request: NextRequest) {
+  // Lightweight check for session token cookie
+  const sessionToken = request.cookies.get("better-auth.session_token");
 
-export default auth((req) => {
-  if (!req.auth) {
-    const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+  if (!sessionToken) {
+    const loginUrl = new URL("/login", request.nextUrl.origin);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
-});
+  
+  // Note: Authoritative session and permission validation MUST occur
+  // within the protected API routes, Server Actions, and Server Components.
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/onboarding/:path*"],
