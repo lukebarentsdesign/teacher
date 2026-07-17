@@ -116,10 +116,42 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  const teacherUserId = "seed-teacher-user-id";
+  await prisma.user.upsert({
+    where: { email },
+    update: {
+      name,
+      emailVerified: true,
+      updatedAt: new Date(),
+    },
+    create: {
+      id: teacherUserId,
+      name,
+      email,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.account.upsert({
+    where: { id: "seed-teacher-account-id" },
+    update: { password: passwordHash },
+    create: {
+      id: "seed-teacher-account-id",
+      accountId: teacherUserId,
+      providerId: "credential",
+      userId: teacherUserId,
+      password: passwordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
   const teacher = await prisma.teacher.upsert({
     where: { email },
-    update: { passwordHash },
-    create: { name, email, passwordHash },
+    update: { passwordHash, userId: teacherUserId },
+    create: { name, email, passwordHash, userId: teacherUserId },
   });
 
   await purgeTeacherData(teacher.id);
@@ -129,11 +161,45 @@ async function main() {
   await prisma.organisation.deleteMany({});
 
   const coverPasswordHash = await bcrypt.hash("cover12345", 10);
+  const coverUserId = "seed-cover-user-id";
+  
+  await prisma.user.upsert({
+    where: { email: "cover.teacher@example.com" },
+    update: {
+      name: "Alex Cover",
+      emailVerified: true,
+      updatedAt: new Date(),
+    },
+    create: {
+      id: coverUserId,
+      name: "Alex Cover",
+      email: "cover.teacher@example.com",
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.account.upsert({
+    where: { id: "seed-cover-account-id" },
+    update: { password: coverPasswordHash },
+    create: {
+      id: "seed-cover-account-id",
+      accountId: coverUserId,
+      providerId: "credential",
+      userId: coverUserId,
+      password: coverPasswordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
   const coverTeacher = await prisma.teacher.upsert({
     where: { email: "cover.teacher@example.com" },
     update: {
       name: "Alex Cover",
       passwordHash: coverPasswordHash,
+      userId: coverUserId,
       teachesGroups: true,
       controlsOwnSchedule: true,
       archetype: TeacherArchetype.GROUP_INDEPENDENT,
@@ -144,6 +210,7 @@ async function main() {
       name: "Alex Cover",
       email: "cover.teacher@example.com",
       passwordHash: coverPasswordHash,
+      userId: coverUserId,
       teachesGroups: true,
       controlsOwnSchedule: true,
       archetype: TeacherArchetype.GROUP_INDEPENDENT,

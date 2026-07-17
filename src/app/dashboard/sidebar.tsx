@@ -214,15 +214,10 @@ function SidebarCategory({
   );
 }
 
+import { Logo } from "@/components/landing/logo";
+
 function BrandMark() {
-  return (
-    <span className="flex items-center gap-2.5 text-base font-bold tracking-tight text-white">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-white text-sm font-black text-brand-650 shadow-sm">
-        L
-      </span>
-      Learnio
-    </span>
-  );
+  return <Logo size={28} wordmarkClassName="text-lg text-white font-bold" />;
 }
 
 function SidebarContent({
@@ -352,7 +347,7 @@ export function DashboardChrome({
             >
               <MenuIcon className="h-4 w-4" />
             </button>
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#1b4bbd] text-sm font-black text-white shadow-sm">L</span>
+            <Logo size={28} showWordmark={false} />
           </div>
 
           <div className="hidden items-center gap-3 sm:flex mr-4 shrink-0">

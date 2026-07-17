@@ -10,6 +10,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { micrositeSignOutAction } from "@/app/parent/actions";
+import { Logo } from "@/components/landing/logo";
 
 type TabLink = {
   segment: string;
@@ -83,11 +84,8 @@ export function ParentChrome({
       {/* Desktop Sidebar (Purple) */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 bg-gradient-to-b from-[#8b5cf6] to-[#5b21b6] text-white border-r border-[#7c3aed] md:flex flex-col p-5 z-20">
         {/* Logo Branding */}
-        <div className="flex items-center gap-3 px-2 mb-8">
-          <div className="h-9 w-9 rounded-xl bg-white/25 flex items-center justify-center border border-white/10 shadow-sm shrink-0">
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-white leading-none">Student Portal</span>
+        <div className="flex items-center gap-3 px-2 mb-8 mt-2">
+          <Logo size={28} wordmarkClassName="text-lg text-white font-bold" />
         </div>
 
         {/* Navigation Section */}
@@ -179,10 +177,7 @@ export function ParentChrome({
               </button>
               
               <div className="flex items-center gap-3 px-2 mb-8 mt-2">
-                <div className="h-9 w-9 rounded-xl bg-white/25 flex items-center justify-center border border-white/10 shadow-sm shrink-0">
-                  <GraduationCap className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-lg font-bold tracking-tight text-white leading-none">Student Portal</span>
+                <Logo size={28} wordmarkClassName="text-lg text-white font-bold" />
               </div>
 
               <div className="flex-1 overflow-y-auto">

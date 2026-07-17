@@ -13,7 +13,7 @@ export function TeachingNoteCard({ className = "" }: { className?: string }) {
     >
       <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full shadow-sm" />
       <ul className="list-none p-0 m-0 text-sm">
-        <li>32 lessons</li>
+        <li>32 sessions</li>
         <li>£30 each</li>
         <li>September–July</li>
       </ul>
@@ -32,12 +32,12 @@ export function SmoothPaymentCard({ className = "" }: { className?: string }) {
         </div>
         <div>
           <div className="font-semibold text-neutral-900 text-sm">Amelia Carter</div>
-          <div className="text-xs text-neutral-500">30-minute piano lesson</div>
+          <div className="text-xs text-neutral-500">30-minute weekly session</div>
         </div>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between text-neutral-600">
-          <span>30 lessons × £32</span>
+          <span>30 sessions × £32</span>
           <span>£960</span>
         </div>
         <div className="h-px bg-neutral-100 w-full my-2" />

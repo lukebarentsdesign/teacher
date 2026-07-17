@@ -18,6 +18,7 @@ export function LoginCodeForm() {
           inputMode="numeric"
           maxLength={6}
           required
+          defaultValue="410001"
           autoComplete="one-time-code"
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg tracking-widest focus:border-neutral-500 focus:outline-none"
           placeholder="000000"
