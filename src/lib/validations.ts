@@ -82,6 +82,9 @@ export const subscriptionSchema = z.object({
   annualFee: z.coerce.number().positive("Annual fee must be greater than 0"),
   billingModel: z.enum(["SMOOTHED_SUBSCRIPTION", "PER_LESSON", "HOURLY", "TERMLY"]),
   startDate: z.string().min(1, "Start date is required"),
+  lessonCount: z.coerce.number().int().positive().optional(),
+  lessonPrice: z.coerce.number().positive().optional(),
+  months: z.coerce.number().int().positive().optional(),
 });
 
 export const roomOpenHoursRowSchema = z.object({

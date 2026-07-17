@@ -338,6 +338,11 @@ model Teacher {
   /// account for themselves. See "Credit application" in the no-show/make-up-credit build notes.
   autoApplyCreditToNextPayment Boolean @default(true)
 
+  invoicePrefix       String?
+  businessName        String?
+  businessAddress     String?
+  paymentInstructions String?
+
   /// Teacher's own Gmail, connected via a separate OAuth grant (NOT the NextAuth login provider —
   /// login stays Credentials-only). Lets guardian emails be sent from the teacher's real address
   /// instead of a generic sender. gmailRefreshTokenEncrypted is a real bearer secret (unlike the
@@ -382,6 +387,8 @@ model Teacher {
   timetableWaitlist       TimetableWaitlist[]
   outOfScopeSignups       OutOfScopeSignup[]
   locationTravelTimes     LocationTravelTime[]
+  invoices                Invoice[]
+  comingSoonFeedback      ComingSoonFeedback[]
 }
 
 model TeachingLocation {
@@ -808,6 +815,7 @@ model Payer {
   lessonFeedback      LessonFeedback[]
   giftCardsPurchased  GiftCard[]
   coursePurchases     CoursePurchase[]
+  invoices            Invoice[]
 
   @@index([teacherId])
 }
@@ -856,6 +864,8 @@ model Subscription {
   ledgerEntries LedgerEntry[]
   payments      Payment[]
   lessons       Lesson[]
+  invoices      Invoice[]
+  calculationSnapshot Json?
 }
 
 /// Prepaid block of N lessons at a discounted bundle rate. Distinct from Subscription —
@@ -887,8 +897,11 @@ model LedgerEntry {
   createdAt      DateTime        @default(now())
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  invoiceId    String?
+  invoice      Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
 
   @@index([subscriptionId, date])
+  @@index([invoiceId])
 }
 
 model Payment {
@@ -1743,6 +1756,52 @@ model OutOfScopeSignup {
   createdAt      DateTime @default(now())
 
   teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+}
+
+// ---------------------------------------------------------------------------
+// Invoice Model
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique
+  teacherId      String
+  payerId        String
+  subscriptionId String?
+  amount         Decimal       @db.Decimal(10, 2)
+  status         String        // draft, issued, paid, void
+  issueDate      DateTime
+  dueDate        DateTime
+  snapshot       Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  payer        Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  ledgerEntries LedgerEntry[]
+
+  @@index([teacherId, issueDate])
+  @@index([payerId])
+}
+
+// ---------------------------------------------------------------------------
+// Coming Soon Feedback Model
+// ---------------------------------------------------------------------------
+
+model ComingSoonFeedback {
+  id         String   @id @default(cuid())
+  teacherId  String
+  featureKey String
+  rating     String   // ESSENTIAL / USEFUL / NOT_IMPORTANT
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, featureKey])
+  @@index([teacherId])
 }
 
 // ---------------------------------------------------------------------------

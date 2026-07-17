@@ -13,6 +13,10 @@ export type InvoiceLineItem = {
 };
 
 export type InvoiceParams = {
+  invoiceNumber?: string;
+  businessName?: string | null;
+  businessAddress?: string | null;
+  paymentInstructions?: string | null;
   teacherName: string;
   teacherEmail: string;
   payerName: string;
@@ -25,11 +29,7 @@ export type InvoiceParams = {
 };
 
 /**
- * A document layer only — rendered directly from existing LedgerEntry data, no new billing
- * entities. Not a replacement for the Stripe receipt/payment record, just a formatted document
- * some payers want for reimbursement/reconciliation/their own tax paperwork. Same pdf-lib
- * approach as contract-pdf.ts, deliberately not sharing code since the layouts differ enough
- * (a table vs. flowing paragraphs) that a shared abstraction would be more trouble than it's worth.
+ * Renders a professional PDF invoice from frozen snapshot details or live data.
  */
 export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -39,8 +39,8 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
   let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let y = PAGE_HEIGHT - MARGIN;
 
-  function newPageIfNeeded() {
-    if (y < MARGIN + LINE_HEIGHT * 3) {
+  function newPageIfNeeded(neededHeight = LINE_HEIGHT * 2) {
+    if (y < MARGIN + neededHeight) {
       page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
       y = PAGE_HEIGHT - MARGIN;
     }
@@ -50,33 +50,48 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
     page.drawText(text, { x, y, size, font: useBold ? boldFont : font, color: rgb(0.1, 0.1, 0.1) });
   }
 
-  drawText("Invoice", MARGIN, true, 20);
-  y -= 28;
-  drawText(`Generated ${params.generatedAt.toLocaleDateString("en-GB")}`, MARGIN);
+  // Header Title
+  drawText(params.invoiceNumber ? `Invoice ${params.invoiceNumber}` : "Invoice Statement", MARGIN, true, 20);
+  y -= 24;
+  drawText(`Issued: ${params.generatedAt.toLocaleDateString("en-GB")}`, MARGIN, false, 9);
+  y -= LINE_HEIGHT * 1.5;
+
+  // Business / Sender Details
+  const displaySender = params.businessName || params.teacherName;
+  drawText(displaySender, MARGIN, true, 11);
+  y -= LINE_HEIGHT;
+  
+  if (params.businessAddress) {
+    const lines = params.businessAddress.split("\n");
+    for (const line of lines) {
+      drawText(line, MARGIN, false, 9);
+      y -= 12;
+    }
+  }
+  drawText(params.teacherEmail, MARGIN, false, 9);
   y -= LINE_HEIGHT * 2;
 
-  drawText(params.teacherName, MARGIN, true);
+  // Recipient / Client Details
+  drawText("Billed to:", MARGIN, true, 10);
   y -= LINE_HEIGHT;
-  drawText(params.teacherEmail, MARGIN);
-  y -= LINE_HEIGHT * 2;
-
-  drawText("Billed to", MARGIN, true);
-  y -= LINE_HEIGHT;
-  drawText(`${params.payerName} (for ${params.studentName})`, MARGIN);
+  drawText(`${params.payerName} (for ${params.studentName})`, MARGIN, false, 10);
   y -= LINE_HEIGHT;
   if (params.payerEmail) {
-    drawText(params.payerEmail, MARGIN);
+    drawText(params.payerEmail, MARGIN, false, 9);
     y -= LINE_HEIGHT;
   }
   if (params.periodFrom && params.periodTo) {
     drawText(
-      `Period: ${params.periodFrom.toLocaleDateString("en-GB")} – ${params.periodTo.toLocaleDateString("en-GB")}`,
-      MARGIN
+      `Billing Period: ${params.periodFrom.toLocaleDateString("en-GB")} – ${params.periodTo.toLocaleDateString("en-GB")}`,
+      MARGIN,
+      false,
+      9
     );
     y -= LINE_HEIGHT;
   }
-  y -= LINE_HEIGHT;
+  y -= LINE_HEIGHT * 1.5;
 
+  // Table Columns
   const colDate = MARGIN;
   const colDesc = MARGIN + 80;
   const colAmount = PAGE_WIDTH - MARGIN - 70;
@@ -91,27 +106,45 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
     thickness: 0.5,
     color: rgb(0.7, 0.7, 0.7),
   });
-  y -= 4;
+  y -= 8;
 
+  // Line Items
   let total = 0;
   for (const item of params.lineItems) {
     newPageIfNeeded();
     total += item.amount;
-    drawText(item.date.toLocaleDateString("en-GB"), colDate);
-    drawText(item.description.slice(0, 40), colDesc);
+    
+    const dateStr = item.date instanceof Date ? item.date.toLocaleDateString("en-GB") : new Date(item.date).toLocaleDateString("en-GB");
+    drawText(dateStr, colDate);
+    drawText(item.description.slice(0, 45), colDesc);
     drawText(`£${item.amount.toFixed(2)}`, colAmount);
     y -= LINE_HEIGHT;
   }
 
-  y -= LINE_HEIGHT;
+  y -= 8;
+  newPageIfNeeded(LINE_HEIGHT * 4);
   page.drawLine({
     start: { x: MARGIN, y: y + 12 },
     end: { x: PAGE_WIDTH - MARGIN, y: y + 12 },
     thickness: 0.5,
     color: rgb(0.7, 0.7, 0.7),
   });
-  drawText("Total", colDesc, true);
-  drawText(`£${total.toFixed(2)}`, colAmount, true);
+  y -= LINE_HEIGHT;
+  drawText("Total Due", colDesc, true, 11);
+  drawText(`£${total.toFixed(2)}`, colAmount, true, 11);
+  
+  // Payment Instructions
+  if (params.paymentInstructions) {
+    y -= LINE_HEIGHT * 3;
+    newPageIfNeeded(LINE_HEIGHT * 4);
+    drawText("Payment Instructions:", MARGIN, true, 10);
+    y -= LINE_HEIGHT;
+    const instLines = params.paymentInstructions.split("\n");
+    for (const line of instLines) {
+      drawText(line, MARGIN, false, 9);
+      y -= 12;
+    }
+  }
 
   return pdfDoc.save();
 }

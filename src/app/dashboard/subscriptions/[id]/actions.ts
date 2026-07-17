@@ -109,3 +109,92 @@ export async function confirmCancellationAction(subscriptionId: string) {
   revalidatePath(`/dashboard/subscriptions/${subscriptionId}`);
   redirect(`/dashboard/subscriptions/${subscriptionId}`);
 }
+
+const REASON_LABEL: Record<string, string> = {
+  PAYMENT: "Payment received",
+  LESSON_DELIVERED: "Lesson",
+  CANCELLATION_ADJUSTMENT: "Cancellation adjustment",
+  MANUAL_CORRECTION: "Adjustment",
+  MAKE_UP_CREDIT_ISSUED: "Make-up credit",
+  MAKE_UP_CREDIT_REDEEMED: "Make-up credit redeemed",
+  VENUE_FEE_ITEMISED: "Venue fee",
+  LATE_CANCELLATION_CHARGE: "Late cancellation charge",
+};
+
+export async function generateInvoiceAction(subscriptionId: string): Promise<string | undefined> {
+  const session = await auth();
+  if (!session?.user?.id) return "Not authenticated";
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { id: subscriptionId },
+    include: {
+      student: true,
+      payer: true,
+      ledgerEntries: {
+        where: { invoiceId: null },
+      },
+    },
+  });
+
+  if (!subscription || subscription.student.teacherId !== session.user.id) {
+    return "Subscription not found";
+  }
+
+  const nonInvoicedEntries = subscription.ledgerEntries;
+  if (nonInvoicedEntries.length === 0) {
+    return "No outstanding ledger entries to invoice.";
+  }
+
+  const teacher = await prisma.teacher.findUniqueOrThrow({
+    where: { id: session.user.id },
+  });
+
+  const totalAmount = nonInvoicedEntries.reduce((sum, entry) => {
+    const amt = Number(entry.amount);
+    return entry.operation === "DEBIT" ? sum + amt : sum - amt;
+  }, 0);
+
+  const invoiceCount = await prisma.invoice.count({
+    where: { teacherId: teacher.id },
+  });
+  const prefix = teacher.invoicePrefix || "INV";
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "").substring(0, 6); // YYYYMM
+  const invoiceNumber = `${prefix}-${dateStr}-${String(invoiceCount + 1).padStart(4, "0")}`;
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      invoiceNumber,
+      teacherId: teacher.id,
+      payerId: subscription.payerId,
+      subscriptionId: subscription.id,
+      amount: totalAmount,
+      status: "ISSUED",
+      issueDate: new Date(),
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      snapshot: {
+        invoiceNumber,
+        teacherName: teacher.name,
+        teacherEmail: teacher.email,
+        businessName: teacher.businessName,
+        businessAddress: teacher.businessAddress,
+        paymentInstructions: teacher.paymentInstructions,
+        payerName: subscription.payer.name,
+        payerEmail: subscription.payer.email,
+        studentName: subscription.student.name,
+        lineItems: nonInvoicedEntries.map((e) => ({
+          date: e.date.toISOString(),
+          description: REASON_LABEL[e.reason] ?? e.reason,
+          amount: e.operation === "DEBIT" ? Number(e.amount) : -Number(e.amount),
+        })),
+        generatedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  await prisma.ledgerEntry.updateMany({
+    where: { id: { in: nonInvoicedEntries.map((e) => e.id) } },
+    data: { invoiceId: invoice.id },
+  });
+
+  revalidatePath(`/dashboard/subscriptions/${subscriptionId}`);
+}

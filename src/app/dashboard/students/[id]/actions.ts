@@ -54,6 +54,8 @@ export async function linkPayerAction(
   revalidatePath(`/dashboard/students/${parsed.data.studentId}`);
 }
 
+import { calculateSubscriptionSchedule } from "@/lib/billing";
+
 export async function createSubscriptionAction(
   _prevState: string | undefined,
   formData: FormData
@@ -67,6 +69,9 @@ export async function createSubscriptionAction(
     annualFee: formData.get("annualFee"),
     billingModel: formData.get("billingModel"),
     startDate: formData.get("startDate"),
+    lessonCount: formData.get("lessonCount"),
+    lessonPrice: formData.get("lessonPrice"),
+    months: formData.get("months"),
   });
 
   if (!parsed.success) {
@@ -79,12 +84,24 @@ export async function createSubscriptionAction(
   ]);
   if (!student || !payer) return "Student or payer not found";
 
-  const { startDate, ...rest } = parsed.data;
+  const { startDate, lessonCount, lessonPrice, months, ...rest } = parsed.data;
+
+  let calculationSnapshot = null;
+  if (rest.billingModel === "SMOOTHED_SUBSCRIPTION" && lessonCount && lessonPrice) {
+    const calcResult = calculateSubscriptionSchedule(
+      lessonCount,
+      lessonPrice,
+      months ?? 12,
+      new Date(startDate)
+    );
+    calculationSnapshot = JSON.parse(JSON.stringify(calcResult));
+  }
 
   await prisma.subscription.create({
     data: {
       ...rest,
       startDate: new Date(startDate),
+      calculationSnapshot: calculationSnapshot || undefined,
     },
   });
 

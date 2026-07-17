@@ -49,6 +49,7 @@ import {
   MessageSquare,
   HelpCircle,
   SlidersHorizontal,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -57,72 +58,32 @@ import { GlobalSearch } from "@/components/ui/global-search";
 type NavLink = { href: string; label: string; icon: LucideIcon };
 export type Archetype = "SOLO" | "GROUP_INDEPENDENT" | null;
 
-// Onboarding-ux-spec Section 5: Dynamic categorized link lists.
-const PHASE3_LINKS: Record<string, NavLink> = {
-  curriculum: { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
-  termCalendar: { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
-  waitlist: { href: "/dashboard/waitlist", label: "Waitlist", icon: ListPlus },
-  certifications: { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
-  taxSeasonMileage: { href: "/dashboard/mileage", label: "Mileage", icon: Car },
-  taxSeasonPack: { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
-};
-
 const CAT_OPERATIONS_LIST: NavLink[] = [
   { href: "/dashboard", label: "Calendar", icon: CalendarDays },
-  { href: "/dashboard/today", label: "Today", icon: Wifi },
   { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
-  { href: "/dashboard/group-classes", label: "Group classes", icon: Users2 },
-  { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
-  { href: "/dashboard/absences", label: "Absences", icon: CalendarX },
-  { href: "/dashboard/incidents", label: "Incidents", icon: AlertTriangle },
-  { href: "/dashboard/unavailability", label: "Unavailability", icon: CalendarOff },
 ];
 
 const CAT_CLIENTS_LIST: NavLink[] = [
   { href: "/dashboard/students", label: "Students", icon: Users },
   { href: "/dashboard/payers", label: "Payers", icon: Wallet },
-  { href: "/dashboard/waitlist", label: "Waitlist", icon: ListPlus },
-  { href: "/dashboard/referrals", label: "Referrals", icon: Handshake },
-];
-
-const CAT_LOCATIONS_LIST: NavLink[] = [
-  { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
-  { href: "/dashboard/travel-times", label: "Travel times", icon: Signpost },
-  { href: "/dashboard/route-check", label: "Route check", icon: Route },
-  { href: "/dashboard/checkin", label: "Check in", icon: ScanLine },
 ];
 
 const CAT_SETUP_LIST: NavLink[] = [
-  { href: "/dashboard/subjects", label: "Subjects", icon: Music },
+  { href: "/dashboard/teaching-locations", label: "Teaching locations", icon: Building2 },
   { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
-  { href: "/dashboard/menu-choices", label: "Menu choices", icon: SlidersHorizontal },
   { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
-  { href: "/dashboard/curriculum-templates", label: "Curriculum templates", icon: GraduationCap },
-  { href: "/dashboard/timetable/new", label: "Generate timetable", icon: Wand2 },
-  { href: "/dashboard/timetable/bulk", label: "Bulk timetable", icon: CalendarClock },
-  { href: "/dashboard/embeds", label: "Onboarding widget", icon: Code2 },
-  { href: "/dashboard/courses", label: "Courses", icon: PlayCircle },
-  { href: "/dashboard/resources", label: "Resources", icon: FolderOpen },
-  { href: "/dashboard/loans", label: "Loans", icon: Package },
-  { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
+  { href: "/dashboard/contract", label: "Contract", icon: FileText },
 ];
 
 const CAT_BUSINESS_LIST: NavLink[] = [
-  { href: "/dashboard/payments", label: "Get paid", icon: Banknote },
   { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
-  { href: "/dashboard/billing", label: "Billing", icon: Settings },
-  { href: "/dashboard/addons", label: "Add-ons", icon: Tag },
-  { href: "/dashboard/gift-cards", label: "Gift cards", icon: Gift },
-  { href: "/dashboard/promo-codes", label: "Promo codes", icon: Percent },
   { href: "/dashboard/accounting-export", label: "Accounting export", icon: FileSpreadsheet },
-  { href: "/dashboard/contract", label: "Contract", icon: FileText },
-  { href: "/dashboard/certifications", label: "Certifications", icon: ShieldCheck },
-  { href: "/dashboard/organisation", label: "Organisation", icon: Building },
-  { href: "/dashboard/mileage", label: "Mileage", icon: Car },
-  { href: "/dashboard/tax-pack", label: "Tax pack", icon: Receipt },
+  { href: "/dashboard/billing", label: "Billing & profile", icon: Settings },
 ];
 
-
+const CAT_COMING_SOON_LIST: NavLink[] = [
+  { href: "/dashboard/coming-soon", label: "Future features", icon: Sparkles },
+];
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -231,26 +192,20 @@ function SidebarContent({
   earnedPhase3Keys: string[];
   onNavigate?: () => void;
 }) {
-  const coreHrefs = new Set<string>();
-  
-  // Base Core links always shown:
-  coreHrefs.add("/dashboard"); // Calendar
-  coreHrefs.add("/dashboard/students"); // Students
-  coreHrefs.add("/dashboard/teaching-locations"); // Teaching Locations
-  coreHrefs.add("/dashboard/subjects"); // Subjects
-  coreHrefs.add("/dashboard/lesson-types"); // Lesson types
-  coreHrefs.add("/dashboard/forecast"); // Forecast
-  coreHrefs.add("/dashboard/billing"); // Billing
-
-  if (archetype === "GROUP_INDEPENDENT") {
-    coreHrefs.add("/dashboard/group-classes"); // Classes for group
-  }
-
-  // Add dynamically earned phase 3 keys
-  earnedPhase3Keys.forEach((key) => {
-    const link = PHASE3_LINKS[key];
-    if (link) coreHrefs.add(link.href);
-  });
+  const coreHrefs = new Set<string>([
+    "/dashboard",
+    "/dashboard/lessons",
+    "/dashboard/students",
+    "/dashboard/payers",
+    "/dashboard/teaching-locations",
+    "/dashboard/lesson-types",
+    "/dashboard/term-calendars",
+    "/dashboard/contract",
+    "/dashboard/forecast",
+    "/dashboard/accounting-export",
+    "/dashboard/billing",
+    "/dashboard/coming-soon",
+  ]);
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto px-3 py-5">
@@ -273,16 +228,10 @@ function SidebarContent({
           coreHrefs={coreHrefs}
           pathname={pathname}
           onNavigate={onNavigate}
+          defaultOpen={true}
         />
         <SidebarCategory
-          label="Locations & Venues"
-          links={CAT_LOCATIONS_LIST}
-          coreHrefs={coreHrefs}
-          pathname={pathname}
-          onNavigate={onNavigate}
-        />
-        <SidebarCategory
-          label="Setup & Config"
+          label="Teaching Setup"
           links={CAT_SETUP_LIST}
           coreHrefs={coreHrefs}
           pathname={pathname}
@@ -294,6 +243,14 @@ function SidebarContent({
           coreHrefs={coreHrefs}
           pathname={pathname}
           onNavigate={onNavigate}
+        />
+        <SidebarCategory
+          label="Coming Soon"
+          links={CAT_COMING_SOON_LIST}
+          coreHrefs={coreHrefs}
+          pathname={pathname}
+          onNavigate={onNavigate}
+          defaultOpen={true}
         />
       </div>
 
