@@ -1764,7 +1764,11 @@ model OutOfScopeSignup {
 
 model Invoice {
   id             String        @id @default(cuid())
-  invoiceNumber  String        @unique
+  /// Human-facing invoice number, generated per-teacher (e.g. "INV-202607-0001" from that teacher's
+  /// own running count). Uniqueness is therefore scoped per-teacher via @@unique below — NOT global:
+  /// two different teachers both issuing their first invoice in the same month legitimately produce
+  /// the same string, which a global @unique would (wrongly) reject with a 500 on the second one.
+  invoiceNumber  String
   teacherId      String
   payerId        String
   subscriptionId String?
@@ -1781,6 +1785,7 @@ model Invoice {
   subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   ledgerEntries LedgerEntry[]
 
+  @@unique([teacherId, invoiceNumber])
   @@index([teacherId, issueDate])
   @@index([payerId])
 }

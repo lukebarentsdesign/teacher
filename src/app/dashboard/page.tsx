@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { TeacherCalendar } from "./teacher-calendar";
@@ -11,7 +12,10 @@ export default async function DashboardHomePage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const session = await auth();
-  const teacherId = session!.user.id;
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+  const teacherId = session.user.id;
 
   const params = await searchParams;
   const selectedDateStr = params?.date;

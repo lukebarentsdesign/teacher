@@ -148,10 +148,20 @@ async function main() {
     },
   });
 
+  // Teacher.id MUST equal the Better Auth user.id — the whole app treats session.user.id as the
+  // teacher's own id (see the databaseHooks note in src/auth.ts). An older seed created the Teacher
+  // with an auto-cuid, breaking that invariant; if such a row exists, drop it so we can recreate it
+  // with the aligned id.
+  const existingTeacher = await prisma.teacher.findUnique({ where: { email } });
+  if (existingTeacher && existingTeacher.id !== teacherUserId) {
+    await purgeTeacherData(existingTeacher.id);
+    await prisma.teacher.delete({ where: { id: existingTeacher.id } });
+  }
+
   const teacher = await prisma.teacher.upsert({
-    where: { email },
-    update: { passwordHash, userId: teacherUserId },
-    create: { name, email, passwordHash, userId: teacherUserId },
+    where: { id: teacherUserId },
+    update: { name, email, passwordHash, userId: teacherUserId },
+    create: { id: teacherUserId, name, email, passwordHash, userId: teacherUserId },
   });
 
   await purgeTeacherData(teacher.id);
@@ -194,8 +204,14 @@ async function main() {
     },
   });
 
+  const existingCover = await prisma.teacher.findUnique({ where: { email: "cover.teacher@example.com" } });
+  if (existingCover && existingCover.id !== coverUserId) {
+    await purgeTeacherData(existingCover.id);
+    await prisma.teacher.delete({ where: { id: existingCover.id } });
+  }
+
   const coverTeacher = await prisma.teacher.upsert({
-    where: { email: "cover.teacher@example.com" },
+    where: { id: coverUserId },
     update: {
       name: "Alex Cover",
       passwordHash: coverPasswordHash,
@@ -207,6 +223,7 @@ async function main() {
       role: TeacherRole.INSTRUCTOR,
     },
     create: {
+      id: coverUserId,
       name: "Alex Cover",
       email: "cover.teacher@example.com",
       passwordHash: coverPasswordHash,
@@ -499,10 +516,15 @@ async function main() {
         locationId: locations.studio.id,
         schedulingMode: SchedulingMode.FIXED,
         taxHandling: TaxHandling.SELF_EMPLOYED,
+        // Includes a Saturday slot deliberately — dayOfWeek is 0-6 (Sun-Sat) everywhere in this
+        // model, not Mon-Fri-only; every other seeded location happened to use weekday-only
+        // examples, which made the demo data LOOK weekday-restricted even though nothing enforces
+        // that. This proves weekend teaching works end-to-end (availability, generator, calendar).
         availability: [
           { dayOfWeek: 1, startTime: "15:00", endTime: "20:00" },
           { dayOfWeek: 2, startTime: "15:00", endTime: "20:00" },
           { dayOfWeek: 4, startTime: "15:00", endTime: "20:00" },
+          { dayOfWeek: 6, startTime: "09:00", endTime: "13:00" },
         ],
         protectedBlocks: [{ dayOfWeek: 4, startTime: "17:00", endTime: "17:30", label: "Travel" }],
       },
