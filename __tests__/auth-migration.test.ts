@@ -5,7 +5,7 @@ const testUserId = "better-auth-migration-user";
 const testAccountId = "better-auth-migration-account";
 const testSessionId = "better-auth-migration-session";
 const testSessionToken = "better-auth-migration-token";
-const testEmail = "teacher@example.com";
+const testEmail = "migration-teacher@example.com";
 const testPassword = "changeme123";
 
 async function deleteAuthFixture() {

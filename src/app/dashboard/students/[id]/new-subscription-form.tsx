@@ -3,7 +3,7 @@
 import { useActionState, useState, useEffect } from "react";
 import type { Payer } from "@prisma/client";
 import { createSubscriptionAction } from "./actions";
-import { calculateSubscriptionSchedule, type BillingCalculationResult } from "@/lib/billing";
+import { calculateSubscriptionSchedule, type BillingCalculationResult } from "@/lib/billing-calculations";
 
 export function NewSubscriptionForm({ studentId, payers }: { studentId: string; payers: Payer[] }) {
   const [error, formAction, pending] = useActionState(createSubscriptionAction, undefined);

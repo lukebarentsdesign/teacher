@@ -1,4 +1,4 @@
-import { calculateSubscriptionSchedule } from "@/lib/billing";
+import { calculateSubscriptionSchedule } from "@/lib/billing-calculations";
 
 describe("calculateSubscriptionSchedule", () => {
   test("calculates even division correctly (30 lessons @ 32 = 960 / 12 = 80/month)", () => {

@@ -22,10 +22,9 @@ export function createForbiddenError(message = "Forbidden") {
   return new ForbiddenError(message);
 }
 
-export type AuthContext = {
-  user: any;
-  session: any;
-};
+import type { LegacyAuthSession } from "@/auth";
+
+export type AuthContext = NonNullable<LegacyAuthSession>;
 
 /**
  * Ensures the request has a valid session and returns an AuthContext.

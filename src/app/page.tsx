@@ -102,7 +102,7 @@ export default function LandingPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
               <h3 className="font-semibold text-neutral-900 mb-2">Admin Overload</h3>
-              <p className="text-sm text-neutral-600">Complex spreadsheets trying to track who has paid for which term and who hasn't.</p>
+              <p className="text-sm text-neutral-600">Complex spreadsheets trying to track who has paid for which term and who hasn&apos;t.</p>
             </div>
           </div>
         </div>
@@ -478,7 +478,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">Roadmap</span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Shape the future of Learnio</h2>
-            <p className="text-lg text-neutral-600">Vote on the features you want us to build next. We're actively developing based on community feedback.</p>
+            <p className="text-lg text-neutral-600">Vote on the features you want us to build next. We&apos;re actively developing based on community feedback.</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">

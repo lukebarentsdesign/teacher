@@ -1,64 +1,80 @@
-export type BillingScheduleItem = {
-  date: Date;
-  amount: number;
-  isLast: boolean;
-};
+import { prisma } from "@/lib/db";
+import { stripe, getAppUrl } from "@/lib/stripe";
 
-export type BillingCalculationResult = {
-  annualTotal: number;
-  monthlyAmount: number;
-  months: number;
-  schedule: BillingScheduleItem[];
-};
+async function getOrCreateStripeCustomer(teacherId: string): Promise<string> {
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: teacherId } });
+  if (teacher.stripeCustomerId) return teacher.stripeCustomerId;
 
-/**
- * Pure calculation function for monthly subscription plans:
- * count * price = annual total
- * annual total / months = monthly amount (with final month penny reconciliation)
- */
-export function calculateSubscriptionSchedule(
-  lessonCount: number,
-  lessonPrice: number,
-  months: number = 12,
-  startDate: Date
-): BillingCalculationResult {
-  const annualTotal = Number((lessonCount * lessonPrice).toFixed(2));
-  
-  if (months <= 0) {
-    throw new Error("Months must be greater than 0");
-  }
+  const customer = await stripe.customers.create({
+    email: teacher.email,
+    name: teacher.name,
+    metadata: { teacherId },
+  });
 
-  // Calculate monthly amount base (rounding down to two decimal places to avoid overcharging)
-  const monthlyAmountBase = Math.floor((annualTotal / months) * 100) / 100;
-  const totalOfMonths = Number((monthlyAmountBase * (months - 1)).toFixed(2));
-  
-  // Reconcile rounding error on the last month so the sum matches the annual total exactly
-  const lastMonthAmount = Number((annualTotal - totalOfMonths).toFixed(2));
+  await prisma.teacher.update({
+    where: { id: teacherId },
+    data: { stripeCustomerId: customer.id },
+  });
 
-  const schedule: BillingScheduleItem[] = [];
-  
-  for (let i = 0; i < months; i++) {
-    const date = new Date(startDate);
-    date.setMonth(startDate.getMonth() + i);
-    
-    // JS Date edge cases (e.g. Jan 31 + 1 month -> Mar 3 instead of Feb 28)
-    const expectedMonth = (startDate.getMonth() + i) % 12;
-    if (date.getMonth() !== expectedMonth) {
-      date.setDate(0); // Sets date to last day of the intended month
-    }
-
-    const isLast = i === months - 1;
-    schedule.push({
-      date,
-      amount: isLast ? lastMonthAmount : monthlyAmountBase,
-      isLast,
-    });
-  }
-
-  return {
-    annualTotal,
-    monthlyAmount: monthlyAmountBase,
-    months,
-    schedule,
-  };
+  return customer.id;
 }
+
+/** Checkout Session for the teacher's own flat monthly/annual Learnio subscription. */
+export async function createPlatformCheckoutSession(teacherId: string): Promise<string> {
+  const priceId = process.env.STRIPE_PLATFORM_PRICE_ID;
+  if (!priceId) throw new Error("STRIPE_PLATFORM_PRICE_ID is not configured");
+
+  const customerId = await getOrCreateStripeCustomer(teacherId);
+  const appUrl = getAppUrl();
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${appUrl}/dashboard/billing?checkout=success`,
+    cancel_url: `${appUrl}/dashboard/billing?checkout=cancelled`,
+    metadata: { teacherId },
+    subscription_data: { metadata: { teacherId } },
+  });
+
+  if (!session.url) throw new Error("Stripe did not return a Checkout URL");
+  return session.url;
+}
+
+/** Stripe-hosted portal for the teacher to manage/cancel their platform subscription. */
+export async function createBillingPortalSession(teacherId: string): Promise<string> {
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: teacherId } });
+  if (!teacher.stripeCustomerId) {
+    throw new Error("No Stripe customer on file yet — subscribe first");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: teacher.stripeCustomerId,
+    return_url: `${getAppUrl()}/dashboard/billing`,
+  });
+
+  return session.url;
+}
+
+const STRIPE_TO_PLATFORM_STATUS = {
+  trialing: "TRIALING",
+  active: "ACTIVE",
+  past_due: "PAST_DUE",
+  canceled: "CANCELED",
+  unpaid: "PAST_DUE",
+  incomplete: "PAST_DUE",
+  incomplete_expired: "CANCELED",
+  paused: "CANCELED",
+} as const;
+
+export function mapStripeSubscriptionStatus(
+  status: string
+): "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELED" {
+  return STRIPE_TO_PLATFORM_STATUS[status as keyof typeof STRIPE_TO_PLATFORM_STATUS] ?? "PAST_DUE";
+}
+
+// ---------------------------------------------------------------------------
+// MVP Smooth-Payment Subscription Calculator
+// ---------------------------------------------------------------------------
+
+export * from "./billing-calculations";

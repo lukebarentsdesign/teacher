@@ -25,7 +25,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  const snapshot = invoice.snapshot as any;
+interface InvoiceSnapshot {
+  invoiceNumber?: string;
+  businessName?: string | null;
+  businessAddress?: string | null;
+  paymentInstructions?: string | null;
+  teacherName: string;
+  teacherEmail: string;
+  payerName: string;
+  payerEmail: string | null;
+  studentName: string;
+  lineItems: Array<{ date: string; description: string; amount: number }>;
+  generatedAt: string;
+}
+
+  const snapshot = invoice.snapshot as unknown as InvoiceSnapshot;
 
   const pdfBytes = await renderInvoicePdf({
     invoiceNumber: invoice.invoiceNumber,
@@ -37,7 +51,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     payerName: snapshot.payerName,
     payerEmail: snapshot.payerEmail,
     studentName: snapshot.studentName,
-    lineItems: snapshot.lineItems.map((item: any) => ({
+    lineItems: snapshot.lineItems.map((item) => ({
       date: new Date(item.date),
       description: item.description,
       amount: item.amount,

@@ -75,7 +75,7 @@ export default async function MenuChoicesPage() {
         <div>
           <h2 className="text-base font-semibold text-neutral-900">Your billing choices</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            These are added to the "Who gets billed" dropdown. Use Parent/student payer when the person paying is an individual, and School/venue payer when an organisation is billed.
+            These are added to the &quot;Who gets billed&quot; dropdown. Use Parent/student payer when the person paying is an individual, and School/venue payer when an organisation is billed.
           </p>
         </div>
         <InvoicingTargetOptionsList options={invoicingTargetOptions} />

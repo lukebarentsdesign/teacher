@@ -39,7 +39,14 @@ export default async function SubscriptionDetailPage({
     ? await getAcceptanceForContract(subscription.payerId, currentContract.version)
     : null;
 
-  const calcSnapshot = subscription.calculationSnapshot as any;
+  interface CalculationSnapshot {
+    lessonCount: number;
+    lessonPrice: number;
+    months: number;
+    monthlyAmount: number;
+  }
+
+  const calcSnapshot = subscription.calculationSnapshot as unknown as CalculationSnapshot;
 
   async function handleGenerateInvoice() {
     "use server";
