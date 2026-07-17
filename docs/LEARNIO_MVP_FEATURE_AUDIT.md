@@ -922,16 +922,16 @@ The key product promise cannot currently be demonstrated clearly in UI: a transp
 
 # Recommended next development sequence
 
-| Priority | Objective | Files/areas affected | Reason it matters | Complexity | Dependency | Acceptance criteria |
-|---:|---|---|---|---|---|---|
-| 1 | Apply and verify auth migrations on the actual trial database. | `prisma/migrations`, deployment DB | Trial accounts must work reliably. | Small | None | `prisma migrate deploy` succeeds; login/register tested on trial DB. |
-| 2 | Define the core billing calculation model. | `prisma/schema.prisma`, new billing lib | Central MVP promise needs one source of truth. | Large | 1 | Given lessons, price and months, app explains monthly amount and stores reviewed result. |
-| 3 | Build a simple smooth-payment calculator UI. | Student/subscription pages | Teachers need transparency. | Large | 2 | Teacher can enter lesson count, price, months and see total/monthly amount. |
-| 4 | Add durable invoice records and numbering. | Prisma models, invoice routes/pages | Historical invoices must not change. | Large | 2 | Issued invoice stores number, dates, line items and PDF can be regenerated from snapshot. |
-| 5 | Simplify trial navigation. | `src/app/dashboard/sidebar.tsx` | Prevents confusion. | Medium | 2-4 decisions | Only core/supporting MVP links visible; coming-soon features clearly separated. |
-| 6 | Create business/invoice settings. | Billing/profile pages, teacher model | Invoices need real sender details. | Medium | 4 | Teacher can enter business name, address, payment instructions and invoice prefix. |
-| 7 | Harden core permissions. | Core dashboard routes/actions | Real pupil data requires tenant safety. | Medium | 1 | Core pupil, payer, subscription, invoice and payment routes use explicit helpers. |
-| 8 | Add browser-level trial journey test. | Playwright/e2e setup | Proves a normal teacher can complete MVP. | Medium | 3-6 | Test covers register/login, add payer, add pupil, calculate subscription, invoice, payment. |
-| 9 | Add feedback collection. | App dashboard/landing | Trial must produce learning. | Small | 5 | Teacher can rate coming-soon features and submit comments. |
-| 10 | Prepare seed/demo separation and privacy checklist. | Seed scripts, docs, data tools | Real trial data needs trust. | Medium | 1 | Demo data clearly labelled; export/delete policy documented or implemented. |
+| Priority | Objective | Status | Files/areas affected | Reason it matters | Complexity | Dependency | Acceptance criteria |
+|---:|---|---|---|---|---|---|---|
+| 1 | Apply and verify auth migrations on the actual trial database. | **DONE** | `prisma/migrations`, deployment DB | Trial accounts must work reliably. | Small | None | `prisma migrate deploy` succeeds; login/register tested on trial DB. |
+| 2 | Define the core billing calculation model. | Todo | `prisma/schema.prisma`, new billing lib | Central MVP promise needs one source of truth. | Large | 1 | Given lessons, price and months, app explains monthly amount and stores reviewed result. |
+| 3 | Build a simple smooth-payment calculator UI. | Todo | Student/subscription pages | Teachers need transparency. | Large | 2 | Teacher can enter lesson count, price, months and see total/monthly amount. |
+| 4 | Add durable invoice records and numbering. | Todo | Prisma models, invoice routes/pages | Historical invoices must not change. | Large | 2 | Issued invoice stores number, dates, line items and PDF can be regenerated from snapshot. |
+| 5 | Simplify trial navigation. | Todo | `src/app/dashboard/sidebar.tsx` | Prevents confusion. | Medium | 2-4 decisions | Only core/supporting MVP links visible; coming-soon features clearly separated. |
+| 6 | Create business/invoice settings. | Todo | Billing/profile pages, teacher model | Invoices need real sender details. | Medium | 4 | Teacher can enter business name, address, payment instructions and invoice prefix. |
+| 7 | Harden core permissions. | Todo | Core dashboard routes/actions | Real pupil data requires tenant safety. | Medium | 1 | Core pupil, payer, subscription, invoice and payment routes use explicit helpers. |
+| 8 | Add browser-level trial journey test. | Todo | Playwright/e2e setup | Proves a normal teacher can complete MVP. | Medium | 3-6 | Test covers register/login, add payer, add pupil, calculate subscription, invoice, payment. |
+| 9 | Add feedback collection. | Todo | App dashboard/landing | Trial must produce learning. | Small | 5 | Teacher can rate coming-soon features and submit comments. |
+| 10 | Prepare seed/demo separation and privacy checklist. | **IN PROGRESS** | Seed scripts, docs, data tools | Real trial data needs trust. | Medium | 1 | Demo data clearly labelled; export/delete policy documented or implemented. |
 
