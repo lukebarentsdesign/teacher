@@ -186,3 +186,62 @@ export async function disconnectGmailAccount(teacherId: string): Promise<void> {
     },
   });
 }
+
+export async function sendEmailWithAttachmentAsTeacher(
+  teacherId: string,
+  to: string,
+  subject: string,
+  bodyText: string,
+  attachmentBuffer: Buffer,
+  attachmentName: string
+): Promise<void> {
+  const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: teacherId } });
+  if (!teacher.gmailConnected || !teacher.gmailConnectedEmail) throw new GmailNotConnectedError();
+
+  const accessToken = await getValidAccessToken(teacherId);
+
+  const boundary = "boundary_" + Math.random().toString(36).substring(2);
+  const pdfBase64 = attachmentBuffer.toString("base64");
+  const splitBase64 = pdfBase64.replace(/(.{76})/g, "$1\r\n");
+
+  const lines = [
+    `From: ${teacher.gmailConnectedEmail}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 7bit",
+    "",
+    bodyText,
+    "",
+    `--${boundary}`,
+    `Content-Type: application/pdf; name="${attachmentName}"`,
+    "Content-Transfer-Encoding: base64",
+    `Content-Disposition: attachment; filename="${attachmentName}"`,
+    "",
+    splitBase64,
+    "",
+    `--${boundary}--`
+  ];
+  const mimeMessage = lines.join("\r\n");
+  const raw = Buffer.from(mimeMessage, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  const res = await fetch(SEND_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw }),
+  });
+
+  if (res.status === 401) throw new GmailReauthRequiredError();
+  if (!res.ok) throw new Error(`Gmail send failed: ${await res.text()}`);
+}

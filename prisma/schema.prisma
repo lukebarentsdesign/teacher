@@ -220,27 +220,27 @@ model Organisation {
 /// self-serve onboarding/embed links elsewhere in this app, rather than an OWNER unilaterally
 /// attaching another Teacher's account. Only acceptable while the invitee has no organisation yet.
 model OrganisationInvite {
-  id                String    @id @default(cuid())
-  organisationId    String
+  id                 String    @id @default(cuid())
+  organisationId     String
   invitedByTeacherId String
-  token             String    @unique
-  createdAt         DateTime  @default(now())
-  acceptedAt        DateTime?
+  token              String    @unique
+  createdAt          DateTime  @default(now())
+  acceptedAt         DateTime?
 
-  organisation    Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  invitedByTeacher Teacher     @relation(fields: [invitedByTeacherId], references: [id], onDelete: Cascade)
+  organisation     Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  invitedByTeacher Teacher      @relation(fields: [invitedByTeacherId], references: [id], onDelete: Cascade)
 }
 
 /// Substitute/cover for a specific Lesson — the covering instructor must be in the same
 /// Organisation as the original. Doesn't transfer ownership of the Lesson/Student/Subscription;
 /// purely a record of who actually taught it, for the org's own reference.
 model CoverAssignment {
-  id                    String    @id @default(cuid())
-  originalInstructorId  String
-  coveringInstructorId  String
-  lessonId              String?
-  reason                String?
-  createdAt             DateTime  @default(now())
+  id                   String   @id @default(cuid())
+  originalInstructorId String
+  coveringInstructorId String
+  lessonId             String?
+  reason               String?
+  createdAt            DateTime @default(now())
 
   originalInstructor Teacher @relation("CoverOriginal", fields: [originalInstructorId], references: [id], onDelete: Cascade)
   coveringInstructor Teacher @relation("CoverCovering", fields: [coveringInstructorId], references: [id], onDelete: Cascade)
@@ -281,8 +281,8 @@ model Teacher {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  userId       String?
-  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// Learnio's own SaaS billing of the teacher — separate from lesson/ledger billing.
   stripeCustomerId       String?                    @unique
@@ -301,9 +301,9 @@ model Teacher {
   /// the two raw answers; archetype is DERIVED from that pair, never asked directly (keeps the
   /// questions feeling like a quick conversation, not a form). Both null = hasn't been through the
   /// archetype question yet (pre-existing accounts from before this spec, or mid-onboarding).
-  teachesGroups        Boolean?
-  controlsOwnSchedule  Boolean?
-  archetype            TeacherArchetype?
+  teachesGroups         Boolean?
+  controlsOwnSchedule   Boolean?
+  archetype             TeacherArchetype?
   /// Set once Screen 6 (dashboard) is reached, regardless of how much of Screens 3-5 was filled
   /// in — onboarding is "complete" the moment they land on a working dashboard, not when every
   /// optional step is done. Null = still mid-onboarding (or a pre-existing account, same as above).
@@ -313,7 +313,7 @@ model Teacher {
   /// if their underlying condition is still true (e.g. "connect Stripe" comes back weekly), so the
   /// dismissal time itself has to be tracked, not just the fact of dismissal. See
   /// src/lib/onboarding.ts for the cooldown logic.
-  dismissedCards        Json @default("{}")
+  dismissedCards        Json              @default("{}")
 
   /// Lone-worker safety (roadmap v2 Part 9b) — who gets alerted if a home-visit check-out doesn't
   /// happen within the expected window. Deliberately separate from the guardian-facing Payer
@@ -326,12 +326,12 @@ model Teacher {
   /// normal state (a standalone teacher, exactly today's behavior). role only means something once
   /// organisationId is set; OWNER is the default so a Teacher who starts an Organisation is
   /// automatically its owner rather than needing a separate promotion step.
-  organisationId String?
-  role           TeacherRole @default(OWNER)
-  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
-  sentOrganisationInvites OrganisationInvite[]
-  coverAssignmentsAsOriginal CoverAssignment[] @relation("CoverOriginal")
-  coverAssignmentsAsCovering CoverAssignment[] @relation("CoverCovering")
+  organisationId             String?
+  role                       TeacherRole          @default(OWNER)
+  organisation               Organisation?        @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  sentOrganisationInvites    OrganisationInvite[]
+  coverAssignmentsAsOriginal CoverAssignment[]    @relation("CoverOriginal")
+  coverAssignmentsAsCovering CoverAssignment[]    @relation("CoverCovering")
 
   /// Whether a Subscription's banked creditAppliedNextPeriod auto-reduces the suggested amount
   /// on the next manually-generated payment request, or is only displayed for the teacher to
@@ -342,6 +342,9 @@ model Teacher {
   businessName        String?
   businessAddress     String?
   paymentInstructions String?
+  invoiceStripeLink   String?
+  invoiceEmailSubjectTemplate String?
+  invoiceEmailBodyTemplate    String?
 
   /// Teacher's own Gmail, connected via a separate OAuth grant (NOT the NextAuth login provider —
   /// login stays Credentials-only). Lets guardian emails be sent from the teacher's real address
@@ -352,70 +355,71 @@ model Teacher {
   gmailRefreshTokenEncrypted String?
   gmailTokenUpdatedAt        DateTime?
 
-  locationLinks         TeacherLocationLink[]
-  locationTypeOptions   LocationTypeOption[]
+  locationLinks          TeacherLocationLink[]
+  locationTypeOptions    LocationTypeOption[]
   invoicingTargetOptions InvoicingTargetOption[]
-  unavailability        Unavailability[]
-  lessons               Lesson[]
-  groupClasses          GroupClass[]
-  assessments           Assessment[]
-  packages              Package[]
-  loanableItems         LoanableItem[]
-  students              Student[]
-  payers                Payer[]
-  contracts             Contract[]
-  resources             Resource[]
-  assignments           Assignment[]
-  maintenanceReminders  MaintenanceReminder[]
-  expenses              Expense[]
+  unavailability         Unavailability[]
+  lessons                Lesson[]
+  groupClasses           GroupClass[]
+  assessments            Assessment[]
+  packages               Package[]
+  loanableItems          LoanableItem[]
+  students               Student[]
+  payers                 Payer[]
+  contracts              Contract[]
+  resources              Resource[]
+  assignments            Assignment[]
+  maintenanceReminders   MaintenanceReminder[]
+  expenses               Expense[]
   privateTuitionRequests PrivateTuitionRequest[]
   addOns                 AddOn[]
-  subjects                Subject[]
-  lessonTypes             LessonType[]
-  termCalendars           TermCalendar[]
-  curriculumTemplates     CurriculumTemplate[]
-  sessionPlanTemplates    SessionPlanTemplate[]
-  certifications          InstructorCertification[]
-  incidentLogs            IncidentLog[]
-  cancellationPolicies    CancellationPolicy[]
-  giftCards               GiftCard[]
-  promoCodes              PromoCode[]
-  embedConfigs            EmbedConfig[]
-  courses                 Course[]
-  courseItems             CourseItem[]
-  mileageLogs             MileageLog[]
-  timetableWaitlist       TimetableWaitlist[]
-  outOfScopeSignups       OutOfScopeSignup[]
-  locationTravelTimes     LocationTravelTime[]
-  invoices                Invoice[]
-  comingSoonFeedback      ComingSoonFeedback[]
+  subjects               Subject[]
+  lessonTypes            LessonType[]
+  termCalendars          TermCalendar[]
+  curriculumTemplates    CurriculumTemplate[]
+  sessionPlanTemplates   SessionPlanTemplate[]
+  certifications         InstructorCertification[]
+  incidentLogs           IncidentLog[]
+  cancellationPolicies   CancellationPolicy[]
+  giftCards              GiftCard[]
+  promoCodes             PromoCode[]
+  embedConfigs           EmbedConfig[]
+  courses                Course[]
+  courseItems            CourseItem[]
+  mileageLogs            MileageLog[]
+  timetableWaitlist      TimetableWaitlist[]
+  outOfScopeSignups      OutOfScopeSignup[]
+  locationTravelTimes    LocationTravelTime[]
+  invoices               Invoice[]
+  quickInvoices          QuickInvoice[]
+  comingSoonFeedback     ComingSoonFeedback[]
 }
 
 model TeachingLocation {
-  id              String          @id @default(cuid())
-  name            String
-  locationType    LocationType    @default(SCHOOL)
-  customLocationType String?
-  address         String?
-  invoicingTarget InvoicingTarget
+  id                    String          @id @default(cuid())
+  name                  String
+  locationType          LocationType    @default(SCHOOL)
+  customLocationType    String?
+  address               String?
+  invoicingTarget       InvoicingTarget
   customInvoicingTarget String?
   /// Legacy single-term scalars, kept as a fallback for locations with no TermCalendar assigned.
   /// The richer TermCalendar (below) supersedes these when set — the bulk timetable generator
   /// prefers a TermCalendar's TermPeriods (so half-terms/holidays are excluded) and only falls
   /// back to termStart/termEnd when no calendar is attached.
-  termStart       DateTime?
-  termEnd         DateTime?
+  termStart             DateTime?
+  termEnd               DateTime?
   /// Optional assigned term calendar. "Inherit a default" = point at a shared TermCalendar reused
   /// across locations; "its own override" (spec 4.5) = point at a location-specific TermCalendar.
   /// Modeled as an assignment rather than a diff-on-top of a base, since merge semantics (which
   /// dates win) would be ambiguous — a location with adjusted dates simply gets its own calendar.
-  termCalendarId  String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  termCalendarId        String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   /// Optional branding, used to color this location's lessons on the teacher's calendar views.
-  logoUrl       String?
-  primaryColor  String?
+  logoUrl        String?
+  primaryColor   String?
   secondaryColor String?
 
   /// Free-text WiFi codes, door entry codes, parking instructions, reception contact etc. —
@@ -428,27 +432,27 @@ model TeachingLocation {
   /// to be shown publicly (it's the room's own agenda), just not tied to any parent/student login.
   displayToken String? @unique
 
-  teacherLinks   TeacherLocationLink[]
-  rooms          Room[]
-  students       Student[]
-  unavailability Unavailability[]
-  lessons        Lesson[]
-  groupClasses   GroupClass[]
-  loanableItems  LoanableItem[]
+  teacherLinks                   TeacherLocationLink[]
+  rooms                          Room[]
+  students                       Student[]
+  unavailability                 Unavailability[]
+  lessons                        Lesson[]
+  groupClasses                   GroupClass[]
+  loanableItems                  LoanableItem[]
   privateTuitionRequestsAsSource PrivateTuitionRequest[]
   /// Which LessonTypes are offered here — see LessonType.locations for the "scoped to specific
   /// venues" semantics (empty on the LessonType side = offered everywhere, not "offered nowhere").
-  lessonTypes    LessonType[]
-  venueFeeArrangements VenueFeeArrangement[]
-  lessonTypePricing    LessonTypeLocationPricing[]
-  termCalendar   TermCalendar? @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
-  cancellationPolicy CancellationPolicy?
-  embedConfigs   EmbedConfig[]
-  mileageLogsFrom MileageLog[] @relation("MileageFrom")
-  mileageLogsTo   MileageLog[] @relation("MileageTo")
-  timetableWaitlist TimetableWaitlist[]
-  travelTimesFrom LocationTravelTime[] @relation("TravelFrom")
-  travelTimesTo   LocationTravelTime[] @relation("TravelTo")
+  lessonTypes                    LessonType[]
+  venueFeeArrangements           VenueFeeArrangement[]
+  lessonTypePricing              LessonTypeLocationPricing[]
+  termCalendar                   TermCalendar?               @relation(fields: [termCalendarId], references: [id], onDelete: SetNull)
+  cancellationPolicy             CancellationPolicy?
+  embedConfigs                   EmbedConfig[]
+  mileageLogsFrom                MileageLog[]                @relation("MileageFrom")
+  mileageLogsTo                  MileageLog[]                @relation("MileageTo")
+  timetableWaitlist              TimetableWaitlist[]
+  travelTimesFrom                LocationTravelTime[]        @relation("TravelFrom")
+  travelTimesTo                  LocationTravelTime[]        @relation("TravelTo")
 }
 
 /// Teacher-managed labels for the TeachingLocation type dropdown. The enum category remains so
@@ -547,18 +551,18 @@ model LessonType {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher             Teacher                     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   /// Optional scoping to specific venues (e.g. group flute only at School A, private flute only
   /// at home) — an EMPTY set here means "offered everywhere", not "offered nowhere". Only treat
   /// this as a filter when non-empty; see how onboarding/the self-serve link use it.
-  locations TeachingLocation[]
+  locations           TeachingLocation[]
   requestedByStudents Student[]
-  locationPricing LessonTypeLocationPricing[]
+  locationPricing     LessonTypeLocationPricing[]
   curriculumTemplates CurriculumTemplate[]
-  promoCodes PromoCode[]
-  embedConfigs EmbedConfig[]
-  courseItems CourseItem[]
-  timetableWaitlist TimetableWaitlist[]
+  promoCodes          PromoCode[]
+  embedConfigs        EmbedConfig[]
+  courseItems         CourseItem[]
+  timetableWaitlist   TimetableWaitlist[]
 
   @@unique([teacherId, name])
   @@index([teacherId])
@@ -667,25 +671,26 @@ model Room {
 // ---------------------------------------------------------------------------
 
 model Student {
-  id         String        @id @default(cuid())
+  id               String        @id @default(cuid())
   /// Owning teacher — the core multi-tenant boundary. A Student belongs to exactly one teacher.
-  teacherId  String
-  name       String
-  dob        DateTime?
-  discipline String // instrument / class / discipline
-  source     StudentSource
-  locationId String? // null for home students
-  igCardId   String? // links to existing IG Card wallet pass, for CheckIn scanning only
+  teacherId        String
+  name             String
+  dob              DateTime?
+  discipline       String // instrument / class / discipline
+  source           StudentSource
+  locationId       String? // null for home students
+  igCardId         String? // links to existing IG Card wallet pass, for CheckIn scanning only
   /// Free text, e.g. a parent's name — low-effort referral tracking (roadmap v2 Part 9c), rolled
   /// up into a "top referrers" view. Not FK'd to Payer: the referrer is very often not a Payer on
   /// this student at all (a friend's parent, a school office), so a free-text name is deliberately
   /// looser than the rest of this app's structured relationships.
-  referredBy String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  referredBy       String?
+  billingFrequency String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  userId     String?
-  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// PENDING_REVIEW = created via the self-serve onboarding questionnaire, not yet a confirmed
   /// enrolment — the teacher must approve before it's ACTIVE. Directly-created (wizard) students
@@ -712,29 +717,30 @@ model Student {
   /// explicitly opts in. Never affects the guardian's own visibility, which is always full.
   shareBalanceWithStudent Boolean @default(false)
 
-  teacher           Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  location          TeachingLocation?  @relation(fields: [locationId], references: [id])
-  payerLinks        StudentPayerLink[]
-  subscriptions     Subscription[]
-  packages          Package[]
-  lessons           Lesson[]
-  groupClassMembers GroupClassMember[]
-  checkIns          CheckIn[]
-  assessments       Assessment[]
-  loans             Loan[]
-  resources         Resource[]
-  assignments       Assignment[]
+  teacher                Teacher                 @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location               TeachingLocation?       @relation(fields: [locationId], references: [id])
+  payerLinks             StudentPayerLink[]
+  subscriptions          Subscription[]
+  packages               Package[]
+  lessons                Lesson[]
+  groupClassMembers      GroupClassMember[]
+  checkIns               CheckIn[]
+  assessments            Assessment[]
+  loans                  Loan[]
+  resources              Resource[]
+  assignments            Assignment[]
   privateTuitionRequests PrivateTuitionRequest[]
-  makeUpLessons     MakeUpLesson[]
+  makeUpLessons          MakeUpLesson[]
   /// Zero-or-more subjects this student is taught, drawn from the teacher's own Subject list —
   /// additive to (not a replacement for) the free-text `discipline` field above, which stays as
   /// the original single-value description shown throughout the app. Lets a student span more
   /// than one subject (e.g. Piano + Music Theory) and be grouped/filtered by any of them.
-  subjects          Subject[]
-  curricula         StudentCurriculum[]
-  groupSessionBookings GroupSessionBooking[]
-  medicalNotes      StudentMedicalNote[]
-  incidentLogs      IncidentLog[]
+  subjects               Subject[]
+  curricula              StudentCurriculum[]
+  groupSessionBookings   GroupSessionBooking[]
+  medicalNotes           StudentMedicalNote[]
+  incidentLogs           IncidentLog[]
+  quickInvoices          QuickInvoice[]
 
   @@index([teacherId])
 }
@@ -748,8 +754,8 @@ model Subject {
   name      String
   createdAt DateTime @default(now())
 
-  teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  students    Student[]
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  students     Student[]
   groupClasses GroupClass[]
 
   @@unique([teacherId, name])
@@ -761,12 +767,12 @@ model Subject {
 /// mutating the existing school-linked one, since school and private are separate billing
 /// relationships that may coexist (e.g. still enrolled at the school, now also private).
 model PrivateTuitionRequest {
-  id               String                      @id @default(cuid())
-  studentId        String
-  teacherId        String
-  sourceLocationId String
-  status           PrivateTuitionRequestStatus @default(PENDING)
-  requestedAt      DateTime                    @default(now())
+  id                 String                      @id @default(cuid())
+  studentId          String
+  teacherId          String
+  sourceLocationId   String
+  status             PrivateTuitionRequestStatus @default(PENDING)
+  requestedAt        DateTime                    @default(now())
   /// Set on acceptance — the new HOME-sourced Student created as a result, for traceability.
   resultingStudentId String?
 
@@ -788,8 +794,8 @@ model Payer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// Persistent unique 6-digit microsite access code (unique per family, not shared globally)
   accessCode          String   @unique
@@ -859,12 +865,12 @@ model Subscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  payer         Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
-  ledgerEntries LedgerEntry[]
-  payments      Payment[]
-  lessons       Lesson[]
-  invoices      Invoice[]
+  student             Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  payer               Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  ledgerEntries       LedgerEntry[]
+  payments            Payment[]
+  lessons             Lesson[]
+  invoices            Invoice[]
   calculationSnapshot Json?
 }
 
@@ -965,17 +971,17 @@ enum WaitlistStatus {
 /// entry when someone asks, updates status as they follow up. No automatic slot-matching; this is
 /// a pipeline list, not a booking engine.
 model TimetableWaitlist {
-  id            String         @id @default(cuid())
-  teacherId     String
-  lessonTypeId  String?
-  locationId    String?
-  contactName   String
-  contactEmail  String?
-  contactPhone  String?
-  notes         String?
-  status        WaitlistStatus @default(WAITING)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id           String         @id @default(cuid())
+  teacherId    String
+  lessonTypeId String?
+  locationId   String?
+  contactName  String
+  contactEmail String?
+  contactPhone String?
+  notes        String?
+  status       WaitlistStatus @default(WAITING)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   teacher    Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   lessonType LessonType?       @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
@@ -1081,23 +1087,23 @@ model Lesson {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student            Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacher            Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  location           TeachingLocation  @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  room               Room?             @relation(fields: [roomId], references: [id])
-  subscription       Subscription?  @relation(fields: [subscriptionId], references: [id])
-  package            Package?       @relation(fields: [packageId], references: [id])
-  addOnBookings      AddOnBooking[]
-  checkIn            CheckIn?
-  note               LessonNote?
-  resources          Resource[]
-  makeUpLessonAsOriginal MakeUpLesson? @relation("OriginalLesson")
-  makeUpLessonAsMakeUp   MakeUpLesson? @relation("MakeUpLessonSlot")
-  sessionPlan        SessionPlan?
-  incidentLogs       IncidentLog[]
-  feedback           LessonFeedback[]
-  coverAssignments   CoverAssignment[]
-  loneWorkerCheckIn  LoneWorkerCheckIn?
+  student                Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher                Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location               TeachingLocation   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  room                   Room?              @relation(fields: [roomId], references: [id])
+  subscription           Subscription?      @relation(fields: [subscriptionId], references: [id])
+  package                Package?           @relation(fields: [packageId], references: [id])
+  addOnBookings          AddOnBooking[]
+  checkIn                CheckIn?
+  note                   LessonNote?
+  resources              Resource[]
+  makeUpLessonAsOriginal MakeUpLesson?      @relation("OriginalLesson")
+  makeUpLessonAsMakeUp   MakeUpLesson?      @relation("MakeUpLessonSlot")
+  sessionPlan            SessionPlan?
+  incidentLogs           IncidentLog[]
+  feedback               LessonFeedback[]
+  coverAssignments       CoverAssignment[]
+  loneWorkerCheckIn      LoneWorkerCheckIn?
 
   @@index([teacherId, scheduledAt])
   @@index([studentId, scheduledAt])
@@ -1108,13 +1114,13 @@ model Lesson {
 /// billing credit. Created alongside the MAKE_UP_CREDIT_ISSUED ledger entry when a lesson is
 /// marked "Absent, make-up owed", so the credit isn't just a floating ledger row.
 model MakeUpLesson {
-  id              String    @id @default(cuid())
-  originalLessonId String   @unique
-  makeUpLessonId  String?   @unique
-  studentId       String
-  requestedAt     DateTime  @default(now())
-  confirmedAt     DateTime?
-  completedAt     DateTime?
+  id               String    @id @default(cuid())
+  originalLessonId String    @unique
+  makeUpLessonId   String?   @unique
+  studentId        String
+  requestedAt      DateTime  @default(now())
+  confirmedAt      DateTime?
+  completedAt      DateTime?
 
   originalLesson Lesson  @relation("OriginalLesson", fields: [originalLessonId], references: [id], onDelete: Cascade)
   makeUpLesson   Lesson? @relation("MakeUpLessonSlot", fields: [makeUpLessonId], references: [id])
@@ -1137,7 +1143,7 @@ model LessonNote {
   /// "worked on Section 3" without requiring a curriculum to exist at all.
   studentCurriculumSectionId String?
 
-  lesson                  Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson                   Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   studentCurriculumSection StudentCurriculumSection? @relation(fields: [studentCurriculumSectionId], references: [id], onDelete: SetNull)
 }
 
@@ -1167,10 +1173,10 @@ model GroupClass {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  teacher       Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  location      TeachingLocation   @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  room          Room?              @relation(fields: [roomId], references: [id])
-  subject       Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  teacher       Teacher               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location      TeachingLocation      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  room          Room?                 @relation(fields: [roomId], references: [id])
+  subject       Subject?              @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   members       GroupClassMember[]
   checkIns      CheckIn[]
   addOnBookings AddOnBooking[]
@@ -1186,12 +1192,12 @@ model GroupClass {
 /// itself has no dated per-occurrence row, sessionDate is the booking's own record of which
 /// occurrence it's for.
 model GroupSessionBooking {
-  id           String              @id @default(cuid())
+  id           String             @id @default(cuid())
   groupClassId String
   studentId    String
-  sessionDate  DateTime            @db.Date
-  status       GroupBookingStatus  @default(CONFIRMED)
-  bookedAt     DateTime            @default(now())
+  sessionDate  DateTime           @db.Date
+  status       GroupBookingStatus @default(CONFIRMED)
+  bookedAt     DateTime           @default(now())
 
   groupClass GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
   student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -1246,7 +1252,7 @@ model AddOn {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  teacher  Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher  Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   bookings AddOnBooking[]
 
   @@index([teacherId])
@@ -1297,21 +1303,21 @@ model Assessment {
 /// item for them), to a specific Lesson, or left unattached in the teacher's general library
 /// until an Assignment references it via Assignment.resourceId.
 model Resource {
-  id          String       @id @default(cuid())
-  teacherId   String
-  type        ResourceType
-  title       String
-  url         String
-  description String?
-  folder      String?
-  sourceLabel String?
-  tags        String?
+  id           String       @id @default(cuid())
+  teacherId    String
+  type         ResourceType
+  title        String
+  url          String
+  description  String?
+  folder       String?
+  sourceLabel  String?
+  tags         String?
   thumbnailUrl String?
-  pinned      Boolean      @default(false)
-  studentId   String?
-  lessonId    String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  pinned       Boolean      @default(false)
+  studentId    String?
+  lessonId     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   teacher     Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student     Student?     @relation(fields: [studentId], references: [id])
@@ -1342,15 +1348,15 @@ model Assignment {
 }
 
 model LoanableItem {
-  id        String   @id @default(cuid())
-  name      String
-  type      String // instrument / book / CD / etc.
-  condition String?
-  value     Decimal? @db.Decimal(10, 2)
-  teacherId String? // owned by Teacher or TeachingLocation (exactly one should be set)
+  id         String   @id @default(cuid())
+  name       String
+  type       String // instrument / book / CD / etc.
+  condition  String?
+  value      Decimal? @db.Decimal(10, 2)
+  teacherId  String? // owned by Teacher or TeachingLocation (exactly one should be set)
   locationId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   teacher              Teacher?              @relation(fields: [teacherId], references: [id])
   location             TeachingLocation?     @relation(fields: [locationId], references: [id])
@@ -1406,8 +1412,8 @@ model CurriculumTemplate {
   /// (e.g. importing curriculum for a "Flute Grade 1" LessonType suggests this template first).
   lessonTypeId String?
 
-  teacher    Teacher              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  lessonType LessonType?          @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
+  teacher    Teacher             @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  lessonType LessonType?         @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
   sections   CurriculumSection[]
   imports    StudentCurriculum[]
 
@@ -1431,25 +1437,25 @@ model CurriculumSection {
 /// subject/section rows, not a live reference. A teacher can also build a plan from scratch
 /// directly on a student (templateId left null) and "Save as Template" afterwards.
 model StudentCurriculum {
-  id          String                @id @default(cuid())
+  id          String                  @id @default(cuid())
   studentId   String
   templateId  String? // the template this was imported from, if any — informational only
   title       String
   subject     String?
-  startedDate DateTime              @default(now())
+  startedDate DateTime                @default(now())
   status      StudentCurriculumStatus @default(ACTIVE)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
 
-  student  Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  template CurriculumTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  student  Student                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  template CurriculumTemplate?        @relation(fields: [templateId], references: [id], onDelete: SetNull)
   sections StudentCurriculumSection[]
 
   @@index([studentId])
 }
 
 model StudentCurriculumSection {
-  id                  String   @id @default(cuid())
+  id                  String                         @id @default(cuid())
   studentCurriculumId String
   order               Int
   title               String
@@ -1470,15 +1476,15 @@ model StudentCurriculumSection {
 /// important once multi-instructor support exists (Part 6e, not yet built — see CLAUDE.md), but
 /// useful standalone as a renewal-date tracker even for a single teacher.
 model InstructorCertification {
-  id                String   @id @default(cuid())
-  teacherId         String
-  certType          String
-  certNumber        String?
-  issuedDate        DateTime
-  expiryDate        DateTime?
+  id                 String    @id @default(cuid())
+  teacherId          String
+  certType           String
+  certNumber         String?
+  issuedDate         DateTime
+  expiryDate         DateTime?
   reminderDaysBefore Int?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
@@ -1490,12 +1496,12 @@ model InstructorCertification {
 /// (rather than a Student field) so future multi-instructor visibility scoping (Part 6e) has
 /// somewhere to attach without a schema change.
 model StudentMedicalNote {
-  id        String                    @id @default(cuid())
+  id        String              @id @default(cuid())
   studentId String
   note      String
-  severity  MedicalNoteSeverity       @default(LOW)
-  createdAt DateTime                  @default(now())
-  updatedAt DateTime                  @updatedAt
+  severity  MedicalNoteSeverity @default(LOW)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -1505,7 +1511,7 @@ model StudentMedicalNote {
 /// A safeguarding/liability record, separate from LessonNote (which is teaching content, shared
 /// with the guardian) — never shown to a parent/student, mirrors StudentMedicalNote's visibility.
 model IncidentLog {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   teacherId      String
   studentId      String?
   lessonId       String?
@@ -1513,9 +1519,9 @@ model IncidentLog {
   description    String
   actionTaken    String?
   reportedToWhom String?
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime @default(now())
 
-  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
   lesson  Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 
@@ -1529,16 +1535,16 @@ model IncidentLog {
 /// resolution in src/lib/cancellation-policy.ts prefers a location-scoped policy when one exists.
 /// No policy configured at all = the original always-free CREDIT behavior, unchanged.
 model CancellationPolicy {
-  id                  String              @id @default(cuid())
-  teacherId           String
-  locationId          String?             @unique
-  noticeHoursRequired Int
-  lateCancelAction    CancellationAction
-  noShowAction        CancellationAction
+  id                   String             @id @default(cuid())
+  teacherId            String
+  locationId           String?            @unique
+  noticeHoursRequired  Int
+  lateCancelAction     CancellationAction
+  noShowAction         CancellationAction
   /// Only meaningful when either action above is PARTIAL_CHARGE.
   partialChargePercent Int?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   teacher  Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   location TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: Cascade)
@@ -1569,17 +1575,17 @@ model LessonFeedback {
 /// decrements on each redemption (posts a MANUAL_CORRECTION-style CREDIT — see
 /// src/lib/gift-card.ts) rather than the card being single-use.
 model GiftCard {
-  id                String   @id @default(cuid())
-  teacherId         String
-  code              String   @unique
-  initialValue      Decimal  @db.Decimal(10, 2)
-  remainingBalance  Decimal  @db.Decimal(10, 2)
+  id                 String   @id @default(cuid())
+  teacherId          String
+  code               String   @unique
+  initialValue       Decimal  @db.Decimal(10, 2)
+  remainingBalance   Decimal  @db.Decimal(10, 2)
   purchasedByPayerId String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  teacher         Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  purchasedByPayer Payer? @relation(fields: [purchasedByPayerId], references: [id], onDelete: SetNull)
+  teacher          Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  purchasedByPayer Payer?  @relation(fields: [purchasedByPayerId], references: [id], onDelete: SetNull)
 
   @@index([teacherId])
 }
@@ -1594,18 +1600,18 @@ enum PromoDiscountType {
 /// lives on the Subscription). `timesUsed` + `usageLimit` are simple counters, not a redemption
 /// log — good enough for "used N of M", not an audit trail (that's what LedgerEntry is for).
 model PromoCode {
-  id             String            @id @default(cuid())
-  teacherId      String
-  code           String
-  discountType   PromoDiscountType
-  value          Decimal           @db.Decimal(10, 2)
-  validFrom      DateTime?
-  validTo        DateTime?
-  usageLimit     Int?
-  timesUsed      Int               @default(0)
-  lessonTypeId   String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  teacherId    String
+  code         String
+  discountType PromoDiscountType
+  value        Decimal           @db.Decimal(10, 2)
+  validFrom    DateTime?
+  validTo      DateTime?
+  usageLimit   Int?
+  timesUsed    Int               @default(0)
+  lessonTypeId String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   teacher    Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   lessonType LessonType? @relation(fields: [lessonTypeId], references: [id], onDelete: SetNull)
@@ -1620,17 +1626,17 @@ model PromoCode {
 /// (src/app/onboard/embed/[token]/) so a teacher can post either to their own website or a
 /// Facebook bio link without maintaining two separate setups.
 model EmbedConfig {
-  id                   String   @id @default(cuid())
-  teacherId            String
-  label                String // teacher's own name for this embed, e.g. "Facebook bio link"
-  locationId           String?
-  brandColor           String?
-  embedToken           String   @unique
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id         String   @id @default(cuid())
+  teacherId  String
+  label      String // teacher's own name for this embed, e.g. "Facebook bio link"
+  locationId String?
+  brandColor String?
+  embedToken String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  teacher   Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  location  TeachingLocation?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  teacher            Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  location           TeachingLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   /// Empty = every active LessonType the location scoping already allows; non-empty narrows further.
   allowedLessonTypes LessonType[]
 
@@ -1683,7 +1689,7 @@ model Course {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  teacher   Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacher   Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   items     CourseItem[]
   purchases CoursePurchase[]
 
@@ -1763,7 +1769,7 @@ model OutOfScopeSignup {
 // ---------------------------------------------------------------------------
 
 model Invoice {
-  id             String        @id @default(cuid())
+  id             String   @id @default(cuid())
   /// Human-facing invoice number, generated per-teacher (e.g. "INV-202607-0001" from that teacher's
   /// own running count). Uniqueness is therefore scoped per-teacher via @@unique below — NOT global:
   /// two different teachers both issuing their first invoice in the same month legitimately produce
@@ -1772,22 +1778,72 @@ model Invoice {
   teacherId      String
   payerId        String
   subscriptionId String?
-  amount         Decimal       @db.Decimal(10, 2)
-  status         String        // draft, issued, paid, void
+  amount         Decimal  @db.Decimal(10, 2)
+  status         String // draft, issued, paid, void
   issueDate      DateTime
   dueDate        DateTime
   snapshot       Json
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  payer        Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  teacher       Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  payer         Payer         @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   ledgerEntries LedgerEntry[]
 
   @@unique([teacherId, invoiceNumber])
   @@index([teacherId, issueDate])
   @@index([payerId])
+}
+
+/// A persisted invoice record created from the Quick Invoice module.
+/// Tracks the billing period, lesson dates, and payment status.
+model QuickInvoice {
+  id            String    @id @default(cuid())
+  teacherId     String
+  studentId     String
+  invoiceRef    String
+  /// "upfront" = invoiced before lessons happen | "arrears" = invoiced after lessons happen
+  billingMode   String    @default("upfront")
+  periodStart   DateTime
+  periodEnd     DateTime
+  lessonsCount  Int
+  /// Total based on attended lessons (arrears) or scheduled lessons (upfront)
+  totalAmount   Float
+  costPerLesson Float
+  dueDate       DateTime
+  /// null = not yet paid
+  paidAt        DateTime?
+  paidAmount    Float?
+  /// "unpaid" | "paid" | "partial" | "overdue"
+  status        String    @default("unpaid")
+  /// When the email was dispatched (null = not yet sent)
+  emailedAt     DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  teacher     Teacher                  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student     Student                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonDates QuickInvoiceLessonDate[]
+
+  @@index([teacherId])
+  @@index([studentId])
+  @@index([status])
+}
+
+/// Each individual lesson date on a QuickInvoice. Used for attendance tracking in arrears billing.
+model QuickInvoiceLessonDate {
+  id        String   @id @default(cuid())
+  invoiceId String
+  date      DateTime
+  /// true = student attended (only matters in arrears billing; upfront counts all as attended)
+  attended  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  invoice QuickInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
 }
 
 // ---------------------------------------------------------------------------
@@ -1798,7 +1854,7 @@ model ComingSoonFeedback {
   id         String   @id @default(cuid())
   teacherId  String
   featureKey String
-  rating     String   // ESSENTIAL / USEFUL / NOT_IMPORTANT
+  rating     String // ESSENTIAL / USEFUL / NOT_IMPORTANT
   comment    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -1814,28 +1870,28 @@ model ComingSoonFeedback {
 // ---------------------------------------------------------------------------
 
 model User {
-  id            String    @id
+  id            String   @id
   name          String
   email         String
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
-  
+
   // admin plugin
   role       String?
   banned     Boolean?
   banReason  String?
   banExpires DateTime?
-  
-  sessions      Session[]
-  accounts      Account[]
-  
+
+  sessions Session[]
+  accounts Account[]
+
   // Domain Model Links (Profiles)
   teacherProfiles Teacher[]
   payerProfiles   Payer[]
   studentProfiles Student[]
-  
+
   // Organization plugin
   members     AuthMember[]
   invitations AuthInvitation[]
@@ -1854,10 +1910,10 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // Organization plugin
   activeOrganizationId String?
-  
+
   @@unique([token])
   @@map("session")
 }
@@ -1894,7 +1950,7 @@ model Verification {
 
 // Organization Plugin Models
 model AuthOrganization {
-  id        String    @id
+  id        String   @id
   name      String
   slug      String?
   logo      String?
@@ -1903,7 +1959,7 @@ model AuthOrganization {
 
   members     AuthMember[]
   invitations AuthInvitation[]
-  
+
   @@unique([slug])
   @@map("auth_organization")
 }
@@ -1916,7 +1972,7 @@ model AuthMember {
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   role           String
   createdAt      DateTime
-  
+
   @@map("auth_member")
 }
 
@@ -1930,6 +1986,6 @@ model AuthInvitation {
   expiresAt      DateTime
   inviterId      String
   user           User             @relation(fields: [inviterId], references: [id], onDelete: Cascade)
-  
+
   @@map("auth_invitation")
 }

@@ -26,6 +26,10 @@ export type InvoiceParams = {
   generatedAt: Date;
   periodFrom?: Date;
   periodTo?: Date;
+  dueDate?: Date;
+  teacherAddress?: string;
+  teacherBankDetails?: string;
+  teacherStripeLink?: string;
 };
 
 /**
@@ -54,6 +58,11 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
   drawText(params.invoiceNumber ? `Invoice ${params.invoiceNumber}` : "Invoice Statement", MARGIN, true, 20);
   y -= 24;
   drawText(`Issued: ${params.generatedAt.toLocaleDateString("en-GB")}`, MARGIN, false, 9);
+  y -= 12;
+  if (params.dueDate) {
+    drawText(`Due by: ${params.dueDate.toLocaleDateString("en-GB")}`, MARGIN, true, 9);
+    y -= 12;
+  }
   y -= LINE_HEIGHT * 1.5;
 
   // Business / Sender Details
@@ -61,10 +70,11 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
   drawText(displaySender, MARGIN, true, 11);
   y -= LINE_HEIGHT;
   
-  if (params.businessAddress) {
-    const lines = params.businessAddress.split("\n");
+  const displayAddress = params.businessAddress || params.teacherAddress;
+  if (displayAddress) {
+    const lines = displayAddress.split("\n");
     for (const line of lines) {
-      drawText(line, MARGIN, false, 9);
+      drawText(line.trim(), MARGIN, false, 9);
       y -= 12;
     }
   }
@@ -134,16 +144,24 @@ export async function renderInvoicePdf(params: InvoiceParams): Promise<Uint8Arra
   drawText(`£${total.toFixed(2)}`, colAmount, true, 11);
   
   // Payment Instructions
-  if (params.paymentInstructions) {
+  const displayInstructions = params.paymentInstructions || params.teacherBankDetails;
+  if (displayInstructions) {
     y -= LINE_HEIGHT * 3;
     newPageIfNeeded(LINE_HEIGHT * 4);
     drawText("Payment Instructions:", MARGIN, true, 10);
     y -= LINE_HEIGHT;
-    const instLines = params.paymentInstructions.split("\n");
+    const instLines = displayInstructions.split("\n");
     for (const line of instLines) {
-      drawText(line, MARGIN, false, 9);
+      drawText(line.trim(), MARGIN, false, 9);
       y -= 12;
     }
+  }
+
+  if (params.teacherStripeLink) {
+    y -= LINE_HEIGHT * 2;
+    newPageIfNeeded();
+    drawText(`Pay Online (Stripe): ${params.teacherStripeLink}`, MARGIN, false, 9);
+    y -= LINE_HEIGHT;
   }
 
   return pdfDoc.save();

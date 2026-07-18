@@ -76,6 +76,7 @@ const CAT_SETUP_LIST: NavLink[] = [
 ];
 
 const CAT_BUSINESS_LIST: NavLink[] = [
+  { href: "/dashboard/quick-invoice", label: "Quick Invoice", icon: FileText },
   { href: "/dashboard/forecast", label: "Forecast", icon: TrendingUp },
   { href: "/dashboard/accounting-export", label: "Accounting export", icon: FileSpreadsheet },
   { href: "/dashboard/billing", label: "Billing & profile", icon: Settings },

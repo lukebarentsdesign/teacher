@@ -50,6 +50,173 @@ function atTime(date: Date, hours: number, minutes = 0) {
 function dateOnly(date: Date) {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
+const schoolTimerProgramme = [
+  { dayOfWeek: 1, startTime: "09:00", endTime: "09:30" },
+  { dayOfWeek: 1, startTime: "10:00", endTime: "12:00" },
+  { dayOfWeek: 1, startTime: "12:45", endTime: "14:00" },
+  { dayOfWeek: 3, startTime: "09:00", endTime: "09:30" },
+  { dayOfWeek: 3, startTime: "10:00", endTime: "12:00" },
+  { dayOfWeek: 3, startTime: "12:45", endTime: "14:00" },
+];
+
+const schoolRoomOpenHours = schoolTimerProgramme.map(({ dayOfWeek, startTime, endTime }) => ({
+  dayOfWeek,
+  openTime: startTime,
+  closeTime: endTime,
+}));
+
+const homeVisitTimerProgramme = [
+  { dayOfWeek: 2, startTime: "15:30", endTime: "17:00" },
+  { dayOfWeek: 2, startTime: "17:30", endTime: "19:30" },
+  { dayOfWeek: 4, startTime: "15:30", endTime: "17:00" },
+  { dayOfWeek: 4, startTime: "17:30", endTime: "19:30" },
+];
+
+const onlineTimerProgramme = [
+  { dayOfWeek: 5, startTime: "09:00", endTime: "09:30" },
+  { dayOfWeek: 5, startTime: "10:00", endTime: "12:00" },
+  { dayOfWeek: 5, startTime: "12:45", endTime: "14:00" },
+];
+
+const firstNames = [
+  "Amelia",
+  "Arthur",
+  "Beatrice",
+  "Caleb",
+  "Daisy",
+  "Ethan",
+  "Freya",
+  "George",
+  "Hannah",
+  "Isaac",
+  "Jasmine",
+  "Kai",
+  "Lily",
+  "Mason",
+  "Nora",
+  "Oscar",
+  "Poppy",
+  "Reuben",
+  "Sofia",
+  "Theo",
+  "Uma",
+  "Victor",
+  "Willow",
+  "Zach",
+];
+
+const lastNames = [
+  "Abbott",
+  "Bailey",
+  "Carter",
+  "Davies",
+  "Edwards",
+  "Foster",
+  "Grant",
+  "Hughes",
+  "Iqbal",
+  "Jones",
+  "Kaur",
+  "Lewis",
+  "Morgan",
+  "Nguyen",
+  "Owen",
+  "Patel",
+  "Quinn",
+  "Roberts",
+  "Singh",
+  "Taylor",
+  "Walker",
+  "Young",
+];
+
+function cohortName(index: number, offset: number) {
+  return `${firstNames[(index + offset) % firstNames.length]} ${lastNames[(index * 3 + offset) % lastNames.length]}`;
+}
+
+async function seedSchedulingCohort({
+  teacherId,
+  locationId,
+  count,
+  accessCodeStart,
+  nameOffset,
+  source,
+  discipline,
+  subjectId,
+  lessonTypeId,
+  payerLabel,
+  subscriptionStart,
+  annualFee,
+  billingModel,
+}: {
+  teacherId: string;
+  locationId: string;
+  count: number;
+  accessCodeStart: number;
+  nameOffset: number;
+  source: StudentSource;
+  discipline: string;
+  subjectId: string;
+  lessonTypeId: string;
+  payerLabel: string;
+  subscriptionStart: Date;
+  annualFee: string;
+  billingModel: BillingModel;
+}) {
+  const created: { studentId: string; payerId: string; subscriptionId: string }[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const studentName = cohortName(i, nameOffset);
+    const familyName = studentName.split(" ").at(-1) ?? `Family${i + 1}`;
+    const payerName = `${["Sarah", "James", "Nadia", "Tom", "Meera", "Daniel"][i % 6]} ${familyName}`;
+    const payer = await prisma.payer.create({
+      data: {
+        teacherId,
+        name: payerName,
+        email: `${payerLabel.toLowerCase()}${String(i + 1).padStart(2, "0")}@example.com`,
+        phone: `07700 ${String(accessCodeStart + i).slice(1)}`,
+        accessCode: String(accessCodeStart + i),
+        contactPref: i % 3 === 0 ? ContactPref.WHATSAPP : i % 3 === 1 ? ContactPref.EMAIL : ContactPref.SMS,
+        notes: `${payerLabel} demo parent. Useful for testing timetable generation, billing, and parent microsite access.`,
+      },
+    });
+
+    const student = await prisma.student.create({
+      data: {
+        teacherId,
+        name: studentName,
+        dob: new Date(`${2010 + (i % 7)}-${String((i % 9) + 1).padStart(2, "0")}-15T00:00:00.000Z`),
+        discipline,
+        source,
+        locationId,
+        igCardId: `IG-${payerLabel.toUpperCase()}-${String(i + 1).padStart(2, "0")}`,
+        referredBy: i % 2 === 0 ? "School office" : "Parent referral",
+        status: StudentStatus.ACTIVE,
+        requestedLessonTypeId: lessonTypeId,
+        subjects: { connect: [{ id: subjectId }] },
+      },
+    });
+
+    await prisma.studentPayerLink.create({
+      data: { studentId: student.id, payerId: payer.id, isPrimary: true },
+    });
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        studentId: student.id,
+        payerId: payer.id,
+        annualFee: new Prisma.Decimal(annualFee),
+        billingModel,
+        startDate: subscriptionStart,
+        creditAppliedNextPeriod: i % 8 === 0 ? new Prisma.Decimal("10.00") : undefined,
+      },
+    });
+
+    created.push({ studentId: student.id, payerId: payer.id, subscriptionId: subscription.id });
+  }
+
+  return created;
+}
 
 async function purgeTeacherData(teacherId: string) {
   const locationIds = (
@@ -395,6 +562,42 @@ async function main() {
         },
       },
     }),
+    schoolNorth: await prisma.teachingLocation.create({
+      data: {
+        name: "Northgate Academy",
+        locationType: LocationType.SCHOOL,
+        address: "88 Northgate Road, Bristol",
+        invoicingTarget: InvoicingTarget.PARENT,
+        termStart: new Date("2026-09-07T00:00:00.000Z"),
+        termEnd: new Date("2027-07-20T00:00:00.000Z"),
+        termCalendarId: termCalendar.id,
+        primaryColor: "#7c3aed",
+        secondaryColor: "#ede9fe",
+        accessNotes: "Reception badge required. Practice room key held by site office.",
+        displayToken: "seed-display-northgate",
+        lessonTypes: {
+          connect: [{ id: lessonTypes.flute.id }, { id: lessonTypes.theory.id }],
+        },
+      },
+    }),
+    schoolRiverside: await prisma.teachingLocation.create({
+      data: {
+        name: "Riverside Prep",
+        locationType: LocationType.SCHOOL,
+        address: "4 Riverside Walk, Bristol",
+        invoicingTarget: InvoicingTarget.PARENT,
+        termStart: new Date("2026-09-07T00:00:00.000Z"),
+        termEnd: new Date("2027-07-20T00:00:00.000Z"),
+        termCalendarId: termCalendar.id,
+        primaryColor: "#b45309",
+        secondaryColor: "#fef3c7",
+        accessNotes: "Use side entrance after 11am. Music cupboard code 3071.",
+        displayToken: "seed-display-riverside",
+        lessonTypes: {
+          connect: [{ id: lessonTypes.flute.id }, { id: lessonTypes.piano.id }],
+        },
+      },
+    }),
     homeVisit: await prisma.teachingLocation.create({
       data: {
         name: "Home Visits",
@@ -459,10 +662,23 @@ async function main() {
         locationId: locations.school.id,
         label: "Music Room",
         features: { piano: true, whiteboard: true },
-        openHours: [
-          { dayOfWeek: 1, openTime: "09:00", closeTime: "16:30" },
-          { dayOfWeek: 3, openTime: "09:00", closeTime: "16:30" },
-        ],
+        openHours: schoolRoomOpenHours,
+      },
+    }),
+    northgatePractice: await prisma.room.create({
+      data: {
+        locationId: locations.schoolNorth.id,
+        label: "Practice Room",
+        features: { piano: false, whiteboard: true },
+        openHours: schoolRoomOpenHours,
+      },
+    }),
+    riversideSuite: await prisma.room.create({
+      data: {
+        locationId: locations.schoolRiverside.id,
+        label: "Music Suite",
+        features: { piano: true, whiteboard: false },
+        openHours: schoolRoomOpenHours,
       },
     }),
     studioA: await prisma.room.create({
@@ -494,21 +710,31 @@ async function main() {
         locationId: locations.school.id,
         schedulingMode: SchedulingMode.FLUID,
         taxHandling: TaxHandling.PAYE_VIA_SCHOOL,
-        availability: [
-          { dayOfWeek: 1, startTime: "09:00", endTime: "15:00" },
-          { dayOfWeek: 3, startTime: "09:00", endTime: "15:00" },
-        ],
-        protectedBlocks: [{ dayOfWeek: 1, startTime: "12:00", endTime: "12:30", label: "Lunch" }],
+        availability: schoolTimerProgramme,
+        protectedBlocks: [],
+      },
+      {
+        teacherId: teacher.id,
+        locationId: locations.schoolNorth.id,
+        schedulingMode: SchedulingMode.FLUID,
+        taxHandling: TaxHandling.PAYE_VIA_SCHOOL,
+        availability: schoolTimerProgramme,
+        protectedBlocks: [],
+      },
+      {
+        teacherId: teacher.id,
+        locationId: locations.schoolRiverside.id,
+        schedulingMode: SchedulingMode.FLUID,
+        taxHandling: TaxHandling.PAYE_VIA_SCHOOL,
+        availability: schoolTimerProgramme,
+        protectedBlocks: [],
       },
       {
         teacherId: teacher.id,
         locationId: locations.homeVisit.id,
         schedulingMode: SchedulingMode.FIXED,
         taxHandling: TaxHandling.SELF_EMPLOYED,
-        availability: [
-          { dayOfWeek: 2, startTime: "15:30", endTime: "19:30" },
-          { dayOfWeek: 4, startTime: "15:30", endTime: "19:30" },
-        ],
+        availability: homeVisitTimerProgramme,
         protectedBlocks: [],
       },
       {
@@ -533,7 +759,7 @@ async function main() {
         locationId: locations.online.id,
         schedulingMode: SchedulingMode.FIXED,
         taxHandling: TaxHandling.SELF_EMPLOYED,
-        availability: [{ dayOfWeek: 5, startTime: "10:00", endTime: "16:00" }],
+        availability: onlineTimerProgramme,
         protectedBlocks: [],
       },
       {
@@ -776,6 +1002,85 @@ async function main() {
     ],
   });
 
+  const ashdownCohort = await seedSchedulingCohort({
+    teacherId: teacher.id,
+    locationId: locations.school.id,
+    count: 10,
+    accessCodeStart: 620001,
+    nameOffset: 0,
+    source: StudentSource.SCHOOL_INQUIRY,
+    discipline: "Flute",
+    subjectId: subjects.flute.id,
+    lessonTypeId: lessonTypes.flute.id,
+    payerLabel: "ashdown",
+    subscriptionStart: new Date("2026-09-07T00:00:00.000Z"),
+    annualFee: "960.00",
+    billingModel: BillingModel.TERMLY,
+  });
+
+  const northgateCohort = await seedSchedulingCohort({
+    teacherId: teacher.id,
+    locationId: locations.schoolNorth.id,
+    count: 10,
+    accessCodeStart: 621001,
+    nameOffset: 8,
+    source: StudentSource.SCHOOL_INQUIRY,
+    discipline: "Music Theory",
+    subjectId: subjects.theory.id,
+    lessonTypeId: lessonTypes.theory.id,
+    payerLabel: "northgate",
+    subscriptionStart: new Date("2026-09-07T00:00:00.000Z"),
+    annualFee: "720.00",
+    billingModel: BillingModel.SMOOTHED_SUBSCRIPTION,
+  });
+
+  const riversideCohort = await seedSchedulingCohort({
+    teacherId: teacher.id,
+    locationId: locations.schoolRiverside.id,
+    count: 10,
+    accessCodeStart: 622001,
+    nameOffset: 16,
+    source: StudentSource.SCHOOL_INQUIRY,
+    discipline: "Piano",
+    subjectId: subjects.piano.id,
+    lessonTypeId: lessonTypes.piano.id,
+    payerLabel: "riverside",
+    subscriptionStart: new Date("2026-09-07T00:00:00.000Z"),
+    annualFee: "1120.00",
+    billingModel: BillingModel.PER_LESSON,
+  });
+
+  const homeVisitCohort = await seedSchedulingCohort({
+    teacherId: teacher.id,
+    locationId: locations.homeVisit.id,
+    count: 14,
+    accessCodeStart: 623001,
+    nameOffset: 24,
+    source: StudentSource.HOME,
+    discipline: "Piano",
+    subjectId: subjects.piano.id,
+    lessonTypeId: lessonTypes.piano.id,
+    payerLabel: "homevisit",
+    subscriptionStart: new Date("2026-09-07T00:00:00.000Z"),
+    annualFee: "1560.00",
+    billingModel: BillingModel.PER_LESSON,
+  });
+
+  const onlineCohort = await seedSchedulingCohort({
+    teacherId: teacher.id,
+    locationId: locations.online.id,
+    count: 9,
+    accessCodeStart: 624001,
+    nameOffset: 38,
+    source: StudentSource.HOME,
+    discipline: "Music Theory",
+    subjectId: subjects.theory.id,
+    lessonTypeId: lessonTypes.theory.id,
+    payerLabel: "online",
+    subscriptionStart: new Date("2026-09-14T00:00:00.000Z"),
+    annualFee: "720.00",
+    billingModel: BillingModel.SMOOTHED_SUBSCRIPTION,
+  });
   const contracts = {
     v1: await prisma.contract.create({
       data: {
@@ -1093,6 +1398,143 @@ async function main() {
     },
   });
 
+  const fullTeachingDayPlan = [
+    {
+      cohort: ashdownCohort[0],
+      locationId: locations.school.id,
+      roomId: rooms.schoolMusic.id,
+      scheduledAt: atTime(new Date(), 9, 0),
+      durationMins: 30,
+      note: "Quick tone check, long notes, and one focused scale goal before registration.",
+      resourceTitle: "Morning tone warm-up",
+    },
+    {
+      cohort: ashdownCohort[1],
+      locationId: locations.school.id,
+      roomId: rooms.schoolMusic.id,
+      scheduledAt: atTime(new Date(), 10, 0),
+      durationMins: 30,
+      note: "Worked through rhythm accuracy and set two-bar repeat practice.",
+      resourceTitle: "Rhythm cards pack",
+    },
+    {
+      cohort: northgateCohort[0],
+      locationId: locations.schoolNorth.id,
+      roomId: rooms.northgatePractice.id,
+      scheduledAt: atTime(new Date(), 10, 30),
+      durationMins: 30,
+      note: "Theory recap: note values, rests, and simple time signatures.",
+      resourceTitle: "Time-signature recap sheet",
+    },
+    {
+      cohort: northgateCohort[1],
+      locationId: locations.schoolNorth.id,
+      roomId: rooms.northgatePractice.id,
+      scheduledAt: atTime(new Date(), 11, 0),
+      durationMins: 30,
+      note: "Interval recognition games; parent should hear major/minor examples this week.",
+      resourceTitle: "Interval listening examples",
+      resourceType: ResourceType.AUDIO,
+    },
+    {
+      cohort: riversideCohort[0],
+      locationId: locations.schoolRiverside.id,
+      roomId: rooms.riversideSuite.id,
+      scheduledAt: atTime(new Date(), 11, 30),
+      durationMins: 30,
+      note: "Piano hand-position reset and slow metronome practice for the left hand.",
+      resourceTitle: "Left-hand pattern worksheet",
+    },
+    {
+      cohort: riversideCohort[1],
+      locationId: locations.schoolRiverside.id,
+      roomId: rooms.riversideSuite.id,
+      scheduledAt: atTime(new Date(), 12, 45),
+      durationMins: 30,
+      note: "Sight-reading short phrases; set one new line daily until next lesson.",
+      resourceTitle: "Sight-reading starter lines",
+    },
+    {
+      cohort: ashdownCohort[2],
+      locationId: locations.school.id,
+      roomId: rooms.schoolMusic.id,
+      scheduledAt: atTime(new Date(), 13, 15),
+      durationMins: 30,
+      note: "End-of-school block: articulation focus and tidy practice targets.",
+      resourceTitle: "Articulation checklist",
+    },
+    {
+      cohort: homeVisitCohort[0],
+      locationId: locations.homeVisit.id,
+      scheduledAt: atTime(new Date(), 15, 30),
+      durationMins: 45,
+      note: "Home visit: rebuilt confidence on the new piece and agreed a shorter practice routine.",
+      resourceTitle: "Home practice tracker",
+    },
+    {
+      cohort: homeVisitCohort[1],
+      locationId: locations.homeVisit.id,
+      scheduledAt: atTime(new Date(), 16, 15),
+      durationMins: 45,
+      note: "Focused on steady pulse, then recorded one good take for comparison next week.",
+      resourceTitle: "Pulse practice audio",
+      resourceType: ResourceType.AUDIO,
+    },
+    {
+      cohort: onlineCohort[0],
+      locationId: locations.online.id,
+      scheduledAt: atTime(new Date(), 17, 30),
+      durationMins: 30,
+      note: "Online theory: checked homework and introduced cadence recognition.",
+      resourceTitle: "Cadence examples video",
+      resourceType: ResourceType.VIDEO,
+      meetingUrl: "https://meet.example.com/today-theory-1",
+    },
+    {
+      cohort: onlineCohort[1],
+      locationId: locations.online.id,
+      scheduledAt: atTime(new Date(), 18, 15),
+      durationMins: 30,
+      note: "Online wrap-up lesson: mock test corrections and next worksheet assigned.",
+      resourceTitle: "Mock test correction sheet",
+      meetingUrl: "https://meet.example.com/today-theory-2",
+    },
+  ];
+
+  for (const item of fullTeachingDayPlan) {
+    const lesson = await prisma.lesson.create({
+      data: {
+        studentId: item.cohort.studentId,
+        teacherId: teacher.id,
+        locationId: item.locationId,
+        roomId: item.roomId,
+        subscriptionId: item.cohort.subscriptionId,
+        scheduledAt: item.scheduledAt,
+        durationMins: item.durationMins,
+        meetingUrl: item.meetingUrl,
+      },
+    });
+
+    await prisma.lessonNote.create({
+      data: {
+        lessonId: lesson.id,
+        content: item.note,
+      },
+    });
+
+    await prisma.resource.create({
+      data: {
+        teacherId: teacher.id,
+        type: item.resourceType ?? ResourceType.DOCUMENT,
+        title: item.resourceTitle,
+        url: `https://example.com/resources/today/${lesson.id}`,
+        folder: "Today full-day demo",
+        sourceLabel: "Seeded full teaching day",
+        lessonId: lesson.id,
+        studentId: item.cohort.studentId,
+      },
+    });
+  }
   await prisma.lessonNote.createMany({
     data: [
       {

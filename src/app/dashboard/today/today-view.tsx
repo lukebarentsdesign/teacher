@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
+import {
   Clock, Check, Phone, ShieldCheck, RefreshCw,
   Download, Play, AlertCircle, TimerReset, FileText, Headphones, Image as ImageIcon, Video
 } from "lucide-react";
@@ -104,10 +104,10 @@ export function TodayView({ teacherId }: { teacherId: string }) {
 
   // Group lessons by date string (e.g., "20.06.2024")
   const lessonsList = data?.lessons ?? [];
-  
+
   // Find current active lesson (ongoing or next immediate)
   const activeLesson = lessonsList.find(l => !isLessonCompleted(l)) || lessonsList[0];
-  
+
   // Find "Up Next" lesson
   const upNextLesson = lessonsList.find(l => l.id !== activeLesson?.id && !isLessonCompleted(l));
 
@@ -142,7 +142,7 @@ export function TodayView({ teacherId }: { teacherId: string }) {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Top Banner Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-4">
         <div>
@@ -187,16 +187,16 @@ export function TodayView({ teacherId }: { teacherId: string }) {
       {/* 2-Column Responsive Workspace */}
       {!loading && data && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Main Workspace Column (70%) */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* 1. Active Lesson (Now) */}
             {activeLesson ? (
               <div className="bg-white border-2 border-brand-500 rounded-[2rem] p-6 shadow-md relative overflow-hidden">
                 {/* Visual top indicator */}
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand-500 to-indigo-500" />
-                
+
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-[9px] font-black bg-brand-50 text-brand-700 border border-brand-100 px-2.5 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
                     <span className="h-1.5 w-1.5 bg-brand-600 rounded-full" />
@@ -212,11 +212,10 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                     <button
                       type="button"
                       onClick={toggleEndCue}
-                      className={`rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors ${
-                        endCueEnabled
-                          ? "border-brand-200 bg-brand-50 text-brand-700"
-                          : "border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600"
-                      }`}
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors ${endCueEnabled
+                        ? "border-brand-200 bg-brand-50 text-brand-700"
+                        : "border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600"
+                        }`}
                       title="Show a subtle countdown during the last five minutes"
                     >
                       5-min end cue
@@ -357,14 +356,13 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                   {timelineLessons.map((lesson) => {
                     const comp = isLessonCompleted(lesson);
                     return (
-                      <div 
-                        key={lesson.id} 
+                      <div
+                        key={lesson.id}
                         className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                            comp ? "bg-teal-50 text-teal-700 border border-teal-100" : "bg-blue-50 text-blue-700 border border-blue-100"
-                          }`}>
+                          <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${comp ? "bg-teal-50 text-teal-700 border border-teal-100" : "bg-blue-50 text-blue-700 border border-blue-100"
+                            }`}>
                             {comp ? "Completed" : "Scheduled"}
                           </span>
                           <div>
@@ -430,7 +428,7 @@ export function TodayView({ teacherId }: { teacherId: string }) {
                   {data.notifications.map((notif: TodayNotification) => {
                     const state = handlingNotif[notif.id];
                     return (
-                      <div 
+                      <div
                         key={notif.id}
                         className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-sm flex items-start gap-3 relative transition-all"
                       >

@@ -26,6 +26,21 @@ export default async function LoginPage({
           </div>
 
           <LoginForm callbackUrl={callbackUrl} />
+          <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+            <p className="mb-2 font-medium text-neutral-800">Demo logins</p>
+            <div className="space-y-3 text-neutral-600">
+              <div>
+                <p className="font-medium text-neutral-700">Test teacher</p>
+                <p className="select-all font-mono text-xs">teacher@example.com</p>
+                <p className="select-all font-mono text-xs">changeme123</p>
+              </div>
+              <div>
+                <p className="font-medium text-neutral-700">Cover teacher</p>
+                <p className="select-all font-mono text-xs">cover.teacher@example.com</p>
+                <p className="select-all font-mono text-xs">cover12345</p>
+              </div>
+            </div>
+          </div>
           <p className="mt-6 text-center text-sm text-neutral-500">
             New to Learnio?{" "}
             <Link href="/register" className="font-medium text-brand-700 hover:underline">
