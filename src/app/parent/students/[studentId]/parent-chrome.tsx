@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { 
   GraduationCap, LayoutDashboard, Calendar, CreditCard, 
   Tag, BookOpen, MessageSquare, ClipboardList, 
-  FolderOpen, Wrench, LogOut, Menu, X, Bell,
+  FolderOpen, Wrench, LogOut, Menu, X, Bell, TrendingUp,
   type LucideIcon
 } from "lucide-react";
 import { micrositeSignOutAction } from "@/app/parent/actions";
@@ -41,6 +41,7 @@ export function ParentChrome({
     ...(canSeeLedger ? [{ segment: "ledger", label: "Payment Info", icon: CreditCard }] : []),
     { segment: "extras", label: "Registration", icon: Tag },
     { segment: "courses", label: "Courses", icon: BookOpen },
+    { segment: "progress", label: "Progress", icon: TrendingUp },
     { segment: "notes", label: "Notice", icon: MessageSquare },
     { segment: "assignments", label: "Assignments", icon: ClipboardList },
     { segment: "resources", label: "Resources", icon: FolderOpen },

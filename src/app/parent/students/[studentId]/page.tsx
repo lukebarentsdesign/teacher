@@ -100,6 +100,17 @@ export default async function StudentOverviewPage({
   const cashBalance = totalPaid - totalPayable;
   const showLedger = context.canSeeLedger;
 
+  // Progress — the most recently started active curriculum, if any. Reads are never gated by
+  // module entitlement, so this shows regardless of whether Curriculum is currently switched on.
+  const activeCurriculum = await prisma.studentCurriculum.findFirst({
+    where: { studentId, status: "ACTIVE" },
+    include: { sections: true },
+    orderBy: { startedDate: "desc" },
+  });
+  const progressTotal = activeCurriculum?.sections.length ?? 0;
+  const progressCompleted = activeCurriculum?.sections.filter((s) => s.status === "COMPLETED").length ?? 0;
+  const progressPercent = progressTotal === 0 ? 0 : Math.round((progressCompleted / progressTotal) * 100);
+
   return (
     <div className="space-y-8">
       {/* 2-Column Responsive Portal Layout */}
@@ -160,6 +171,37 @@ export default async function StudentOverviewPage({
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Progress (curriculum completion) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-neutral-800 uppercase tracking-wide">Progress</h3>
+              <Link href={`/parent/students/${studentId}/progress`} className="text-[10px] font-bold text-brand-600 hover:underline flex items-center gap-0.5">
+                See all <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            {!activeCurriculum ? (
+              <p className="text-xs font-medium text-neutral-500 rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-sm text-center">
+                No curriculum plan set up yet.
+              </p>
+            ) : (
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-neutral-900 text-sm">{activeCurriculum.title}</h4>
+                  <span className="text-xs font-bold text-brand-700">{progressPercent}%</span>
+                </div>
+                <div className="mt-2.5 h-2 w-full rounded-full bg-neutral-100">
+                  <div
+                    className="h-2 rounded-full bg-brand-500 transition-all"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] text-neutral-400 font-semibold">
+                  {progressCompleted} of {progressTotal} section{progressTotal === 1 ? "" : "s"} complete
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Practice for Next Week (Assignments) */}
