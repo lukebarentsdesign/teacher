@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const createOrgSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -17,6 +18,10 @@ export async function createOrganisationAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+
+  if (!(await hasModule(session.user.id, "ORGANISATION"))) {
+    return "The Organisation module isn't enabled on this account";
+  }
 
   const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session.user.id } });
   if (teacher.organisationId) return "You're already part of an organisation";
@@ -37,6 +42,9 @@ export async function createOrganisationAction(
 export async function createInviteAction(): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "ORGANISATION"))) {
+    return "The Organisation module isn't enabled on this account";
+  }
 
   const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: session.user.id } });
   if (!teacher.organisationId) return "Start an organisation first";
@@ -86,6 +94,9 @@ export async function leaveOrganisationAction(): Promise<void> {
 export async function acceptInviteAction(token: string): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "ORGANISATION"))) {
+    return "The Organisation module isn't enabled on this account";
+  }
 
   const invite = await prisma.organisationInvite.findUnique({ where: { token } });
   if (!invite || invite.acceptedAt) return "This invite is no longer valid";

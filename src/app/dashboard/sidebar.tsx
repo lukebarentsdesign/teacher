@@ -75,7 +75,15 @@ const CAT_SETUP_LIST: NavLink[] = [
   { href: "/dashboard/lesson-types", label: "Lesson types", icon: ListMusic },
   { href: "/dashboard/term-calendars", label: "Term calendars", icon: CalendarRange },
   { href: "/dashboard/contract", label: "Contract", icon: FileText },
+  { href: "/dashboard/organisation", label: "Organisation", icon: Users2 },
 ];
+
+/// Maps a nav href to the ModuleKey that gates it. Anything not listed here is Foundation
+/// (or otherwise ungated) and always shows — see src/lib/modules.ts for the source of truth.
+const MODULE_GATED_HREFS: Record<string, string> = {
+  "/dashboard/term-calendars": "TERM_CALENDARS",
+  "/dashboard/organisation": "ORGANISATION",
+};
 
 const CAT_BUSINESS_LIST: NavLink[] = [
   { href: "/dashboard/quick-invoice", label: "Quick Invoice", icon: FileText },
@@ -184,17 +192,28 @@ function BrandMark() {
   return <Logo size={28} wordmarkClassName="text-lg text-white font-bold" />;
 }
 
+function filterByModuleAccess(links: NavLink[], enabledModules: string[]): NavLink[] {
+  return links.filter((link) => {
+    const requiredModule = MODULE_GATED_HREFS[link.href];
+    return !requiredModule || enabledModules.includes(requiredModule);
+  });
+}
+
 function SidebarContent({
   pathname,
   archetype,
   earnedPhase3Keys,
+  enabledModules,
   onNavigate,
 }: {
   pathname: string;
   archetype: Archetype;
   earnedPhase3Keys: string[];
+  enabledModules: string[];
   onNavigate?: () => void;
 }) {
+  const setupLinks = filterByModuleAccess(CAT_SETUP_LIST, enabledModules);
+
   const coreHrefs = new Set<string>([
     "/dashboard",
     "/dashboard/quick-tools",
@@ -236,7 +255,7 @@ function SidebarContent({
         />
         <SidebarCategory
           label="Teaching Setup"
-          links={CAT_SETUP_LIST}
+          links={setupLinks}
           coreHrefs={coreHrefs}
           pathname={pathname}
           onNavigate={onNavigate}
@@ -279,11 +298,13 @@ export function DashboardChrome({
   userName,
   archetype,
   earnedPhase3Keys,
+  enabledModules,
   children,
 }: {
   userName: string;
   archetype: Archetype;
   earnedPhase3Keys: string[];
+  enabledModules: string[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -293,7 +314,12 @@ export function DashboardChrome({
     <div className="flex min-h-screen bg-[#faf9f7]">
       {/* Desktop: persistent sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 bg-gradient-to-b from-[#1b4bbd] to-[#12368c] text-white border-r border-[#10308c] sm:block">
-        <SidebarContent pathname={pathname} archetype={archetype} earnedPhase3Keys={earnedPhase3Keys} />
+        <SidebarContent
+          pathname={pathname}
+          archetype={archetype}
+          earnedPhase3Keys={earnedPhase3Keys}
+          enabledModules={enabledModules}
+        />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -359,6 +385,7 @@ export function DashboardChrome({
               pathname={pathname}
               archetype={archetype}
               earnedPhase3Keys={earnedPhase3Keys}
+              enabledModules={enabledModules}
               onNavigate={() => setMobileOpen(false)}
             />
           </div>

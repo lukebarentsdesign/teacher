@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { NewOrgForm } from "./new-org-form";
 import { InviteGenerator, InviteLink } from "./invite-generator";
 import { LeaveOrgButton } from "./leave-org-button";
+import { hasModule } from "@/lib/modules";
 
 export default async function OrganisationPage() {
   const session = await auth();
@@ -20,6 +21,24 @@ export default async function OrganisationPage() {
   });
 
   if (!teacher.organisation) {
+    // Already-in-an-org teachers keep working below regardless of module status, so nobody
+    // gets stranded mid-relationship if this ever gets locked for their account — only the
+    // "start a new one" entry point is gated.
+    const moduleEnabled = await hasModule(session!.user.id, "ORGANISATION");
+
+    if (!moduleEnabled) {
+      return (
+        <div className="max-w-lg space-y-3">
+          <h1 className="text-2xl font-semibold text-neutral-900">Organisation</h1>
+          <p className="text-sm text-neutral-500">
+            The Organisation module isn&apos;t enabled on this account. It lets you invite other
+            Learnio teacher accounts as instructors and log cover assignments between you — get
+            in touch if you&apos;d like it switched on.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-lg space-y-6">
         <div>

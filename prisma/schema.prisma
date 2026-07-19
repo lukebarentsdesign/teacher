@@ -198,6 +198,44 @@ enum TeacherArchetype {
   GROUP_INDEPENDENT
 }
 
+/// The set of optional, independently toggleable feature areas outside Foundation (Student,
+/// Payer, StudentPayerLink, TeachingLocation, LessonType, Contract — those are never gated).
+/// New modules get a new value here rather than a free-text key, so a typo in a moduleKey check
+/// fails at compile time instead of silently never matching. See src/lib/modules.ts for the
+/// registry (label, description, gated routes) and the hasModule() helper every gate calls.
+enum ModuleKey {
+  ORGANISATION
+  TERM_CALENDARS
+}
+
+/// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for
+/// future paywall UI — not yet enforced anywhere). LOCKED = explicitly switched off (distinct
+/// from "no row exists", which also means locked-out once a module stops defaulting open — see
+/// hasModule()'s DEFAULT_OPEN_UNTIL_PAYWALL comment).
+enum ModuleAccessStatus {
+  ENABLED
+  TRIAL
+  LOCKED
+}
+
+/// One row per teacher per optional module. Absence of a row is handled by hasModule() in
+/// src/lib/modules.ts, not by a default here — that's the single place the "no row = open for
+/// now, until the paywall ships" policy lives, so it can flip to closed-by-default later without
+/// a data migration.
+model TeacherModuleAccess {
+  id        String             @id @default(cuid())
+  teacherId String
+  moduleKey ModuleKey
+  status    ModuleAccessStatus @default(ENABLED)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, moduleKey])
+  @@index([teacherId])
+}
+
 /// The tenancy boundary above Teacher (roadmap v2 Part 6e) — deliberately conservative in scope.
 /// Grouping Teacher accounts under one Organisation does NOT change the existing per-Teacher
 /// tenancy boundary on Student/Payer/etc. (still `teacherId`, unchanged everywhere) — a
@@ -393,6 +431,7 @@ model Teacher {
   invoices               Invoice[]
   quickInvoices          QuickInvoice[]
   comingSoonFeedback     ComingSoonFeedback[]
+  moduleAccess           TeacherModuleAccess[]
 }
 
 model TeachingLocation {

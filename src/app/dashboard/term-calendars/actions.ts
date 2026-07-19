@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 export async function createTermCalendarAction(
   _prevState: string | undefined,
@@ -12,6 +13,9 @@ export async function createTermCalendarAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "TERM_CALENDARS"))) {
+    return "The Term calendars module isn't enabled on this account";
+  }
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return "Name is required";
@@ -54,6 +58,9 @@ export async function addTermPeriodAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "TERM_CALENDARS"))) {
+    return "The Term calendars module isn't enabled on this account";
+  }
   if (!(await assertOwnCalendar(calendarId, session.user.id))) return "Calendar not found";
 
   const parsed = periodSchema.safeParse({
@@ -83,6 +90,9 @@ export async function addHolidayPeriodAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "TERM_CALENDARS"))) {
+    return "The Term calendars module isn't enabled on this account";
+  }
   if (!(await assertOwnCalendar(calendarId, session.user.id))) return "Calendar not found";
 
   const parsed = periodSchema.safeParse({

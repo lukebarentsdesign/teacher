@@ -1,0 +1,78 @@
+import { prisma } from "@/lib/db";
+import type { ModuleKey } from "@prisma/client";
+
+/**
+ * Module separation (roadmap discussion, July 2026): the app is split into a Foundation layer
+ * that's never gated — Student, Payer, StudentPayerLink, TeachingLocation, LessonType, Contract —
+ * and a set of optional modules that can be switched on/off per teacher, eventually behind a
+ * paywall. This file is the single place that decision gets enforced. Nothing outside this file
+ * should read TeacherModuleAccess directly — always go through hasModule()/requireModule() so the
+ * default-open policy below can change in one place later.
+ */
+
+export type ModuleDefinition = {
+  key: ModuleKey;
+  label: string;
+  description: string;
+};
+
+export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
+  ORGANISATION: {
+    key: "ORGANISATION",
+    label: "Organisation",
+    description:
+      "Invite other Learnio teacher accounts as instructors and log cover assignments between them.",
+  },
+  TERM_CALENDARS: {
+    key: "TERM_CALENDARS",
+    label: "Term calendars",
+    description:
+      "Term/holiday-aware scheduling for teaching locations, instead of a plain continuous week.",
+  },
+};
+
+/**
+ * DEFAULT_OPEN_UNTIL_PAYWALL: no paywall UI or Stripe wiring exists yet, so a teacher with no
+ * TeacherModuleAccess row for a given module is currently treated as ENABLED — this is what keeps
+ * every existing teacher's Organisation/Term-calendar access working exactly as it did before
+ * this migration, with zero data backfill required. The day a real paywall ships, flip this to
+ * `false` (and backfill ENABLED rows for anyone who should keep grandfathered access) rather than
+ * changing the call sites that use hasModule().
+ */
+const DEFAULT_OPEN_UNTIL_PAYWALL = true;
+
+/** Whether `teacherId` currently has access to `moduleKey`. This is the only check any route,
+ * server action, or nav item should use — never query TeacherModuleAccess directly. */
+export async function hasModule(teacherId: string, moduleKey: ModuleKey): Promise<boolean> {
+  const access = await prisma.teacherModuleAccess.findUnique({
+    where: { teacherId_moduleKey: { teacherId, moduleKey } },
+  });
+
+  if (!access) return DEFAULT_OPEN_UNTIL_PAYWALL;
+  return access.status === "ENABLED" || access.status === "TRIAL";
+}
+
+/** Bulk variant for gating a full nav render in one query instead of one round-trip per module. */
+export async function getEnabledModules(teacherId: string): Promise<Set<ModuleKey>> {
+  const rows = await prisma.teacherModuleAccess.findMany({ where: { teacherId } });
+  const byKey = new Map(rows.map((r) => [r.moduleKey, r.status]));
+
+  const enabled = new Set<ModuleKey>();
+  for (const key of Object.keys(MODULE_REGISTRY) as ModuleKey[]) {
+    const status = byKey.get(key);
+    const isEnabled = status ? status === "ENABLED" || status === "TRIAL" : DEFAULT_OPEN_UNTIL_PAYWALL;
+    if (isEnabled) enabled.add(key);
+  }
+  return enabled;
+}
+
+/** Throws if the module is locked — use at the top of a server action/route handler, not just in
+ * the UI, so a locked-out teacher can't call the action directly once they can't see the button. */
+export async function requireModule(teacherId: string, moduleKey: ModuleKey): Promise<void> {
+  const allowed = await hasModule(teacherId, moduleKey);
+  if (!allowed) {
+    throw new Error(
+      `The ${MODULE_REGISTRY[moduleKey].label} module isn't enabled on this account.`
+    );
+  }
+}

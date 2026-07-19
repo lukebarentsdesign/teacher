@@ -2,9 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewCalendarForm } from "./new-calendar-form";
+import { hasModule } from "@/lib/modules";
 
 export default async function TermCalendarsPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "TERM_CALENDARS");
 
   const calendars = await prisma.termCalendar.findMany({
     where: { teacherId: session!.user.id },
@@ -42,7 +44,14 @@ export default async function TermCalendarsPage() {
         </ul>
       )}
 
-      <NewCalendarForm />
+      {moduleEnabled ? (
+        <NewCalendarForm />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Term calendars module isn&apos;t enabled on this account, so new calendars can&apos;t
+          be created — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

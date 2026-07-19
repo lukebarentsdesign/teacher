@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isWithinTaxSeasonWindow } from "@/lib/nav";
+import { getEnabledModules } from "@/lib/modules";
 import { DashboardChrome } from "./sidebar";
 
 export default async function DashboardLayout({
@@ -14,6 +15,7 @@ export default async function DashboardLayout({
   const teacher = teacherId ? await prisma.teacher.findUnique({ where: { id: teacherId } }) : null;
 
   const earnedPhase3Keys: string[] = [];
+  const enabledModules = teacherId ? Array.from(await getEnabledModules(teacherId)) : [];
 
   if (teacherId) {
     // Curriculum templates: a teacher has logged 3+ lessons with the same student.
@@ -50,6 +52,7 @@ export default async function DashboardLayout({
       userName={session?.user?.name ?? "Account"}
       archetype={teacher?.archetype ?? null}
       earnedPhase3Keys={earnedPhase3Keys}
+      enabledModules={enabledModules}
     >
       {children}
     </DashboardChrome>
