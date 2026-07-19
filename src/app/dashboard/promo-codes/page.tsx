@@ -3,9 +3,11 @@ import { auth } from "@/auth";
 import { NewPromoCodeForm } from "./new-promo-code-form";
 import { ApplyPromoCodeForm } from "./apply-promo-code-form";
 import { DeletePromoCodeButton } from "./delete-promo-code-button";
+import { hasModule } from "@/lib/modules";
 
 export default async function PromoCodesPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "COMMERCE");
 
   const [promoCodes, lessonTypes, subscriptions] = await Promise.all([
     prisma.promoCode.findMany({
@@ -56,7 +58,15 @@ export default async function PromoCodesPage() {
         </ul>
       )}
 
-      <NewPromoCodeForm lessonTypes={lessonTypes} />
+      {moduleEnabled ? (
+        <NewPromoCodeForm lessonTypes={lessonTypes} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Commerce add-ons module isn&apos;t enabled on this account, so new promo codes
+          can&apos;t be created — get in touch if you&apos;d like it switched on. Existing codes
+          can still be applied below.
+        </p>
+      )}
 
       <div>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Apply a code</h2>

@@ -2,9 +2,11 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewAddOnForm } from "./new-addon-form";
 import { ArchiveAddOnButton } from "./archive-addon-button";
+import { hasModule } from "@/lib/modules";
 
 export default async function AddOnsPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "COMMERCE");
   const addOns = await prisma.addOn.findMany({
     where: { teacherId: session!.user.id, archivedAt: null },
     orderBy: { name: "asc" },
@@ -55,7 +57,14 @@ export default async function AddOnsPage() {
         </div>
       )}
 
-      <NewAddOnForm />
+      {moduleEnabled ? (
+        <NewAddOnForm />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Commerce add-ons module isn&apos;t enabled on this account, so new add-ons
+          can&apos;t be created — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

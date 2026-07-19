@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { postPayment } from "@/lib/ledger";
+import { hasModule } from "@/lib/modules";
 
 function generateCode(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase();
@@ -21,6 +22,9 @@ export async function createGiftCardAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMMERCE"))) {
+    return "The Commerce add-ons module isn't enabled on this account";
+  }
 
   const parsed = createSchema.safeParse({
     initialValue: formData.get("initialValue"),

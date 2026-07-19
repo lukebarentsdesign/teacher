@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const addOnSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -19,6 +20,9 @@ export async function createAddOnAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMMERCE"))) {
+    return "The Commerce add-ons module isn't enabled on this account";
+  }
 
   const parsed = addOnSchema.safeParse({
     name: formData.get("name"),

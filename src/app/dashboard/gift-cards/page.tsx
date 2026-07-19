@@ -3,9 +3,11 @@ import { auth } from "@/auth";
 import { NewGiftCardForm } from "./new-gift-card-form";
 import { RedeemGiftCardForm } from "./redeem-gift-card-form";
 import { DeleteGiftCardButton } from "./delete-gift-card-button";
+import { hasModule } from "@/lib/modules";
 
 export default async function GiftCardsPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "COMMERCE");
 
   const [giftCards, payers, subscriptions] = await Promise.all([
     prisma.giftCard.findMany({
@@ -50,7 +52,15 @@ export default async function GiftCardsPage() {
         </ul>
       )}
 
-      <NewGiftCardForm payers={payers} />
+      {moduleEnabled ? (
+        <NewGiftCardForm payers={payers} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Commerce add-ons module isn&apos;t enabled on this account, so new gift cards
+          can&apos;t be created — get in touch if you&apos;d like it switched on. Existing gift
+          cards can still be redeemed below.
+        </p>
+      )}
 
       <div>
         <h2 className="mb-3 text-lg font-medium text-neutral-900">Redeem</h2>

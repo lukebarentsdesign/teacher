@@ -77,6 +77,19 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "as Absences staying ungated), and Out-of-scope-signups is admin-only platform tooling " +
       "(gated by isAdminEmail, not a teacher-facing feature at all). This module is Embeds alone.",
   },
+  COMMERCE: {
+    key: "COMMERCE",
+    label: "Commerce add-ons",
+    description:
+      "Add-ons (extra chargeable items like equipment hire), gift cards, and promo codes. Gates " +
+      "creating new catalog items only — createAddOnAction, createGiftCardAction, " +
+      "createPromoCodeAction. Booking/redeeming/applying an already-existing item " +
+      "(addAddOnBookingAction, redeemGiftCardAction, applyPromoCodeAction) stays ungated, same " +
+      "'don't strand existing usage' principle as Course purchases — a gift card already bought " +
+      "or a promo code already issued keeps working even if this module gets locked afterwards. " +
+      "AddOnBooking is the only cross-module touchpoint (read/write from lessons/[id]/actions.ts, " +
+      "which only ever references AddOns that already exist in the catalog).",
+  },
 };
 
 /**

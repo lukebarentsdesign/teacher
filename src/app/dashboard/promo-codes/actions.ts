@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { postManualCorrection } from "@/lib/ledger";
 import { isPromoCodeValid, computeDiscountAmount } from "@/lib/promo-code";
+import { hasModule } from "@/lib/modules";
 
 const createSchema = z.object({
   code: z.string().trim().min(1, "Code is required"),
@@ -23,6 +24,9 @@ export async function createPromoCodeAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMMERCE"))) {
+    return "The Commerce add-ons module isn't enabled on this account";
+  }
 
   const parsed = createSchema.safeParse({
     code: formData.get("code"),
