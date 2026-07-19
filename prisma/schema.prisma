@@ -206,6 +206,7 @@ enum TeacherArchetype {
 enum ModuleKey {
   ORGANISATION
   TERM_CALENDARS
+  SCHEDULING
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for

@@ -29,6 +29,17 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
     description:
       "Term/holiday-aware scheduling for teaching locations, instead of a plain continuous week.",
   },
+  SCHEDULING: {
+    key: "SCHEDULING",
+    label: "Scheduling & timetable",
+    description:
+      "The timetable generator (single, bulk, and term-aware repeat scheduling), unavailability " +
+      "rules, waitlist, route-check, and travel times. Deliberately does NOT gate the Lesson " +
+      "record itself, lesson detail/attendance management, or Absences/make-up credits — those " +
+      "stay open since too many other features (billing, check-in, parent microsite, session " +
+      "plans) read from lessons that already exist. This only gates the tooling that creates new " +
+      "lessons at scale; a teacher without it can still track lessons manually through Quick Invoice.",
+  },
 };
 
 /**

@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { previewFixedTimetable, previewFluidTimetable, createLessonsFromSchedule } from "@/lib/timetable";
 import { availabilityArraySchema } from "@/lib/schedule-json";
 import { hasAcceptedCurrentContract } from "@/lib/contracts";
+import { hasModule } from "@/lib/modules";
 
 const confirmSchema = z.object({
   studentId: z.string().min(1),
@@ -20,6 +21,9 @@ export async function confirmTimetableAction(formData: FormData): Promise<void> 
   const session = await auth();
   if (!session?.user?.id) throw new Error("Not authenticated");
   const teacherId = session.user.id;
+  if (!(await hasModule(teacherId, "SCHEDULING"))) {
+    throw new Error("The Scheduling & timetable module isn't enabled on this account");
+  }
 
   const parsed = confirmSchema.parse({
     studentId: formData.get("studentId"),

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewWaitlistForm } from "./new-waitlist-form";
 import { WaitlistRowActions } from "./waitlist-row-actions";
+import { hasModule } from "@/lib/modules";
 
 const STATUS_STYLES: Record<string, string> = {
   WAITING: "bg-amber-50 text-amber-700",
@@ -12,6 +13,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default async function WaitlistPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "SCHEDULING");
 
   const [entries, lessonTypes, links] = await Promise.all([
     prisma.timetableWaitlist.findMany({
@@ -66,7 +68,14 @@ export default async function WaitlistPage() {
         </ul>
       )}
 
-      <NewWaitlistForm lessonTypes={lessonTypes} locations={locations} />
+      {moduleEnabled ? (
+        <NewWaitlistForm lessonTypes={lessonTypes} locations={locations} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Scheduling &amp; timetable module isn&apos;t enabled on this account, so new
+          waitlist entries can&apos;t be added — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

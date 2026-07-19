@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { confirmUnavailability } from "@/lib/unavailability";
 import { sendEmailAsTeacher } from "@/lib/gmail";
+import { hasModule } from "@/lib/modules";
 
 const confirmSchema = z.object({
   start: z.string().min(1),
@@ -19,6 +20,9 @@ export async function confirmUnavailabilityAction(formData: FormData): Promise<v
   const session = await auth();
   if (!session?.user?.id) throw new Error("Not authenticated");
   const teacherId = session.user.id;
+  if (!(await hasModule(teacherId, "SCHEDULING"))) {
+    throw new Error("The Scheduling & timetable module isn't enabled on this account");
+  }
 
   const parsed = confirmSchema.parse({
     start: formData.get("start"),

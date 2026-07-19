@@ -3,10 +3,23 @@ import { auth } from "@/auth";
 import { parseAvailability, parseProtectedBlocks } from "@/lib/schedule-json";
 import { filterAvailableSlots } from "@/lib/scheduling";
 import { BulkTimetableForm } from "./bulk-timetable-form";
+import { hasModule } from "@/lib/modules";
 
 export default async function BulkTimetablePage() {
   const session = await auth();
   const teacherId = session!.user.id;
+
+  if (!(await hasModule(teacherId, "SCHEDULING"))) {
+    return (
+      <div className="max-w-lg space-y-3">
+        <h1 className="text-2xl font-semibold text-neutral-900">Bulk timetable</h1>
+        <p className="text-sm text-neutral-500">
+          The Scheduling &amp; timetable module isn&apos;t enabled on this account — get in touch
+          if you&apos;d like it switched on. Lessons already on your calendar are unaffected.
+        </p>
+      </div>
+    );
+  }
 
   const [links, lessonTypes, students] = await Promise.all([
     prisma.teacherLocationLink.findMany({

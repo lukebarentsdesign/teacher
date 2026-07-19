@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const createSchema = z.object({
   fromLocationId: z.string().min(1, "Pick a from location"),
@@ -17,6 +18,9 @@ export async function upsertTravelTimeAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "SCHEDULING"))) {
+    return "The Scheduling & timetable module isn't enabled on this account";
+  }
 
   const parsed = createSchema.safeParse({
     fromLocationId: formData.get("fromLocationId"),

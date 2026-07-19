@@ -3,9 +3,22 @@ import { auth } from "@/auth";
 import { parseAvailability, parseProtectedBlocks } from "@/lib/schedule-json";
 import { filterAvailableSlots } from "@/lib/scheduling";
 import { NewTimetableForm } from "./new-timetable-form";
+import { hasModule } from "@/lib/modules";
 
 export default async function NewTimetablePage() {
   const session = await auth();
+
+  if (!(await hasModule(session!.user.id, "SCHEDULING"))) {
+    return (
+      <div className="max-w-lg space-y-3">
+        <h1 className="text-2xl font-semibold text-neutral-900">New timetable</h1>
+        <p className="text-sm text-neutral-500">
+          The Scheduling &amp; timetable module isn&apos;t enabled on this account — get in touch
+          if you&apos;d like it switched on. Lessons already on your calendar are unaffected.
+        </p>
+      </div>
+    );
+  }
 
   const [students, links] = await Promise.all([
     prisma.student.findMany({ where: { teacherId: session?.user?.id }, orderBy: { name: "asc" } }),

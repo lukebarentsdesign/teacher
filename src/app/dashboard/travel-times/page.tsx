@@ -2,9 +2,11 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewTravelTimeForm } from "./new-travel-time-form";
 import { DeleteTravelTimeButton } from "./delete-travel-time-button";
+import { hasModule } from "@/lib/modules";
 
 export default async function TravelTimesPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "SCHEDULING");
 
   const [entries, links] = await Promise.all([
     prisma.locationTravelTime.findMany({
@@ -52,7 +54,14 @@ export default async function TravelTimesPage() {
               ))}
             </ul>
           )}
-          <NewTravelTimeForm locations={locations} />
+          {moduleEnabled ? (
+            <NewTravelTimeForm locations={locations} />
+          ) : (
+            <p className="text-sm text-neutral-500">
+              The Scheduling &amp; timetable module isn&apos;t enabled on this account, so new
+              travel times can&apos;t be added — get in touch if you&apos;d like it switched on.
+            </p>
+          )}
         </>
       )}
     </div>

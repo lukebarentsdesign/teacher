@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 import { parseAvailability, parseProtectedBlocks } from "@/lib/schedule-json";
 import { filterAvailableSlots } from "@/lib/scheduling";
 import { planBulkTimetable, type HolidayRange } from "@/lib/bulk-timetable";
@@ -125,6 +126,9 @@ export type BulkConfirmResult = { error?: string; created?: number };
 export async function confirmBulkTimetableAction(payload: unknown): Promise<BulkConfirmResult> {
   const session = await auth();
   if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!(await hasModule(session.user.id, "SCHEDULING"))) {
+    return { error: "The Scheduling & timetable module isn't enabled on this account" };
+  }
 
   const result = await computePlan(session.user.id, payload);
   if (!result.ok) return { error: result.error };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { checkDayFeasibility, type DayStop } from "@/lib/route-check";
+import { hasModule } from "@/lib/modules";
 
 export default async function RouteCheckPage({
   searchParams,
@@ -10,6 +11,18 @@ export default async function RouteCheckPage({
 }) {
   const { date } = await searchParams;
   const session = await auth();
+
+  if (!(await hasModule(session!.user.id, "SCHEDULING"))) {
+    return (
+      <div className="max-w-lg space-y-3">
+        <h1 className="text-2xl font-semibold text-neutral-900">Route check</h1>
+        <p className="text-sm text-neutral-500">
+          The Scheduling &amp; timetable module isn&apos;t enabled on this account — get in touch
+          if you&apos;d like it switched on.
+        </p>
+      </div>
+    );
+  }
 
   const day = date ? new Date(date) : new Date();
   const dayStart = new Date(day);
