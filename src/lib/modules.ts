@@ -55,15 +55,15 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
     key: "COMPLIANCE",
     label: "Compliance & safety",
     description:
-      "Instructor certifications and cancellation policy are gated (creation only; deletion " +
-      "always stays open, same as every module). Incident log and student medical notes are " +
-      "DELIBERATELY NEVER GATED — explicit product decision: safety/safeguarding records must " +
+      "Only Cancellation policy is actually gated (creation/upsert; deletion always stays open). " +
+      "Instructor certifications, incident log, and student medical notes are DELIBERATELY NEVER " +
+      "GATED — explicit product decision: safeguarding-relevant records and credentials must " +
       "never sit behind a paywall, at any tier, under any circumstances. Do not add a hasModule() " +
-      "check to createIncidentLogAction or addMedicalNoteAction — this is intentional, not an " +
-      "oversight. Zero external consumers of certifications/incidents/medical notes. Cancellation " +
-      "policy IS read by lesson cancellation/no-show handling (lessons/[id]/actions.ts) — but " +
-      "that read already treats 'no policy exists' as a valid, intentional state (always-free " +
-      "behaviour), so locking this module needs zero change to that consuming code.",
+      "check to createCertificationAction, createIncidentLogAction, or addMedicalNoteAction — " +
+      "this is intentional, not an oversight. Cancellation policy IS read by lesson cancellation/" +
+      "no-show handling (lessons/[id]/actions.ts) — but that read already treats 'no policy " +
+      "exists' as a valid, intentional state (always-free behaviour), so locking this module " +
+      "needs zero change to that consuming code.",
   },
 };
 
