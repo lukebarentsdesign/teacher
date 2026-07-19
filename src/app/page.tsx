@@ -25,6 +25,7 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-8 font-medium text-sm text-neutral-600">
             <Link href="#how-it-works" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">How it works</Link>
+            <Link href="#modules" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Modules</Link>
             <Link href="#features" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Features</Link>
             <Link href="#for-teachers" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Who it&apos;s for</Link>
             <Link href="#pricing" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Pricing</Link>
@@ -107,59 +108,104 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 1b. Flexible practice management */}
-      <section className="py-24 bg-white border-t border-neutral-200/50" id="practice-management">
-        <div className="max-w-5xl mx-auto px-6">
+      {/* 1b. Foundation + Modules — the real architecture */}
+      <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14 max-w-2xl mx-auto">
-            <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">Flexible practice management</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Manage the way you actually teach</h2>
-            <p className="text-lg text-neutral-600">Use the parts you need: a lightweight day view, student records, term calendars, resources, invoices and payment tracking.</p>
+            <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">How Learnio is built</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">One foundation, switch on what you need</h2>
+            <p className="text-lg text-neutral-600">Every account starts with the same core — students, payers, locations and invoicing. Everything else is a module you can turn on only when your practice actually needs it.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
-            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-neutral-100 text-neutral-700 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+          {/* Foundation — always included */}
+          <div className="bg-neutral-900 text-white rounded-3xl p-8 md:p-10 mb-8">
+            <div className="flex items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Today view</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">See the day ahead, lesson contacts, notes and live requests without digging through the calendar.</p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-neutral-100 text-neutral-700 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 2l4 4-4 4M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" /></svg>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-bold">Foundation</h3>
+                  <span className="bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Always included</span>
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  Students, guardians &amp; payers, teaching locations, lesson types and your teaching agreement — plus Quick Invoice, payment tracking and the parent portal. This never sits behind a toggle: it&apos;s what makes every module below actually connect to the same students and the same records, instead of feeling like separate apps bolted together.
+                </p>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Students & families</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Keep learners, guardians, payers and contact details connected, including sibling or shared billing setups.</p>
             </div>
+          </div>
 
+          {/* The 8 modules */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-neutral-100 text-neutral-700 flex items-center justify-center mb-4">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Timetables & terms</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Plan around school terms, rooms, locations, home visits, online lessons and recurring schedules.</p>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Scheduling &amp; Timetable</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Build a timetable in bulk or lesson by lesson, block off unavailable time, run a waitlist and check journey times between venues.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Curriculum &amp; Content</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Reusable curriculum plans, section-by-section progress a family can actually see, shared resources and assignments — or sell your own video courses.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Compliance &amp; Safety</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Cancellation and no-show policies per location. Certifications, incident logs and safeguarding records are always free and included — never a toggle, on any plan.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0zM12 8v4l3 2" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Term Calendars</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Term and holiday dates per location, so bulk timetabling automatically skips the weeks you&apos;re not teaching.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2-5.24" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Group Teaching</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Run group classes alongside your one-to-one work, plan sessions in advance, and track loaned equipment and maintenance.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Commerce Add-ons</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Sell chargeable extras like equipment hire, issue gift cards and run promo codes alongside your regular billing.</p>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Embeds &amp; Booking Widget</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">A booking form you can drop straight into your own website or bio link, so new enquiries land directly in your dashboard.</p>
             </div>
 
             <div className="p-6 rounded-2xl border-2 border-brand-500 bg-brand-50 relative">
-              <span className="absolute -top-3 left-5 bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Included</span>
+              <span className="absolute -top-3 left-5 bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">For growing teams</span>
               <div className="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 14l3-3 3 3 4-5" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2-5.24" /></svg>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Invoices & payments</h3>
-              <p className="text-sm text-neutral-700 leading-relaxed">Create quick invoices, open PDF copies, launch your default email app and record what has been paid.</p>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Organisation</h3>
+              <p className="text-sm text-neutral-700 leading-relaxed">Bring other instructors onto your account and log cover between you — for the day it stops being just you.</p>
             </div>
           </div>
 
-          <div className="bg-neutral-900 text-white rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-start gap-6">
-            <div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold mb-3">Payments matter, but they are only one part of the system</h3>
-              <p className="text-neutral-300 leading-relaxed">Learnio helps with termly, upfront, arrears and manual payment workflows, but it also keeps the teaching side close by: who is next, where they are, what was covered, what they owe, what resources they need, and which follow-ups are waiting.</p>
-            </div>
-          </div>
+          <p className="text-center text-sm text-neutral-500 mt-10 max-w-2xl mx-auto">
+            Safety-related records — certifications, incident logs and safeguarding notes — are never gated behind a paid module, on any plan, under any circumstances.
+          </p>
         </div>
       </section>
 
@@ -486,13 +532,13 @@ export default function LandingPage() {
           
           <div className="grid md:grid-cols-2 gap-6">
             <FeatureVote
-              title="Client portal"
-              description="One secure place for clients and parents to view invoices, balances and sessions."
+              title="Online card payments"
+              description="A Stripe link is already included on every invoice — full in-app checkout (cards saved on file, auto-charging) is next."
               initialVotes={412}
             />
             <FeatureVote
-              title="Online card payments"
-              description="Let clients pay by card with money going straight to you. Manual payment tracking is available now."
+              title="Automated payment reminders"
+              description="Gentle automatic nudges to clients when a payment is due or overdue, on top of the manual reminders available today."
               initialVotes={389}
             />
             <FeatureVote
@@ -501,29 +547,19 @@ export default function LandingPage() {
               initialVotes={301}
             />
             <FeatureVote
-              title="Automated payment reminders"
-              description="Gentle automatic nudges to clients when a payment is due or overdue."
-              initialVotes={276}
+              title="WhatsApp messaging"
+              description="Send invoices and updates over WhatsApp as well as email."
+              initialVotes={187}
             />
             <FeatureVote
-              title="Session notes & shared resources"
-              description="Keep session notes and share materials with your clients."
-              initialVotes={214}
+              title="Video call auto-scheduling"
+              description="Auto-create a Zoom/Meet link when you book an online lesson. Adding your own meeting link works today."
+              initialVotes={134}
             />
             <FeatureVote
-              title="School timetable tools"
-              description="Manage terms, rooms, travel and pupil timetables across multiple schools."
-              initialVotes={168}
-            />
-            <FeatureVote
-              title="Group & shared lessons"
-              description="Support small-group lessons and shared lesson billing."
-              initialVotes={143}
-            />
-            <FeatureVote
-              title="Equipment tracking"
-              description="Track loaned equipment, instruments and books with due-back dates."
-              initialVotes={97}
+              title="Multi-currency support"
+              description="Bill in a currency other than GBP for teachers working with international families."
+              initialVotes={68}
             />
           </div>
         </div>
@@ -571,7 +607,7 @@ export default function LandingPage() {
               <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;9<span className="text-base font-semibold text-neutral-400">/mo</span></div>
               <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors">Start free trial</Link>
               <ul className="space-y-3">
-                {["Up to 25 clients", "Clients, payers & locations", "Invoice PDFs & payment tracking", "CSV export"].map((f) => (
+                {["Foundation: students, payers & locations", "Quick Invoice, PDFs & payment tracking", "Scheduling & Timetable module", "Certifications & safeguarding, always free"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-neutral-600">
                     <svg className="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -588,7 +624,7 @@ export default function LandingPage() {
               <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;19<span className="text-base font-semibold text-white/75">/mo</span></div>
               <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-white text-brand-600 hover:bg-neutral-50 transition-colors">Start free trial</Link>
               <ul className="space-y-3">
-                {["Unlimited clients", "Everything in Solo", "Term calendars & timetabling", "Make-up credits & lesson records"].map((f) => (
+                {["Everything in Solo", "Term Calendars & Curriculum modules", "Compliance policies & Commerce add-ons", "Embeds, booking widget & Group Teaching"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-white/95">
                     <svg className="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -604,7 +640,7 @@ export default function LandingPage() {
               <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;39<span className="text-base font-semibold text-neutral-400">/mo</span></div>
               <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors">Talk to us</Link>
               <ul className="space-y-3">
-                {["Everything in Studio", "Multiple instructors", "Cover assignments", "Priority support"].map((f) => (
+                {["Everything in Studio", "Organisation module: invite instructors", "Cover assignments between accounts", "Priority support"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-neutral-600">
                     <svg className="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -614,7 +650,7 @@ export default function LandingPage() {
             </div>
 
           </div>
-          <p className="text-center text-sm text-neutral-500 mt-8 max-w-2xl mx-auto">Coming-soon features (online payments, client portal, calendar sync and deeper lesson tools) are included as they ship - no price change during your trial.</p>
+          <p className="text-center text-sm text-neutral-500 mt-8 max-w-2xl mx-auto">Every plan includes the Foundation and Quick Invoice with no extra charge — you&apos;re only ever paying for the modules your practice actually uses. Certifications, incident logs and safeguarding records are always free, on every plan, with no exceptions.</p>
         </div>
       </section>
 
