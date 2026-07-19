@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const planFieldsSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -27,7 +28,8 @@ async function assertOwnSessionPlan(sessionPlanId: string, teacherId: string) {
   });
 }
 
-/** A Lesson has at most one SessionPlan (1:1) — create it on first save, edit in place after. */
+/** A Lesson has at most one SessionPlan (1:1) — create it on first save, edit in place after.
+ * Only the CREATE branch is module-gated; editing an already-existing plan never is. */
 export async function upsertLessonSessionPlanAction(
   lessonId: string,
   _prevState: string | undefined,
@@ -44,6 +46,9 @@ export async function upsertLessonSessionPlanAction(
   if (existing) {
     await prisma.sessionPlan.update({ where: { id: existing.id }, data: parsed.data });
   } else {
+    if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+      return "The Group teaching module isn't enabled on this account";
+    }
     await prisma.sessionPlan.create({
       data: { ...parsed.data, lessonId, createdBy: session.user.id },
     });
@@ -64,6 +69,9 @@ export async function createGroupClassSessionPlanAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+    return "The Group teaching module isn't enabled on this account";
+  }
   if (!(await assertOwnGroupClass(groupClassId, session.user.id))) return "Group class not found";
 
   const parsed = planFieldsSchema.safeParse({ title: formData.get("title"), content: formData.get("content") });
@@ -126,6 +134,9 @@ export async function saveSessionPlanAsTemplateAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+    return "The Group teaching module isn't enabled on this account";
+  }
   const plan = await assertOwnSessionPlan(sessionPlanId, session.user.id);
   if (!plan) return "Session plan not found";
 

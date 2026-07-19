@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { loanableItemSchema, checkOutLoanSchema } from "@/lib/validations";
+import { hasModule } from "@/lib/modules";
 
 export async function createLoanableItemAction(
   _prevState: string | undefined,
@@ -12,6 +13,9 @@ export async function createLoanableItemAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+    return "The Group teaching module isn't enabled on this account";
+  }
 
   const parsed = loanableItemSchema.safeParse({
     name: formData.get("name"),

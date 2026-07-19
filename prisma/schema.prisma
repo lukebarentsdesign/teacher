@@ -211,6 +211,7 @@ enum ModuleKey {
   COMPLIANCE
   EMBEDS
   COMMERCE
+  GROUP_TEACHING
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for

@@ -21,6 +21,7 @@ export default async function LocationDetailPage({
   const { id } = await params;
   const session = await auth();
   const complianceModuleEnabled = await hasModule(session!.user.id, "COMPLIANCE");
+  const groupTeachingModuleEnabled = await hasModule(session!.user.id, "GROUP_TEACHING");
 
   const location = await prisma.teachingLocation.findUnique({
     where: { id },
@@ -223,7 +224,15 @@ export default async function LocationDetailPage({
             </table>
           </div>
         )}
-        <NewGroupClassForm locationId={location.id} rooms={rooms} subjects={subjects} />
+        {groupTeachingModuleEnabled ? (
+          <NewGroupClassForm locationId={location.id} rooms={rooms} subjects={subjects} />
+        ) : (
+          <p className="mt-3 text-sm text-neutral-500">
+            The Group teaching module isn&apos;t enabled on this account, so new group classes
+            can&apos;t be created — get in touch if you&apos;d like it switched on. Existing group
+            classes, enrolments, and session bookings are unaffected.
+          </p>
+        )}
       </section>
 
       {offeredLessonTypes.length > 0 && (

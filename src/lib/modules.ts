@@ -90,6 +90,27 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "AddOnBooking is the only cross-module touchpoint (read/write from lessons/[id]/actions.ts, " +
       "which only ever references AddOns that already exist in the catalog).",
   },
+  GROUP_TEACHING: {
+    key: "GROUP_TEACHING",
+    label: "Group teaching",
+    description:
+      "Group classes, session plans (+ templates), and equipment loans/maintenance reminders. " +
+      "The dividing line, consistent with every module: gate creating a NEW instance of the " +
+      "module's own core data type (GroupClass, SessionPlan, SessionPlanTemplate, LoanableItem, " +
+      "MaintenanceReminder); never gate enrolling in, booking, or using something that already " +
+      "exists (GroupClassMember enrollment, GroupSessionBooking — both teacher- and guardian-" +
+      "initiated, checkOutLoanAction) — same reasoning as Course purchases and AddOn bookings in " +
+      "other modules. GroupClass creation itself lives in " +
+      "teaching-locations/[id]/actions.ts (a Foundation file, gated there for UX convenience, " +
+      "same pattern as CancellationPolicyForm) rather than a dedicated group-classes actions " +
+      "file — there isn't one; group-classes/[id]/actions.ts only has member/booking actions, " +
+      "which stay ungated per the dividing line above. CheckIn (dashboard/checkin, lib/checkin.ts) " +
+      "spans both Lesson and GroupClass targets and is DELIBERATELY NEVER GATED — it's pure " +
+      "attendance-recording, same safety-adjacent category as incident logs. " +
+      "generateDisplayTokenAction (in session-plans/actions.ts, oddly) only sets a field on " +
+      "TeachingLocation and isn't tied to any GroupClass/SessionPlan — left ungated as Foundation-" +
+      "adjacent, not module-specific.",
+  },
 };
 
 /**

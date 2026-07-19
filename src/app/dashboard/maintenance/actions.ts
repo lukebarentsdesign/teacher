@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const reminderSchema = z.object({
   itemDescription: z.string().trim().min(1, "Describe the item"),
@@ -18,6 +19,9 @@ export async function createMaintenanceReminderAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+    return "The Group teaching module isn't enabled on this account";
+  }
 
   const parsed = reminderSchema.safeParse({
     itemDescription: formData.get("itemDescription"),

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { availabilityArraySchema, protectedBlocksArraySchema } from "@/lib/schedule-json";
 import { roomSchema, groupClassSchema } from "@/lib/validations";
+import { hasModule } from "@/lib/modules";
 import { z } from "zod";
 
 const createLinkSchema = z.object({
@@ -160,6 +161,9 @@ export async function createGroupClassAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "GROUP_TEACHING"))) {
+    return "The Group teaching module isn't enabled on this account";
+  }
 
   const locationId = formData.get("locationId") as string;
   if (!(await assertLinkedToSchool(locationId, session.user.id))) return "Teaching location not found";
