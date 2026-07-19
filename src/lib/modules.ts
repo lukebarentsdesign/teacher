@@ -40,6 +40,17 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "plans) read from lessons that already exist. This only gates the tooling that creates new " +
       "lessons at scale; a teacher without it can still track lessons manually through Quick Invoice.",
   },
+  CURRICULUM: {
+    key: "CURRICULUM",
+    label: "Curriculum & content",
+    description:
+      "Curriculum templates, per-student curriculum (assigned/imported/duplicated), resources, " +
+      "and assignments — plus sellable courses. Zero other modules read from any of this " +
+      "(confirmed: only the Today view's optional resource list and the course-purchase Stripe " +
+      "flow touch it, and both degrade fine — an empty resource list, or a purchase against a " +
+      "course created before this was ever locked). Gates creating new curriculum/resource/" +
+      "assignment/course content; never gates viewing, publishing, or deleting what already exists.",
+  },
 };
 
 /**

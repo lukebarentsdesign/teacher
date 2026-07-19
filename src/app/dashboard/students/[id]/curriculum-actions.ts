@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 async function assertOwnStudent(studentId: string, teacherId: string) {
   return prisma.student.findFirst({ where: { id: studentId, teacherId } });
@@ -17,6 +18,9 @@ async function assertOwnStudent(studentId: string, teacherId: string) {
 export async function importCurriculumAction(studentId: string, templateId: string): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(studentId, session.user.id))) return "Student not found";
 
   const template = await prisma.curriculumTemplate.findFirst({
@@ -53,6 +57,9 @@ export async function createBlankCurriculumAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(studentId, session.user.id))) return "Student not found";
 
   const title = (formData.get("title") as string)?.trim();
@@ -71,6 +78,9 @@ export async function addStudentCurriculumSectionAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(studentId, session.user.id))) return "Student not found";
 
   const curriculum = await prisma.studentCurriculum.findFirst({ where: { id: studentCurriculumId, studentId } });
@@ -148,6 +158,9 @@ export async function saveCurriculumAsTemplateAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(studentId, session.user.id))) return "Student not found";
 
   const title = (formData.get("title") as string)?.trim();
@@ -187,6 +200,9 @@ export async function duplicateCurriculumAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(sourceStudentId, session.user.id))) return "Student not found";
   if (!(await assertOwnStudent(targetStudentId, session.user.id))) return "Target student not found";
 

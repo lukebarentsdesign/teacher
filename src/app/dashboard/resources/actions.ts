@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const resourceSchema = z.object({
   type: z.enum(["DOCUMENT", "AUDIO", "VIDEO", "IMAGE"]),
@@ -25,6 +26,9 @@ export async function createResourceAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
 
   const parsed = resourceSchema.safeParse({
     type: formData.get("type"),

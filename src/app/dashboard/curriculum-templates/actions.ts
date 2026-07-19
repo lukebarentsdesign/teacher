@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 async function assertOwnTemplate(templateId: string, teacherId: string) {
   return prisma.curriculumTemplate.findFirst({ where: { id: templateId, teacherId } });
@@ -23,6 +24,9 @@ export async function createCurriculumTemplateAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
 
   const parsed = createTemplateSchema.safeParse({
     title: formData.get("title"),
@@ -88,6 +92,9 @@ export async function addTemplateSectionAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnTemplate(templateId, session.user.id))) return "Template not found";
 
   const parsed = sectionSchema.safeParse({

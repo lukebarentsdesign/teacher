@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 async function assertOwnCourse(courseId: string, teacherId: string) {
   return prisma.course.findFirst({ where: { id: courseId, teacherId } });
@@ -22,6 +23,9 @@ export async function createCourseAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
 
   const parsed = createCourseSchema.safeParse({
     title: formData.get("title"),
@@ -77,6 +81,9 @@ export async function addCourseItemAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
   if (!(await assertOwnCourse(courseId, session.user.id))) return "Course not found";
 
   const parsed = itemSchema.safeParse({

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewCourseForm } from "./new-course-form";
+import { hasModule } from "@/lib/modules";
 
 export default async function CoursesPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "CURRICULUM");
 
   const courses = await prisma.course.findMany({
     where: { teacherId: session!.user.id },
@@ -44,7 +46,14 @@ export default async function CoursesPage() {
         </ul>
       )}
 
-      <NewCourseForm />
+      {moduleEnabled ? (
+        <NewCourseForm />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Curriculum &amp; content module isn&apos;t enabled on this account, so new courses
+          can&apos;t be created — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

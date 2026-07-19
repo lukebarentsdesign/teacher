@@ -2,9 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewTemplateForm } from "./new-template-form";
+import { hasModule } from "@/lib/modules";
 
 export default async function CurriculumTemplatesPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "CURRICULUM");
 
   const [templates, lessonTypes] = await Promise.all([
     prisma.curriculumTemplate.findMany({
@@ -55,7 +57,14 @@ export default async function CurriculumTemplatesPage() {
         </ul>
       )}
 
-      <NewTemplateForm lessonTypes={lessonTypes} />
+      {moduleEnabled ? (
+        <NewTemplateForm lessonTypes={lessonTypes} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Curriculum &amp; content module isn&apos;t enabled on this account, so new templates
+          can&apos;t be created — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

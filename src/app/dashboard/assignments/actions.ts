@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const assignmentSchema = z.object({
   studentId: z.string().min(1),
@@ -22,6 +23,9 @@ export async function createAssignmentAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "CURRICULUM"))) {
+    return "The Curriculum & content module isn't enabled on this account";
+  }
 
   const parsed = assignmentSchema.safeParse({
     studentId: formData.get("studentId"),

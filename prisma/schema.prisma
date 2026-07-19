@@ -207,6 +207,7 @@ enum ModuleKey {
   ORGANISATION
   TERM_CALENDARS
   SCHEDULING
+  CURRICULUM
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for
