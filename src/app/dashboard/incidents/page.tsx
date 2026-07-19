@@ -3,11 +3,9 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewIncidentForm } from "./new-incident-form";
 import { DeleteIncidentButton } from "./delete-incident-button";
-import { hasModule } from "@/lib/modules";
 
 export default async function IncidentsPage() {
   const session = await auth();
-  const moduleEnabled = await hasModule(session!.user.id, "COMPLIANCE");
 
   const [incidents, students] = await Promise.all([
     prisma.incidentLog.findMany({
@@ -66,14 +64,7 @@ export default async function IncidentsPage() {
         </ul>
       )}
 
-      {moduleEnabled ? (
-        <NewIncidentForm students={students} />
-      ) : (
-        <p className="text-sm text-neutral-500">
-          The Compliance &amp; safety module isn&apos;t enabled on this account, so new incidents
-          can&apos;t be logged here — get in touch if you&apos;d like it switched on.
-        </p>
-      )}
+      <NewIncidentForm students={students} />
     </div>
   );
 }
