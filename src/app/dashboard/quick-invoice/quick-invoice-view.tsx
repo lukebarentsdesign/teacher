@@ -12,6 +12,7 @@ import {
   sendBatchQuickInvoicesAction,
   createQuickInvoiceAction,
   recordQuickInvoiceSentAction,
+  markQuickInvoicesSentAction,
   markInvoicePaidAction,
   updateLessonAttendanceAction,
   getStudentInvoicesAction,
@@ -172,7 +173,7 @@ export function QuickInvoiceView({
   const [emailBody, setEmailBody] = useState("");
   const [sendSuccess, setSendSuccess] = useState(false);
   const [sendError, setSendError] = useState("");
-  const [sentInvoiceIds, setSentInvoiceIds] = useState<Record<string, string>>({});
+  const [sentInvoiceIds, setSentInvoiceIds] = useState<Record<string, { invoiceId: string; invoiceUrl: string }>>({});
   // Invoice Calendar & Billing State
   const [billingMode, setBillingMode] = useState<"upfront" | "arrears">("upfront");
   const [periodStart, setPeriodStart] = useState<string>(() => {
@@ -198,6 +199,7 @@ export function QuickInvoiceView({
   const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState<string>("");
   const [markPaidPending, setMarkPaidPending] = useState(false);
+  const [copiedInvoiceId, setCopiedInvoiceId] = useState<string | null>(null);
   const attendedCount = billingMode === "arrears"
     ? lessonDates.filter((d) => d.attended).length
     : lessonDates.length;
@@ -240,7 +242,7 @@ export function QuickInvoiceView({
     results?: { studentName: string; success: boolean; error?: string }[];
   }>({ inProgress: false });
   const [mailtoQueue, setMailtoQueue] = useState<{
-    items: { studentId: string; studentName: string; payerEmail: string; subject: string; body: string; pdfUrl: string; lessonsCount: number; costPerLesson: number }[];
+    items: { studentId: string; studentName: string; payerEmail: string; subject: string; body: string; pdfUrl: string; invoiceId: string; invoiceUrl: string; lessonsCount: number; costPerLesson: number }[];
     currentIndex: number;
   } | null>(null);
 
@@ -468,6 +470,11 @@ export function QuickInvoiceView({
   const buildInvoiceRecordKey = (studentId: string, count: number, rate: number) =>
     `${studentId}-${periodStart}-${periodEnd}-${dueDate}-${count}-${rate}`;
 
+  const getHostedInvoiceUrl = (invoiceId: string, accessCode: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/invoice/${invoiceId}?code=${encodeURIComponent(accessCode)}`;
+  };
+
   const recordSentInvoice = async (student: StudentType, count: number, rate: number) => {
     const key = buildInvoiceRecordKey(student.id, count, rate);
     if (sentInvoiceIds[key]) return sentInvoiceIds[key];
@@ -480,31 +487,36 @@ export function QuickInvoiceView({
       periodStart,
       periodEnd,
       dueDate,
+      markSent: false,
       invoiceRef: `INV-${student.name.replace(/\s+/g, "").toUpperCase()}-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}`,
     });
 
-    if (res.success && res.invoiceId) {
-      setSentInvoiceIds((prev) => ({ ...prev, [key]: res.invoiceId! }));
-      router.refresh();
-      return res.invoiceId;
+    if (res.success && res.invoiceId && res.accessCode) {
+      const invoiceLink = { invoiceId: res.invoiceId, invoiceUrl: getHostedInvoiceUrl(res.invoiceId, res.accessCode) };
+      setSentInvoiceIds((prev) => ({ ...prev, [key]: invoiceLink }));
+      return invoiceLink;
     }
 
-    setSendError(res.error || "Could not record the sent invoice");
+    setSendError(res.error || "Could not create the hosted invoice link");
     return null;
   };
+
+  const appendHostedInvoiceLink = (body: string, invoiceUrl: string) =>
+    `${body}\n\nView or download the invoice here:\n${invoiceUrl}`;
 
   const openDefaultEmailForStudent = async (student: StudentType, count: number, rate: number) => {
     if (!student.payerEmail) return;
     setSendError("");
+    const invoiceLink = await recordSentInvoice(student, count, rate);
+    if (!invoiceLink) return;
+
     const values = getInvoiceTemplateValues(student, count, rate);
     const subject = renderInvoiceEmailTemplate(emailSubject || DEFAULT_INVOICE_EMAIL_SUBJECT_TEMPLATE, values);
-    const body = renderInvoiceEmailTemplate(emailBody || DEFAULT_INVOICE_EMAIL_BODY_TEMPLATE, values);
+    const baseBody = renderInvoiceEmailTemplate(emailBody || DEFAULT_INVOICE_EMAIL_BODY_TEMPLATE, values);
+    const body = appendHostedInvoiceLink(baseBody, invoiceLink.invoiceUrl);
     const pdfUrl = getPdfUrlForStudent(student.id, count, rate);
 
-    window.open(pdfUrl, "_blank");
-    window.location.href = `mailto:${student.payerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-      body + "\n\n(Please attach the opened invoice PDF from the browser tab to this email.)"
-    )}`;
+    window.location.href = `mailto:${student.payerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     setMailtoQueue({
       items: [{
@@ -514,6 +526,8 @@ export function QuickInvoiceView({
         subject,
         body,
         pdfUrl,
+        invoiceId: invoiceLink.invoiceId,
+        invoiceUrl: invoiceLink.invoiceUrl,
         lessonsCount: count,
         costPerLesson: rate,
       }],
@@ -623,19 +637,10 @@ export function QuickInvoiceView({
     if (!mailtoQueue) return;
     const item = mailtoQueue.items[mailtoQueue.currentIndex];
     if (!item) {
-      setMailtoQueue(null);
       return;
     }
 
-    // Open PDF inline in a new window/tab
-    window.open(item.pdfUrl, "_blank");
-
-    // Open mailto link
-    const mailto = `mailto:${item.payerEmail}?subject=${encodeURIComponent(
-      item.subject
-    )}&body=${encodeURIComponent(
-      item.body + "\n\n(Please attach the opened invoice PDF from the browser tab to this email.)"
-    )}`;
+    const mailto = `mailto:${item.payerEmail}?subject=${encodeURIComponent(item.subject)}&body=${encodeURIComponent(item.body)}`;
     window.location.href = mailto;
 
     setMailtoQueue((prev) => {
@@ -646,73 +651,98 @@ export function QuickInvoiceView({
       };
     });
   };
+
   // Batch Native Mail Launcher Start
   const handleConfirmMailtoQueueSent = async () => {
     if (!mailtoQueue) return;
     setSendError("");
 
-    const sentItems = mailtoQueue.items;
-    for (const item of sentItems) {
+    const invoiceIds = mailtoQueue.items.map((item) => item.invoiceId);
+    const res = await markQuickInvoicesSentAction(invoiceIds);
+    if (!res.success) {
+      setSendError(res.error || "Could not mark invoices as sent");
+      return;
     }
 
     setMailtoQueue(null);
     setSendSuccess(true);
+    router.refresh();
   };
 
   const handleMailtoQueueNotSent = () => {
     setMailtoQueue(null);
-    setSendError("No invoices were recorded. Open the email queue again when you are ready to send.");
+    setSendError("No invoices were marked as sent. Open the email queue again when you are ready to send.");
   };
-  const handleStartMailtoQueue = () => {
-    const items = selectedStudentIds.map((id) => {
-      const match = students.find((s) => s.id === id)!;
-      const count = batchLessonsConfig[id] || 4;
-      const rate = batchCostConfig[id] || 30;
 
-      const values = getInvoiceTemplateValues(match, count, rate);
-      const itemSubject = renderInvoiceEmailTemplate(
-        emailSubject || DEFAULT_INVOICE_EMAIL_SUBJECT_TEMPLATE,
-        values
-      );
-      const itemBody = renderInvoiceEmailTemplate(
-        emailBody || DEFAULT_INVOICE_EMAIL_BODY_TEMPLATE,
-        values
-      );
+  const handleStartMailtoQueue = async () => {
+    setSendError("");
+    const items = (
+      await Promise.all(
+        selectedStudentIds.map(async (id) => {
+          const match = students.find((s) => s.id === id);
+          if (!match?.payerEmail) return null;
+          const count = batchLessonsConfig[id] || 4;
+          const rate = batchCostConfig[id] || 30;
+          const invoiceLink = await recordSentInvoice(match, count, rate);
+          if (!invoiceLink) return null;
 
-      const pdfUrl = getPdfUrlForStudent(id, count, rate);
-      return {
-        studentId: match.id,
-        studentName: match.name,
-        payerEmail: match.payerEmail || "",
-        subject: itemSubject,
-        body: itemBody,
-        pdfUrl,
-        lessonsCount: count,
-        costPerLesson: rate,
-      };
-    }).filter((item) => !!item.payerEmail);
+          const values = getInvoiceTemplateValues(match, count, rate);
+          const itemSubject = renderInvoiceEmailTemplate(
+            emailSubject || DEFAULT_INVOICE_EMAIL_SUBJECT_TEMPLATE,
+            values
+          );
+          const itemBody = appendHostedInvoiceLink(
+            renderInvoiceEmailTemplate(emailBody || DEFAULT_INVOICE_EMAIL_BODY_TEMPLATE, values),
+            invoiceLink.invoiceUrl
+          );
+
+          return {
+            studentId: match.id,
+            studentName: match.name,
+            payerEmail: match.payerEmail,
+            subject: itemSubject,
+            body: itemBody,
+            pdfUrl: getPdfUrlForStudent(id, count, rate),
+            invoiceId: invoiceLink.invoiceId,
+            invoiceUrl: invoiceLink.invoiceUrl,
+            lessonsCount: count,
+            costPerLesson: rate,
+          };
+        })
+      )
+    ).filter((item): item is NonNullable<typeof item> => Boolean(item));
 
     if (items.length === 0) return;
 
     setMailtoQueue({ items, currentIndex: 0 });
   };
-
   // Native Mail Client Launcher
-  const handleOpenNativeMail = () => {
+  const handleOpenNativeMail = async () => {
     if (!selectedStudent || !selectedStudent.payerEmail) return;
-    
-    // Open PDF inline in a new window/tab
-    window.open(getPdfUrl(), "_blank");
+    setSendError("");
+    const invoiceLink = await recordSentInvoice(selectedStudent, attendedCount, costPerLesson);
+    if (!invoiceLink) return;
 
-    // Open mailto link
-    const mailto = `mailto:${selectedStudent.payerEmail}?subject=${encodeURIComponent(
-      emailSubject
-    )}&body=${encodeURIComponent(
-      emailBody + "\n\n(Please attach the opened invoice PDF from the browser tab to this email.)"
-    )}`;
+    const body = appendHostedInvoiceLink(emailBody, invoiceLink.invoiceUrl);
+    const mailto = `mailto:${selectedStudent.payerEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailto;
-  };
 
+    setMailtoQueue({
+      items: [{
+        studentId: selectedStudent.id,
+        studentName: selectedStudent.name,
+        payerEmail: selectedStudent.payerEmail,
+        subject: emailSubject,
+        body,
+        pdfUrl: getPdfUrl(),
+        invoiceId: invoiceLink.invoiceId,
+        invoiceUrl: invoiceLink.invoiceUrl,
+        lessonsCount: attendedCount,
+        costPerLesson,
+      }],
+      currentIndex: 1,
+    });
+  };
   // Share Sheet trigger (Web Share API)
   const handleShareInvoice = async () => {
     if (!selectedStudent) return;
@@ -810,6 +840,59 @@ export function QuickInvoiceView({
     if (hist.success && hist.invoices) setInvoiceHistory(hist.invoices);
   };
 
+  const getSavedInvoiceUrl = (inv: InvoiceHistoryItem) => {
+    if (!inv.accessCode) return null;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/invoice/${inv.id}?code=${encodeURIComponent(inv.accessCode)}`;
+  };
+
+  const getSavedInvoicePdfUrl = (inv: InvoiceHistoryItem) => {
+    if (!inv.accessCode) return null;
+    return `/api/quick-invoice/${inv.id}/pdf?code=${encodeURIComponent(inv.accessCode)}`;
+  };
+
+  const handleCopySavedInvoiceLink = async (inv: InvoiceHistoryItem) => {
+    const url = getSavedInvoiceUrl(inv);
+    if (!url) {
+      setSendError("This invoice does not have a hosted access link yet.");
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setCopiedInvoiceId(inv.id);
+    window.setTimeout(() => setCopiedInvoiceId(null), 1800);
+  };
+
+  const handleResendSavedInvoice = (inv: InvoiceHistoryItem) => {
+    if (!selectedStudent?.payerEmail) {
+      setSendError("No payer email is available for this invoice.");
+      return;
+    }
+    const url = getSavedInvoiceUrl(inv);
+    const pdfUrl = getSavedInvoicePdfUrl(inv);
+    if (!url || !pdfUrl) {
+      setSendError("This invoice does not have a hosted access link yet.");
+      return;
+    }
+
+    const subject = renderSubjectForStudent(selectedStudent, inv.lessonsCount, inv.costPerLesson);
+    const body = appendHostedInvoiceLink(renderBodyForStudent(selectedStudent, inv.lessonsCount, inv.costPerLesson), url);
+    window.location.href = `mailto:${selectedStudent.payerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setMailtoQueue({
+      items: [{
+        studentId: selectedStudent.id,
+        studentName: selectedStudent.name,
+        payerEmail: selectedStudent.payerEmail,
+        subject,
+        body,
+        pdfUrl,
+        invoiceId: inv.id,
+        invoiceUrl: url,
+        lessonsCount: inv.lessonsCount,
+        costPerLesson: inv.costPerLesson,
+      }],
+      currentIndex: 1,
+    });
+  };
   const handleSaveInvoice = () => {
     if (!selectedStudent || lessonDates.length === 0) return;
     setSaveInvoiceSuccess(false);
@@ -2120,6 +2203,21 @@ export function QuickInvoiceView({
                             {inv.emailedAt && <span>Emailed: {new Date(inv.emailedAt).toLocaleDateString("en-GB")}</span>}
                           </div>
 
+                          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                            <a href={getSavedInvoiceUrl(inv) || "#"} target="_blank" rel="noreferrer" className={`rounded-lg border px-3 py-2 text-center text-[10px] font-black transition-colors ${inv.accessCode ? "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50" : "pointer-events-none border-neutral-100 bg-neutral-50 text-neutral-300"}`}>
+                              Open Hosted
+                            </a>
+                            <button type="button" onClick={() => handleCopySavedInvoiceLink(inv)} disabled={!inv.accessCode} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-[10px] font-black text-neutral-700 transition-colors hover:bg-neutral-50 disabled:border-neutral-100 disabled:bg-neutral-50 disabled:text-neutral-300">
+                              {copiedInvoiceId === inv.id ? "Copied" : "Copy Link"}
+                            </button>
+                            <a href={getSavedInvoicePdfUrl(inv) || "#"} target="_blank" rel="noreferrer" className={`rounded-lg border px-3 py-2 text-center text-[10px] font-black transition-colors ${inv.accessCode ? "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50" : "pointer-events-none border-neutral-100 bg-neutral-50 text-neutral-300"}`}>
+                              Download PDF
+                            </a>
+                            <button type="button" onClick={() => handleResendSavedInvoice(inv)} disabled={!inv.accessCode || !selectedStudent?.payerEmail} className="rounded-lg bg-brand-600 px-3 py-2 text-[10px] font-black text-white transition-colors hover:bg-brand-700 disabled:bg-neutral-200 disabled:text-neutral-500">
+                              Resend Email
+                            </button>
+                          </div>
+
                           {inv.billingMode === "arrears" && inv.status !== "paid" && inv.lessonDates.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
                               {inv.lessonDates.map((lessonDate) => (
@@ -2352,6 +2450,13 @@ export function QuickInvoiceView({
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

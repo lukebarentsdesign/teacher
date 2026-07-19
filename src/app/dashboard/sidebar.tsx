@@ -50,6 +50,7 @@ import {
   HelpCircle,
   SlidersHorizontal,
   Sparkles,
+  Gauge,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -60,6 +61,7 @@ export type Archetype = "SOLO" | "GROUP_INDEPENDENT" | null;
 
 const CAT_OPERATIONS_LIST: NavLink[] = [
   { href: "/dashboard", label: "Calendar", icon: CalendarDays },
+  { href: "/dashboard/quick-tools", label: "Quick Tools", icon: Gauge },
   { href: "/dashboard/lessons", label: "Lessons", icon: BookOpen },
 ];
 
@@ -195,6 +197,7 @@ function SidebarContent({
 }) {
   const coreHrefs = new Set<string>([
     "/dashboard",
+    "/dashboard/quick-tools",
     "/dashboard/lessons",
     "/dashboard/students",
     "/dashboard/payers",
@@ -364,3 +367,5 @@ export function DashboardChrome({
     </div>
   );
 }
+
+

@@ -42,6 +42,7 @@ export type InvoiceHistoryItem = {
   emailedAt: string | null;
   notes: string | null;
   createdAt: string;
+  accessCode: string | null;
   lessonDates: { id: string; date: string; attended: boolean }[];
 };
 export type QuickInvoiceSettingsInput = {
@@ -374,11 +375,12 @@ export type RecordQuickInvoiceSentInput = {
   dueDate: string;
   invoiceRef?: string;
   notes?: string;
+  markSent?: boolean;
 };
 
 export async function recordQuickInvoiceSentAction(
   data: RecordQuickInvoiceSentInput
-): Promise<{ success: boolean; invoiceId?: string; error?: string }> {
+): Promise<{ success: boolean; invoiceId?: string; accessCode?: string; error?: string }> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
   const teacherId = session.user.id;
@@ -386,7 +388,15 @@ export async function recordQuickInvoiceSentAction(
   try {
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, teacherId },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        payerLinks: {
+          where: { isPrimary: true },
+          select: { payer: { select: { accessCode: true } } },
+          take: 1,
+        },
+      },
     });
     if (!student) return { success: false, error: "Student not found" };
 
@@ -410,15 +420,38 @@ export async function recordQuickInvoiceSentAction(
         totalAmount: lessonsCount * safeRate,
         dueDate,
         status: "unpaid",
-        emailedAt: new Date(),
-        notes: data.notes || `${lessonsCount} ${data.billingUnit === "hours" ? "hours" : "lessons"} sent from Quick Invoice Sheet`,
+        emailedAt: data.markSent === false ? null : new Date(),
+        notes: data.notes || `${lessonsCount} ${data.billingUnit === "hours" ? "hours" : "lessons"} prepared from Quick Invoice Sheet`,
       },
     });
 
     revalidatePath("/dashboard/quick-invoice");
-    return { success: true, invoiceId: invoice.id };
+    return { success: true, invoiceId: invoice.id, accessCode: student.payerLinks[0]?.payer.accessCode };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Failed to record sent invoice" };
+  }
+}
+
+export async function markQuickInvoicesSentAction(
+  invoiceIds: string[]
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  try {
+    await prisma.quickInvoice.updateMany({
+      where: {
+        teacherId: session.user.id,
+        id: { in: invoiceIds },
+        emailedAt: null,
+      },
+      data: { emailedAt: new Date() },
+    });
+
+    revalidatePath("/dashboard/quick-invoice");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to confirm sent invoices" };
   }
 }
 export async function createQuickInvoiceAction(
@@ -550,7 +583,18 @@ export async function getStudentInvoicesAction(
   try {
     const invoices = await prisma.quickInvoice.findMany({
       where: { teacherId: session.user.id, studentId },
-      include: { lessonDates: { orderBy: { date: "asc" } } },
+      include: {
+        lessonDates: { orderBy: { date: "asc" } },
+        student: {
+          include: {
+            payerLinks: {
+              where: { isPrimary: true },
+              include: { payer: true },
+              take: 1,
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -572,6 +616,7 @@ export async function getStudentInvoicesAction(
         emailedAt: inv.emailedAt?.toISOString() || null,
         notes: inv.notes || null,
         createdAt: inv.createdAt.toISOString(),
+        accessCode: inv.student.payerLinks[0]?.payer.accessCode || null,
         lessonDates: inv.lessonDates.map((d) => ({
           id: d.id,
           date: d.date.toISOString(),
@@ -583,7 +628,6 @@ export async function getStudentInvoicesAction(
     return { success: false, error: err instanceof Error ? err.message : "Failed to load invoices" };
   }
 }
-
 export async function getUnpaidInvoicesReminderAction(): Promise<{
   count: number;
   overdueCount: number;
@@ -606,3 +650,7 @@ export async function getUnpaidInvoicesReminderAction(): Promise<{
 
   return { count: invoices.length, overdueCount, studentNames };
 }
+
+
+
+
