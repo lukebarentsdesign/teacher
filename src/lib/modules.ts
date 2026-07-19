@@ -65,6 +65,18 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "exists' as a valid, intentional state (always-free behaviour), so locking this module " +
       "needs zero change to that consuming code.",
   },
+  EMBEDS: {
+    key: "EMBEDS",
+    label: "Embeds & booking widget",
+    description:
+      "The embeddable booking-widget links (EmbedConfig) a teacher can put on their own site or " +
+      "bio link. Zero external consumers. NOTE: this was originally scoped as a broader 'Growth " +
+      "& Outreach' module alongside Referrals and Out-of-scope-signups, but neither of those " +
+      "belongs here on inspection — Referrals is just a read-only rollup of Student.referredBy " +
+      "(a Foundation field, no module-specific data or creation action of its own, same reasoning " +
+      "as Absences staying ungated), and Out-of-scope-signups is admin-only platform tooling " +
+      "(gated by isAdminEmail, not a teacher-facing feature at all). This module is Embeds alone.",
+  },
 };
 
 /**

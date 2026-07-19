@@ -2,9 +2,11 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewEmbedForm } from "./new-embed-form";
 import { EmbedShareCard } from "./embed-share-card";
+import { hasModule } from "@/lib/modules";
 
 export default async function EmbedsPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "EMBEDS");
 
   const [embeds, locations, lessonTypes] = await Promise.all([
     prisma.embedConfig.findMany({ where: { teacherId: session!.user.id }, orderBy: { createdAt: "desc" } }),
@@ -44,7 +46,15 @@ export default async function EmbedsPage() {
         </div>
       )}
 
-      <NewEmbedForm locations={uniqueLocations} lessonTypes={lessonTypes} />
+      {moduleEnabled ? (
+        <NewEmbedForm locations={uniqueLocations} lessonTypes={lessonTypes} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Embeds &amp; booking widget module isn&apos;t enabled on this account, so new embed
+          links can&apos;t be created — get in touch if you&apos;d like it switched on. Existing
+          embed links keep working for visitors either way.
+        </p>
+      )}
     </div>
   );
 }

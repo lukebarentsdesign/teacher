@@ -209,6 +209,7 @@ enum ModuleKey {
   SCHEDULING
   CURRICULUM
   COMPLIANCE
+  EMBEDS
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for

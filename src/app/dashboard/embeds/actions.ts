@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const createSchema = z.object({
   label: z.string().trim().min(1, "Give this embed a name"),
@@ -18,6 +19,9 @@ export async function createEmbedConfigAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "EMBEDS"))) {
+    return "The Embeds & booking widget module isn't enabled on this account";
+  }
 
   const parsed = createSchema.safeParse({
     label: formData.get("label"),
