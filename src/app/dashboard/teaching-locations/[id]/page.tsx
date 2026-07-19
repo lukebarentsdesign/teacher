@@ -9,6 +9,7 @@ import { NewGroupClassForm } from "./new-group-class-form";
 import { VenueFeeArrangements } from "./venue-fee-arrangements";
 import { DisplayLink } from "./display-link";
 import { CancellationPolicyForm } from "../../cancellation-policy/cancellation-policy-form";
+import { hasModule } from "@/lib/modules";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -19,6 +20,7 @@ export default async function LocationDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  const complianceModuleEnabled = await hasModule(session!.user.id, "COMPLIANCE");
 
   const location = await prisma.teachingLocation.findUnique({
     where: { id },
@@ -260,20 +262,28 @@ export default async function LocationDetailPage({
         <p className="mb-3 text-xs text-neutral-500">
           Overrides your account-wide default (set under Billing) for lessons at this location only.
         </p>
-        <CancellationPolicyForm
-          locationId={location.id}
-          policy={
-            cancellationPolicy
-              ? {
-                  id: cancellationPolicy.id,
-                  noticeHoursRequired: cancellationPolicy.noticeHoursRequired,
-                  lateCancelAction: cancellationPolicy.lateCancelAction,
-                  noShowAction: cancellationPolicy.noShowAction,
-                  partialChargePercent: cancellationPolicy.partialChargePercent,
-                }
-              : null
-          }
-        />
+        {complianceModuleEnabled ? (
+          <CancellationPolicyForm
+            locationId={location.id}
+            policy={
+              cancellationPolicy
+                ? {
+                    id: cancellationPolicy.id,
+                    noticeHoursRequired: cancellationPolicy.noticeHoursRequired,
+                    lateCancelAction: cancellationPolicy.lateCancelAction,
+                    noShowAction: cancellationPolicy.noShowAction,
+                    partialChargePercent: cancellationPolicy.partialChargePercent,
+                  }
+                : null
+            }
+          />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Compliance &amp; safety module isn&apos;t enabled on this account, so a
+            location-specific override can&apos;t be set — get in touch if you&apos;d like it
+            switched on.
+          </p>
+        )}
       </section>
 
       <section id="enrolled" className="scroll-mt-20">

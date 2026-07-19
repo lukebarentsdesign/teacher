@@ -51,6 +51,18 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "course created before this was ever locked). Gates creating new curriculum/resource/" +
       "assignment/course content; never gates viewing, publishing, or deleting what already exists.",
   },
+  COMPLIANCE: {
+    key: "COMPLIANCE",
+    label: "Compliance & safety",
+    description:
+      "Instructor certifications, incident log, student medical notes, and cancellation policy. " +
+      "Zero external consumers of certifications/incidents/medical notes. Cancellation policy IS " +
+      "read by lesson cancellation/no-show handling (lessons/[id]/actions.ts) — but that read " +
+      "already treats 'no policy exists' as a valid, intentional state (always-free behaviour, " +
+      "same as before any policy feature existed), so locking this module needs zero change to " +
+      "that consuming code — it just means a teacher can't create a new policy. Only creation " +
+      "actions are gated; deletion always stays open.",
+  },
 };
 
 /**

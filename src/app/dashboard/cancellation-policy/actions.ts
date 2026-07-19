@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const policySchema = z.object({
   noticeHoursRequired: z.coerce.number().int().min(0),
@@ -20,6 +21,9 @@ export async function upsertCancellationPolicyAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMPLIANCE"))) {
+    return "The Compliance & safety module isn't enabled on this account";
+  }
 
   if (locationId) {
     const link = await prisma.teacherLocationLink.findFirst({ where: { locationId, teacherId: session.user.id } });

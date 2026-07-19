@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 async function assertOwnStudent(studentId: string, teacherId: string) {
   return prisma.student.findFirst({ where: { id: studentId, teacherId } });
@@ -21,6 +22,9 @@ export async function addMedicalNoteAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMPLIANCE"))) {
+    return "The Compliance & safety module isn't enabled on this account";
+  }
   if (!(await assertOwnStudent(studentId, session.user.id))) return "Student not found";
 
   const parsed = noteSchema.safeParse({ note: formData.get("note"), severity: formData.get("severity") });

@@ -4,6 +4,7 @@ import { startCheckoutAction, openBillingPortalAction, disconnectGmailAction } f
 import { BrandSettingsForm } from "./brand-settings-form";
 import { CancellationPolicyForm } from "../cancellation-policy/cancellation-policy-form";
 import { EmergencyContactForm } from "./emergency-contact-form";
+import { hasModule } from "@/lib/modules";
 
 const STATUS_COPY: Record<string, string> = {
   TRIALING: "You're on a trial — full access, nothing charged yet.",
@@ -24,6 +25,7 @@ export default async function BillingPage({
   const defaultCancellationPolicy = await prisma.cancellationPolicy.findFirst({
     where: { teacherId: session!.user.id, locationId: null },
   });
+  const complianceModuleEnabled = await hasModule(session!.user.id, "COMPLIANCE");
 
   return (
     <div className="max-w-lg space-y-6">
@@ -133,20 +135,28 @@ export default async function BillingPage({
           Your default policy for late cancellations/no-shows, applied to every teaching location
           unless it has its own override. Leave unset and it stays free, as before.
         </p>
-        <CancellationPolicyForm
-          locationId={null}
-          policy={
-            defaultCancellationPolicy
-              ? {
-                  id: defaultCancellationPolicy.id,
-                  noticeHoursRequired: defaultCancellationPolicy.noticeHoursRequired,
-                  lateCancelAction: defaultCancellationPolicy.lateCancelAction,
-                  noShowAction: defaultCancellationPolicy.noShowAction,
-                  partialChargePercent: defaultCancellationPolicy.partialChargePercent,
-                }
-              : null
-          }
-        />
+        {complianceModuleEnabled ? (
+          <CancellationPolicyForm
+            locationId={null}
+            policy={
+              defaultCancellationPolicy
+                ? {
+                    id: defaultCancellationPolicy.id,
+                    noticeHoursRequired: defaultCancellationPolicy.noticeHoursRequired,
+                    lateCancelAction: defaultCancellationPolicy.lateCancelAction,
+                    noShowAction: defaultCancellationPolicy.noShowAction,
+                    partialChargePercent: defaultCancellationPolicy.partialChargePercent,
+                  }
+                : null
+            }
+          />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Compliance &amp; safety module isn&apos;t enabled on this account, so a new policy
+            can&apos;t be set — get in touch if you&apos;d like it switched on. Lessons stay free
+            to cancel in the meantime, exactly as before this feature existed.
+          </p>
+        )}
       </div>
     </div>
   );

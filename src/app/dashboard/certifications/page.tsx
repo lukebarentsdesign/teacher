@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NewCertificationForm } from "./new-certification-form";
 import { DeleteCertificationButton } from "./delete-certification-button";
+import { hasModule } from "@/lib/modules";
 
 function expiryBadge(expiryDate: Date | null, reminderDaysBefore: number | null): { label: string; className: string } | null {
   if (!expiryDate) return null;
@@ -16,6 +17,7 @@ function expiryBadge(expiryDate: Date | null, reminderDaysBefore: number | null)
 
 export default async function CertificationsPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "COMPLIANCE");
 
   const certifications = await prisma.instructorCertification.findMany({
     where: { teacherId: session!.user.id },
@@ -62,7 +64,14 @@ export default async function CertificationsPage() {
         </ul>
       )}
 
-      <NewCertificationForm />
+      {moduleEnabled ? (
+        <NewCertificationForm />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          The Compliance &amp; safety module isn&apos;t enabled on this account, so new
+          certifications can&apos;t be added — get in touch if you&apos;d like it switched on.
+        </p>
+      )}
     </div>
   );
 }

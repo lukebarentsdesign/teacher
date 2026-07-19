@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const certSchema = z.object({
   certType: z.string().trim().min(1, "Certification type is required"),
@@ -19,6 +20,9 @@ export async function createCertificationAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMPLIANCE"))) {
+    return "The Compliance & safety module isn't enabled on this account";
+  }
 
   const parsed = certSchema.safeParse({
     certType: formData.get("certType"),

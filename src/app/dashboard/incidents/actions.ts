@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 
 const incidentSchema = z.object({
   studentId: z.string().optional(),
@@ -19,6 +20,9 @@ export async function createIncidentLogAction(
 ): Promise<string | undefined> {
   const session = await auth();
   if (!session?.user?.id) return "Not authenticated";
+  if (!(await hasModule(session.user.id, "COMPLIANCE"))) {
+    return "The Compliance & safety module isn't enabled on this account";
+  }
 
   const studentIdRaw = (formData.get("studentId") as string) || undefined;
 
