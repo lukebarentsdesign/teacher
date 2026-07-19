@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 import { SectionForm } from "./section-form";
 import { DeleteSectionButton } from "./delete-section-button";
 import { PublishToggle } from "./publish-toggle";
@@ -9,6 +10,7 @@ import { PublishToggle } from "./publish-toggle";
 export default async function CurriculumTemplateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "CURRICULUM");
 
   const template = await prisma.curriculumTemplate.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -59,7 +61,14 @@ export default async function CurriculumTemplateDetailPage({ params }: { params:
             ))}
           </ul>
         )}
-        <SectionForm templateId={template.id} />
+        {moduleEnabled ? (
+          <SectionForm templateId={template.id} />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Curriculum &amp; content module isn&apos;t enabled on this account, so new
+            sections can&apos;t be added — get in touch if you&apos;d like it switched on.
+          </p>
+        )}
       </section>
 
       {template.imports.length > 0 && (

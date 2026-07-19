@@ -8,6 +8,7 @@ import { LessonSessionPlanPanel } from "../../session-plans/lesson-session-plan-
 import { MeetingUrlForm } from "./meeting-url-form";
 import { CoverAssignmentPanel } from "./cover-assignment-panel";
 import { LoneWorkerPanel } from "./lone-worker-panel";
+import { hasModule } from "@/lib/modules";
 
 export default async function LessonDetailPage({
   params,
@@ -16,6 +17,7 @@ export default async function LessonDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  const groupTeachingModuleEnabled = await hasModule(session!.user.id, "GROUP_TEACHING");
 
   const lesson = await prisma.lesson.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -159,6 +161,7 @@ export default async function LessonDetailPage({
               : null
           }
           templates={sessionPlanTemplates}
+          moduleEnabled={groupTeachingModuleEnabled}
         />
       </section>
 

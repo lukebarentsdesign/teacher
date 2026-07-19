@@ -7,6 +7,7 @@ import { hasModule } from "@/lib/modules";
 
 export default async function OrganisationPage() {
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "ORGANISATION");
 
   const teacher = await prisma.teacher.findUniqueOrThrow({
     where: { id: session!.user.id },
@@ -23,9 +24,7 @@ export default async function OrganisationPage() {
   if (!teacher.organisation) {
     // Already-in-an-org teachers keep working below regardless of module status, so nobody
     // gets stranded mid-relationship if this ever gets locked for their account — only the
-    // "start a new one" entry point is gated.
-    const moduleEnabled = await hasModule(session!.user.id, "ORGANISATION");
-
+    // "start a new one" entry point (and, below, generating a new invite) is gated.
     if (!moduleEnabled) {
       return (
         <div className="max-w-lg space-y-3">
@@ -94,7 +93,14 @@ export default async function OrganisationPage() {
               ))}
             </div>
           )}
-          <InviteGenerator />
+          {moduleEnabled ? (
+            <InviteGenerator />
+          ) : (
+            <p className="text-sm text-neutral-500">
+              The Organisation module isn&apos;t enabled on this account, so new invites
+              can&apos;t be generated — get in touch if you&apos;d like it switched on.
+            </p>
+          )}
         </section>
       )}
 

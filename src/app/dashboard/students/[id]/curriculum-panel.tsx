@@ -260,16 +260,27 @@ function ImportForm({ studentId, templates }: { studentId: string; templates: Te
   );
 }
 
+function ModuleLockedNotice() {
+  return (
+    <p className="text-xs text-neutral-500">
+      The Curriculum &amp; content module isn&apos;t enabled on this account — get in touch if
+      you&apos;d like it switched on.
+    </p>
+  );
+}
+
 export function CurriculumPanel({
   studentId,
   curricula,
   templates,
   otherStudents,
+  moduleEnabled,
 }: {
   studentId: string;
   curricula: Curriculum[];
   templates: Template[];
   otherStudents: OtherStudent[];
+  moduleEnabled: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -299,10 +310,18 @@ export function CurriculumPanel({
                   <SectionRow key={s.id} section={s} studentCurriculumId={c.id} studentId={studentId} />
                 ))}
               </ul>
-              <AddSectionForm studentCurriculumId={c.id} studentId={studentId} />
+              {moduleEnabled ? (
+                <AddSectionForm studentCurriculumId={c.id} studentId={studentId} />
+              ) : (
+                <ModuleLockedNotice />
+              )}
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <SaveAsTemplateForm studentCurriculumId={c.id} studentId={studentId} />
-                <DuplicateForm studentCurriculumId={c.id} studentId={studentId} otherStudents={otherStudents} />
+                {moduleEnabled && (
+                  <>
+                    <SaveAsTemplateForm studentCurriculumId={c.id} studentId={studentId} />
+                    <DuplicateForm studentCurriculumId={c.id} studentId={studentId} otherStudents={otherStudents} />
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => deleteStudentCurriculumAction(c.id, studentId)}
@@ -316,18 +335,24 @@ export function CurriculumPanel({
         </div>
       )}
 
-      {templates.length > 0 ? (
-        <ImportForm studentId={studentId} templates={templates} />
+      {moduleEnabled ? (
+        <>
+          {templates.length > 0 ? (
+            <ImportForm studentId={studentId} templates={templates} />
+          ) : (
+            <p className="text-xs text-neutral-500">
+              No templates yet —{" "}
+              <Link href="/dashboard/curriculum-templates" className="underline hover:text-neutral-900">
+                build one
+              </Link>{" "}
+              or save a plan built here as a template.
+            </p>
+          )}
+          <BlankCurriculumForm studentId={studentId} />
+        </>
       ) : (
-        <p className="text-xs text-neutral-500">
-          No templates yet —{" "}
-          <Link href="/dashboard/curriculum-templates" className="underline hover:text-neutral-900">
-            build one
-          </Link>{" "}
-          or save a plan built here as a template.
-        </p>
+        <ModuleLockedNotice />
       )}
-      <BlankCurriculumForm studentId={studentId} />
     </div>
   );
 }

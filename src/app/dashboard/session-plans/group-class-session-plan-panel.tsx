@@ -38,7 +38,7 @@ function SaveAsTemplateForm({ sessionPlanId }: { sessionPlanId: string }) {
   );
 }
 
-function CurrentPlanCard({ plan }: { plan: Plan }) {
+function CurrentPlanCard({ plan, moduleEnabled }: { plan: Plan; moduleEnabled: boolean }) {
   const [editing, setEditing] = useState(false);
 
   if (editing) {
@@ -85,7 +85,7 @@ function CurrentPlanCard({ plan }: { plan: Plan }) {
         >
           {plan.publishedAt ? "Unpublish" : "Publish to display"}
         </button>
-        <SaveAsTemplateForm sessionPlanId={plan.id} />
+        {moduleEnabled && <SaveAsTemplateForm sessionPlanId={plan.id} />}
         <button type="button" onClick={() => deleteSessionPlanAction(plan.id)} className="text-xs text-red-600 underline hover:text-red-800">
           Remove
         </button>
@@ -98,19 +98,26 @@ export function GroupClassSessionPlanPanel({
   groupClassId,
   plans,
   templates,
+  moduleEnabled,
 }: {
   groupClassId: string;
   plans: Plan[];
   templates: Template[];
+  moduleEnabled: boolean;
 }) {
   const [startingNew, setStartingNew] = useState(false);
   const [current, ...history] = plans;
 
   return (
     <div className="space-y-3">
-      {current && !startingNew && <CurrentPlanCard plan={current} />}
+      {current && !startingNew && <CurrentPlanCard plan={current} moduleEnabled={moduleEnabled} />}
 
-      {startingNew || !current ? (
+      {!moduleEnabled ? (
+        <p className="text-sm text-neutral-500">
+          The Group teaching module isn&apos;t enabled on this account, so a new session plan
+          can&apos;t be started — get in touch if you&apos;d like it switched on.
+        </p>
+      ) : startingNew || !current ? (
         <div className="space-y-2">
           <SessionPlanForm
             action={createGroupClassSessionPlanAction.bind(null, groupClassId)}

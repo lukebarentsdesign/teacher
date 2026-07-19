@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 import { PeriodForm } from "./period-form";
 import { DeletePeriodButton } from "./delete-period-button";
 
@@ -10,6 +11,7 @@ const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: 
 export default async function TermCalendarDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "TERM_CALENDARS");
 
   const calendar = await prisma.termCalendar.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -51,7 +53,14 @@ export default async function TermCalendarDetailPage({ params }: { params: Promi
             ))}
           </ul>
         )}
-        <PeriodForm calendarId={calendar.id} kind="term" />
+        {moduleEnabled ? (
+          <PeriodForm calendarId={calendar.id} kind="term" />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Term calendars module isn&apos;t enabled on this account, so new terms can&apos;t
+            be added — get in touch if you&apos;d like it switched on.
+          </p>
+        )}
       </section>
 
       <section>
@@ -71,7 +80,14 @@ export default async function TermCalendarDetailPage({ params }: { params: Promi
             ))}
           </ul>
         )}
-        <PeriodForm calendarId={calendar.id} kind="holiday" />
+        {moduleEnabled ? (
+          <PeriodForm calendarId={calendar.id} kind="holiday" />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Term calendars module isn&apos;t enabled on this account, so new holidays
+            can&apos;t be added — get in touch if you&apos;d like it switched on.
+          </p>
+        )}
       </section>
     </div>
   );

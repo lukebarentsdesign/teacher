@@ -6,12 +6,14 @@ import { AddMemberForm } from "./add-member-form";
 import { RemoveMemberButton } from "./remove-member-button";
 import { GroupClassSessionPlanPanel } from "../../session-plans/group-class-session-plan-panel";
 import { SessionBookingsPanel } from "./session-bookings-panel";
+import { hasModule } from "@/lib/modules";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function GroupClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "GROUP_TEACHING");
 
   const groupClass = await prisma.groupClass.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -122,6 +124,7 @@ export default async function GroupClassDetailPage({ params }: { params: Promise
             createdAt: p.createdAt.toISOString(),
           }))}
           templates={sessionPlanTemplates}
+          moduleEnabled={moduleEnabled}
         />
       </section>
 

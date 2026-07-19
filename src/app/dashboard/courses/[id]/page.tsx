@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { hasModule } from "@/lib/modules";
 import { CourseItemForm } from "./course-item-form";
 import { DeleteItemButton } from "./delete-item-button";
 import { PublishToggle } from "./publish-toggle";
@@ -10,6 +11,7 @@ import { RecordPurchaseForm } from "./record-purchase-form";
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
+  const moduleEnabled = await hasModule(session!.user.id, "CURRICULUM");
 
   const course = await prisma.course.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -69,7 +71,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
             ))}
           </ul>
         )}
-        <CourseItemForm courseId={course.id} lessonTypes={lessonTypes} />
+        {moduleEnabled ? (
+          <CourseItemForm courseId={course.id} lessonTypes={lessonTypes} />
+        ) : (
+          <p className="text-sm text-neutral-500">
+            The Curriculum &amp; content module isn&apos;t enabled on this account, so new items
+            can&apos;t be added — get in touch if you&apos;d like it switched on.
+          </p>
+        )}
       </section>
 
       <section>

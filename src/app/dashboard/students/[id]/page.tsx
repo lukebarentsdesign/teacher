@@ -11,6 +11,7 @@ import { NewAssessmentForm } from "./new-assessment-form";
 import { DeclinePrivateTuitionRequestButton } from "./decline-private-tuition-request-button";
 import { CurriculumPanel } from "./curriculum-panel";
 import { MedicalNotesPanel } from "./medical-notes-panel";
+import { hasModule } from "@/lib/modules";
 
 export default async function StudentDetailPage({
   params,
@@ -19,6 +20,7 @@ export default async function StudentDetailPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  const curriculumModuleEnabled = await hasModule(session!.user.id, "CURRICULUM");
 
   const student = await prisma.student.findFirst({
     where: { id, teacherId: session!.user.id },
@@ -273,6 +275,7 @@ export default async function StudentDetailPage({
           }))}
           templates={curriculumTemplates}
           otherStudents={otherStudents}
+          moduleEnabled={curriculumModuleEnabled}
         />
       </section>
 

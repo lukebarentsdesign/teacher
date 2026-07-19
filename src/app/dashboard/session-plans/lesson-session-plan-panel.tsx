@@ -42,14 +42,24 @@ export function LessonSessionPlanPanel({
   lessonId,
   plan,
   templates,
+  moduleEnabled,
 }: {
   lessonId: string;
   plan: Plan | null;
   templates: Template[];
+  moduleEnabled: boolean;
 }) {
   const [editing, setEditing] = useState(false);
 
   if (!plan) {
+    if (!moduleEnabled) {
+      return (
+        <p className="text-sm text-neutral-500">
+          The Group teaching module isn&apos;t enabled on this account, so a session plan
+          can&apos;t be created — get in touch if you&apos;d like it switched on.
+        </p>
+      );
+    }
     return <SessionPlanForm action={upsertLessonSessionPlanAction.bind(null, lessonId)} templates={templates} submitLabel="Create plan" />;
   }
 
@@ -96,7 +106,7 @@ export function LessonSessionPlanPanel({
         >
           {plan.publishedAt ? "Unpublish" : "Publish to display"}
         </button>
-        <SaveAsTemplateForm sessionPlanId={plan.id} />
+        {moduleEnabled && <SaveAsTemplateForm sessionPlanId={plan.id} />}
         <button type="button" onClick={() => deleteSessionPlanAction(plan.id)} className="text-xs text-red-600 underline hover:text-red-800">
           Remove
         </button>
