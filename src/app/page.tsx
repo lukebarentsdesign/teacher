@@ -108,7 +108,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 1b. Foundation + Modules — the real architecture */}      <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
+      {/* 1b. Foundation + Modules — the real architecture */}
+      <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14 max-w-2xl mx-auto">
             <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">How TeachBase is built</span>
