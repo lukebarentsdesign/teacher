@@ -108,13 +108,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 1b. Foundation + Modules — the real architecture */}
-      <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
+      {/* 1b. Foundation + Modules — the real architecture */}      <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14 max-w-2xl mx-auto">
             <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">How TeachBase is built</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">One foundation, switch on what you need</h2>
-            <p className="text-lg text-neutral-600">Every account starts with the same core — students, payers, locations and agreements. Everything else is a module you can turn on only when your practice actually needs it.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Start free, add what you need</h2>
+            <p className="text-lg text-neutral-600">Every account starts with the same core Foundation — 100% free. Turn on advanced modules only when your practice actually needs them.</p>
           </div>
  
           {/* Foundation — always included */}
@@ -126,90 +125,90 @@ export default function LandingPage() {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold">Foundation</h3>
-                  <span className="bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Always included</span>
+                  <span className="bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Always Included • Free Forever</span>
                 </div>
                 <p className="text-neutral-300 leading-relaxed">
-                  Students, guardians &amp; payers, teaching locations, lesson types and your teaching agreement — plus the parent portal. This never sits behind a toggle: it&apos;s what makes every module below actually connect to the same students and the same records, instead of feeling like separate apps bolted together.
+                  Everything a solo tutor needs to run their business day one — Students, Payers, Contracts, Quick Invoice, and the parent microsite — free, no card required. This is the core platform that keeps your practice connected.
                 </p>
               </div>
             </div>
           </div>
  
-          {/* The 9 modules */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Quick Invoicing</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Generate professional quick invoices, track payment history, log attendance, and email PDF invoices directly to parents.</p>
-            </div>
+          {/* The 8 modules */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Scheduling & Timetable */}
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
               <h3 className="font-semibold text-neutral-900 mb-1.5">Scheduling &amp; Timetable</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Build a timetable in bulk or lesson by lesson, block off unavailable time, run a waitlist and check journey times between venues.</p>
+              <p className="text-xs text-neutral-600 leading-relaxed">bulk timetabling, waitlists, travel-time checks</p>
             </div>
 
-            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Curriculum &amp; Content</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Reusable curriculum plans, section-by-section progress a family can actually see, shared resources and assignments — or sell your own video courses.</p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
-              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
-              </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Compliance &amp; Safety</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Cancellation and no-show policies per location. Certifications, incident logs and safeguarding records are always free and included — never a toggle, on any plan.</p>
-            </div>
-
+            {/* Term Calendars */}
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M20 12a8 8 0 11-16 0 8 8 0 0116 0zM12 8v4l3 2" /></svg>
               </div>
               <h3 className="font-semibold text-neutral-900 mb-1.5">Term Calendars</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Term and holiday dates per location, so bulk timetabling automatically skips the weeks you&apos;re not teaching.</p>
+              <p className="text-xs text-neutral-600 leading-relaxed">term-aware scheduling with holidays built in</p>
             </div>
 
+            {/* Curriculum & Content */}
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2-5.24" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Group Teaching</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Run group classes alongside your one-to-one work, plan sessions in advance, and track loaned equipment and maintenance.</p>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Curriculum &amp; Content</h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">curriculum templates, resources, assignments, paid courses</p>
             </div>
 
+            {/* Compliance */}
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
               </div>
-              <h3 className="font-semibold text-neutral-900 mb-1.5">Commerce Add-ons</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">Sell chargeable extras like equipment hire, issue gift cards and run promo codes alongside your regular billing.</p>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Compliance</h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">cancellation policy management</p>
             </div>
 
+            {/* Embeds & Booking Widget */}
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg>
               </div>
               <h3 className="font-semibold text-neutral-900 mb-1.5">Embeds &amp; Booking Widget</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">A booking form you can drop straight into your own website or bio link, so new enquiries land directly in your dashboard.</p>
+              <p className="text-xs text-neutral-600 leading-relaxed">embeddable booking widget for your own site</p>
             </div>
 
-            <div className="p-6 rounded-2xl border-2 border-brand-500 bg-brand-50 relative">
-              <span className="absolute -top-3 left-5 bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">For growing teams</span>
-              <div className="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center mb-4">
+            {/* Commerce Add-ons */}
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694 4.125-8.25 4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Commerce Add-ons</h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">gift cards, promo codes, add-on catalog</p>
+            </div>
+
+            {/* Group Teaching */}
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2-5.24" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Group Teaching</h3>
+              <p className="text-xs text-neutral-600 leading-relaxed">group classes, session plans, equipment tracking</p>
+            </div>
+
+            {/* Organisation */}
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2-5.24" /></svg>
               </div>
               <h3 className="font-semibold text-neutral-900 mb-1.5">Organisation</h3>
-              <p className="text-sm text-neutral-700 leading-relaxed">Bring other instructors onto your account and log cover between you — for the day it stops being just you.</p>
+              <p className="text-xs text-neutral-600 leading-relaxed">add other instructors, assign cover</p>
             </div>
           </div>
-
+ 
           <p className="text-center text-sm text-neutral-500 mt-10 max-w-2xl mx-auto">
             Safety-related records — certifications, incident logs and safeguarding notes — are never gated behind a paid module, on any plan, under any circumstances.
           </p>
@@ -597,83 +596,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6b. Pricing tiers */}
-      <section className="py-24 bg-neutral-50 border-t border-neutral-200/50" id="pricing">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 max-w-2xl mx-auto">
-            <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">Pricing</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, honest pricing</h2>
-            <p className="text-lg text-neutral-600">Start free for two weeks - no card required. Prices below are illustrative for the trial.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
-
-            {/* Solo */}
-            <div className="bg-white border border-neutral-200 rounded-3xl p-8">
-              <h3 className="text-lg font-bold mb-1">Solo</h3>
-              <p className="text-sm text-neutral-500 mb-5">For a teacher just getting started.</p>
-              <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;9<span className="text-base font-semibold text-neutral-400">/mo</span></div>
-              <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors">Start free trial</Link>
-              <ul className="space-y-3">
-                {["Foundation: students, payers & locations", "Quick Invoicing module", "Scheduling & Timetable module", "Certifications & safeguarding, always free"].map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-neutral-600">
-                    <svg className="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Studio (highlighted) */}
-            <div className="relative bg-brand-600 text-white rounded-3xl p-8 shadow-xl md:-translate-y-3">
-              <span className="absolute -top-3 right-6 bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Best value</span>
-              <h3 className="text-lg font-bold mb-1">Studio</h3>
-              <p className="text-sm text-white/80 mb-5">For a busy independent practice.</p>
-              <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;19<span className="text-white/75 font-semibold text-base">/mo</span></div>
-              <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-white text-brand-600 hover:bg-neutral-50 transition-colors">Start free trial</Link>
-              <ul className="space-y-3">
-                {["Everything in Solo", "Term Calendars & Curriculum modules", "Compliance policies & Commerce add-ons", "Embeds, booking widget & Group Teaching"].map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-white/95">
-                    <svg className="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Team */}
-            <div className="bg-white border border-neutral-200 rounded-3xl p-8">
-              <h3 className="text-lg font-bold mb-1">Team</h3>
-              <p className="text-sm text-neutral-500 mb-5">For multi-instructor setups.</p>
-              <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;39<span className="text-base font-semibold text-neutral-400">/mo</span></div>
-              <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors">Talk to us</Link>
-              <ul className="space-y-3">
-                {["Everything in Studio", "Organisation module: invite instructors", "Cover assignments between accounts", "Priority support"].map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-neutral-600">
-                    <svg className="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-          </div>
-          <p className="text-center text-sm text-neutral-500 mt-8 max-w-2xl mx-auto">Every plan includes the Foundation with no extra charge — you&apos;re only ever paying for the modules (like Scheduling, Curriculum, or Quick Invoicing) that your practice actually uses. Certifications, incident logs and safeguarding records are always free, on every plan, with no exceptions.</p>
-        </div>
-      </section>
-
-      {/* 7. Final two-week trial call to action */}
       <section className="py-24 bg-brand-600 text-white text-center" id="get-started">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to run your practice from one place?</h2>
           <p className="text-xl text-brand-100 mb-10 max-w-2xl mx-auto">
-            Join independent teachers, tutors, instructors and coaches replacing scattered admin with one practical workspace. Try TeachBase completely free for 14 days.
+            Join independent teachers, tutors, instructors and coaches replacing scattered admin with one practical workspace. Start using TeachBase Foundation completely free today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup" className="px-8 py-4 bg-white text-brand-600 rounded-full text-lg font-bold hover:bg-neutral-50 transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600">
-              Start your free two-week trial
+            <Link href="/register" className="px-8 py-4 bg-white text-brand-600 rounded-full text-lg font-bold hover:bg-neutral-50 transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600">
+              Create your free account
             </Link>
           </div>
-          <p className="mt-6 text-brand-200 text-sm">No credit card required to start. Cancel anytime.</p>
+          <p className="mt-6 text-brand-200 text-sm">No credit card required. Free forever.</p>
         </div>
       </section>
 

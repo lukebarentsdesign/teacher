@@ -212,7 +212,6 @@ enum ModuleKey {
   EMBEDS
   COMMERCE
   GROUP_TEACHING
-  INVOICING
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for
@@ -333,6 +332,7 @@ model Teacher {
   stripeCustomerId       String?                    @unique
   platformSubscriptionId String?                    @unique
   platformStatus         PlatformSubscriptionStatus @default(TRIALING)
+  isPaidTier             Boolean                    @default(false)
 
   /// Stripe Connect Express account so parent payments land with the teacher, not TeachBase.
   stripeConnectAccountId String? @unique

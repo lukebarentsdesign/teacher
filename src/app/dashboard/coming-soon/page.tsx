@@ -5,44 +5,29 @@ import { FeatureFeedbackForm } from "./feedback-form";
 
 const COMING_SOON_FEATURES = [
   {
-    key: "parent_portal",
-    title: "Parent Portal",
-    description: "Self-service microsite for parents to view schedules, see lesson feedback, check outstanding balances, and sign contracts.",
-  },
-  {
-    key: "stripe_payments",
-    title: "Stripe Online Payments",
-    description: "Automatically collect payments via credit/debit card or Direct Debit links so payments sync directly into your cash balance.",
-  },
-  {
     key: "calendar_sync",
     title: "Two-way Calendar Sync",
     description: "Sync your lesson timetables automatically with Google Calendar, Apple Calendar, or Microsoft Outlook.",
   },
   {
-    key: "lesson_notes_sharing",
-    title: "Lesson Notes & Resource Library",
-    description: "Share teaching notes, sheets, audio tracks, and reference videos directly with students between lessons.",
+    key: "sms_notifications",
+    title: "SMS Reminders & Alerts",
+    description: "Send automated text reminders to parents and students for upcoming lessons, cancellations, or overdue payments.",
   },
   {
-    key: "group_classes",
-    title: "Group Classes & Shared Lessons",
-    description: "Schedule group bookings, manage waitlists, and calculate shared lesson rates automatically.",
+    key: "accounting_export",
+    title: "Accounting Integrations",
+    description: "Export ledger and invoice data directly to QuickBooks, Xero, or FreeAgent for easy tax reporting.",
   },
   {
-    key: "loans_maintenance",
-    title: "Equipment Loans & Maintenance Tracking",
-    description: "Track instruments, books, or materials lent to students and set alerts for service or repair schedules.",
+    key: "expense_receipt_scan",
+    title: "AI Receipt Scanning",
+    description: "Snap photos of receipts on your phone and automatically extract dates, tax, and categories for your expenses.",
   },
   {
-    key: "lone_worker_safety",
-    title: "Lone-Worker Safety & Routing",
-    description: "Check in/out of home visits with safety alerts for family contacts and track travel times between teaching locations.",
-  },
-  {
-    key: "gift_promo_courses",
-    title: "Gift Cards, Promo Codes & Courses",
-    description: "Sell structured lessons as package courses, offer seasonal gift cards, or distribute percentage/fixed discount codes.",
+    key: "interactive_whiteboard",
+    title: "Interactive Classroom Whiteboard",
+    description: "Share a live digital board with students during online lessons for real-time annotation and shared exercises.",
   },
 ];
 

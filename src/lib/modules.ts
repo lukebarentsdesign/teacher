@@ -111,44 +111,60 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "TeachingLocation and isn't tied to any GroupClass/SessionPlan — left ungated as Foundation-" +
       "adjacent, not module-specific.",
   },
-  INVOICING: {
-    key: "INVOICING",
-    label: "Quick invoicing",
-    description:
-      "Generate professional quick invoices, track payment history, log attendance, and email PDF invoices directly to parents.",
-  },
 };
 
-/**
- * DEFAULT_OPEN_UNTIL_PAYWALL: no paywall UI or Stripe wiring exists yet, so a teacher with no
- * TeacherModuleAccess row for a given module is currently treated as ENABLED — this is what keeps
- * every existing teacher's Organisation/Term-calendar access working exactly as it did before
- * this migration, with zero data backfill required. The day a real paywall ships, flip this to
- * `false` (and backfill ENABLED rows for anyone who should keep grandfathered access) rather than
- * changing the call sites that use hasModule().
- */
-const DEFAULT_OPEN_UNTIL_PAYWALL = true;
+export const PRICE_POINT_GBP_MONTHLY = 25;
 
 /** Whether `teacherId` currently has access to `moduleKey`. This is the only check any route,
  * server action, or nav item should use — never query TeacherModuleAccess directly. */
 export async function hasModule(teacherId: string, moduleKey: ModuleKey): Promise<boolean> {
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: teacherId },
+    select: { isPaidTier: true, createdAt: true },
+  });
+
+  if (!teacher) return false;
+
+  // Grandfathering cut-off: any account created before 2026-07-20T13:43:00Z remains unlocked
+  const GRANDFATHER_CUTOFF = new Date("2026-07-20T13:43:00Z");
+  if (teacher.isPaidTier || teacher.createdAt < GRANDFATHER_CUTOFF) {
+    return true;
+  }
+
   const access = await prisma.teacherModuleAccess.findUnique({
     where: { teacherId_moduleKey: { teacherId, moduleKey } },
   });
 
-  if (!access) return DEFAULT_OPEN_UNTIL_PAYWALL;
+  if (!access) return false;
   return access.status === "ENABLED" || access.status === "TRIAL";
 }
 
 /** Bulk variant for gating a full nav render in one query instead of one round-trip per module. */
 export async function getEnabledModules(teacherId: string): Promise<Set<ModuleKey>> {
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: teacherId },
+    select: { isPaidTier: true, createdAt: true },
+  });
+
+  const enabled = new Set<ModuleKey>();
+  if (!teacher) return enabled;
+
+  const GRANDFATHER_CUTOFF = new Date("2026-07-20T13:43:00Z");
+  const hasFullAccess = teacher.isPaidTier || teacher.createdAt < GRANDFATHER_CUTOFF;
+
+  if (hasFullAccess) {
+    for (const key of Object.keys(MODULE_REGISTRY) as ModuleKey[]) {
+      enabled.add(key);
+    }
+    return enabled;
+  }
+
   const rows = await prisma.teacherModuleAccess.findMany({ where: { teacherId } });
   const byKey = new Map(rows.map((r) => [r.moduleKey, r.status]));
 
-  const enabled = new Set<ModuleKey>();
   for (const key of Object.keys(MODULE_REGISTRY) as ModuleKey[]) {
     const status = byKey.get(key);
-    const isEnabled = status ? status === "ENABLED" || status === "TRIAL" : DEFAULT_OPEN_UNTIL_PAYWALL;
+    const isEnabled = status ? status === "ENABLED" || status === "TRIAL" : false;
     if (isEnabled) enabled.add(key);
   }
   return enabled;

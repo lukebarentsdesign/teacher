@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachBase — Clients, sessions and smooth monthly payments in one place</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a;
+    --ink-soft:#475569;
+    --muted:#94a3b8;
+    --line:#e6e9ee;
+    --bg:#eef0f3;
+    --card:#ffffff;
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --amber:#facc15;
+    --green:#22c55e;
+    --shadow:0 20px 45px -20px rgba(15,23,42,.28);
+    --shadow-sm:0 10px 30px -14px rgba(15,23,42,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .shell{max-width:1200px;margin:22px auto;background:#fff;border-radius:26px;overflow:hidden;box-shadow:var(--shadow);}
+  a{text-decoration:none;color:inherit}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 40px;border-bottom:1px solid var(--line);}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:20px;letter-spacing:-.02em;}
+  .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#4338ca);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px -4px rgba(67,56,202,.6)}
+  .logo svg{width:20px;height:20px;display:block}
+  .navlinks{display:flex;gap:34px;font-size:15px;color:var(--ink-soft);font-weight:500}
+  .navlinks a:hover{color:var(--ink)}
+  .navcta{display:flex;align-items:center;gap:20px}
+  .navcta .signin{font-size:15px;font-weight:600}
+  .btn{font-family:inherit;font-weight:600;font-size:15px;border:none;cursor:pointer;border-radius:11px;transition:.15s;}
+  .btn-ghost{border:1px solid var(--line);background:#fff;padding:10px 18px;color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .btn-blue{background:var(--blue);color:#fff;padding:14px 26px;box-shadow:0 12px 24px -10px rgba(37,99,235,.7)}
+  .btn-blue:hover{background:var(--blue-dark)}
+
+  /* HERO */
+  .hero{position:relative;padding:76px 40px 96px;text-align:center;overflow:hidden;
+    background-image:radial-gradient(var(--line) 1px, transparent 1px);background-size:18px 18px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--blue);background:#eff4ff;border:1px solid #dbe6ff;padding:7px 14px;border-radius:100px;margin-bottom:26px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--blue)}
+  h1{font-size:64px;line-height:1.02;letter-spacing:-.035em;font-weight:800;}
+  h1 .grey{color:var(--muted)}
+  .sub{margin:24px auto 34px;max-width:540px;font-size:18px;color:var(--ink-soft);line-height:1.55}
+  .hero .btn-blue{font-size:16px}
+  .microcopy{margin-top:16px;font-size:13px;color:var(--muted)}
+
+  .cube{width:66px;height:66px;border-radius:19px;background:linear-gradient(135deg,#6366f1,#4338ca);display:flex;align-items:center;justify-content:center;margin:0 auto 30px;box-shadow:0 18px 32px -14px rgba(67,56,202,.55)}
+  .cube svg{width:42px;height:42px;display:block}
+
+  /* floating cards */
+  .float{position:absolute;background:#fff;border-radius:16px;box-shadow:var(--shadow-sm);padding:14px 16px;font-size:12px;text-align:left}
+  .f-note{top:60px;left:34px;width:210px;background:#fdf6c3;transform:rotate(-6deg);font-family:'Inter';color:#5b5320;line-height:1.5;font-weight:500;box-shadow:0 16px 30px -18px rgba(80,70,0,.5)}
+  .pin{width:12px;height:12px;border-radius:50%;background:#e11d48;box-shadow:0 0 0 4px #fecdd3;position:absolute;top:-5px;left:50%;transform:translateX(-50%)}
+  .f-check{bottom:-18px;left:14px;width:56px;height:56px;background:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  .f-check div{width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+
+  .f-remind{top:56px;right:34px;width:210px}
+  .f-remind h4{font-size:14px;margin-bottom:10px}
+  .f-remind .row{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:#f1f5f9;border-radius:10px;margin-top:8px;color:var(--ink-soft)}
+  .f-remind .tag{color:var(--blue);font-weight:600}
+
+  .f-tasks{bottom:26px;left:30px;width:255px}
+  .f-tasks h4{font-size:13px;color:var(--ink-soft);margin-bottom:12px;font-weight:600}
+  .task{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .task:first-of-type{border-top:none}
+  .task .ic{width:26px;height:26px;border-radius:7px;background:#eff4ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto}
+  .task .body{flex:1}
+  .task .t1{font-size:12px;font-weight:600}
+  .task .t2{font-size:10px;color:var(--muted)}
+  .bar{height:5px;background:#eef2f7;border-radius:100px;margin-top:5px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--blue);border-radius:100px}
+
+  .f-int{bottom:34px;right:30px;width:220px}
+  .f-int h4{font-size:13px;font-weight:600;margin-bottom:12px}
+  .f-int .apps{display:flex;gap:10px}
+  .f-int .app{width:46px;height:46px;border-radius:12px;background:#fff;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+  /* SECTIONS */
+  section.block{padding:84px 60px}
+  .center{text-align:center;max-width:640px;margin:0 auto 54px}
+  .kicker{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+  h2{font-size:40px;letter-spacing:-.03em;font-weight:800;line-height:1.1}
+  .center p{margin-top:16px;font-size:17px;color:var(--ink-soft);line-height:1.6}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;transition:.18s}
+  .feat:hover{box-shadow:var(--shadow-sm);transform:translateY(-3px);border-color:#dbe3ee}
+  .feat .icon{width:48px;height:48px;border-radius:13px;background:#eff4ff;color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+  .feat h3{font-size:19px;letter-spacing:-.01em;margin-bottom:9px}
+  .feat p{font-size:15px;color:var(--ink-soft);line-height:1.55}
+
+  /* coming soon */
+  .soon{background:#f8fafc;border-top:1px solid var(--line)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#b45309;background:#fef3c7;border:1px solid #fde68a;padding:6px 13px;border-radius:100px;margin-bottom:14px}
+  .soongrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .scard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+  .scard .si{width:40px;height:40px;border-radius:11px;background:#f1f5f9;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .scard h4{font-size:16px;margin-bottom:7px}
+  .scard p{font-size:13.5px;color:var(--ink-soft);line-height:1.5}
+
+  /* CTA */
+  .cta{margin:0 60px 60px;background:#0f172a;border-radius:24px;padding:64px 40px;text-align:center;color:#fff;position:relative;overflow:hidden}
+  .cta:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px}
+  .cta h2{color:#fff;position:relative}
+  .cta p{position:relative;color:#cbd5e1;margin:16px auto 30px;max-width:520px;font-size:17px}
+  .cta .btn-blue{position:relative}
+
+  footer{padding:34px 60px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px;flex-wrap:wrap;gap:12px}
+  .honest{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px 18px;font-size:12.5px;color:var(--muted);max-width:640px;margin:0 auto;line-height:1.55;text-align:center}
+
+  svg{display:block}
+
+  /* SOLUTIONS + DASHBOARD MOCKUP */
+  .sol-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;max-width:940px;margin:0 auto 48px;text-align:left}
+  .sol-col .ic{width:34px;height:34px;color:var(--blue);margin-bottom:14px}
+  .sol-col h4{font-size:16px;margin-bottom:8px}
+  .sol-col p{font-size:14px;color:var(--ink-soft);line-height:1.55}
+  .dash{max-width:960px;margin:0 auto;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);background:#fff}
+  .dash-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:linear-gradient(180deg,#e0ecff,#eff5ff);border-bottom:1px solid rgba(15,23,42,.06)}
+  .dash-bar .l{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+  .dash-bar .l .m{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#6366f1,#4338ca)}
+  .dash-bar .r{display:flex;align-items:center;gap:14px;color:var(--ink-soft);font-size:13px}
+  .dash-body{display:grid;grid-template-columns:190px 1fr}
+  .dash-side{border-right:1px solid var(--line);padding:16px 12px;background:#fafbfc}
+  .dash-side .item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;font-size:13px;color:var(--ink-soft)}
+  .dash-side .item.active{background:#eef4ff;color:var(--blue);font-weight:600}
+  .dash-side .cap{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:16px 10px 6px}
+  .dash-main{padding:22px 22px;background:#f8fafc}
+  .dash-hi{font-size:22px;font-weight:700;margin-bottom:16px}
+  .dash-hi span{color:var(--muted)}
+  .dash-cards{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+  .dcard{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px}
+  .dcard h5{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:11px;display:flex;justify-content:space-between}
+  .d-sess{display:flex;align-items:center;gap:9px;padding:8px 0;font-size:12px;border-top:1px solid var(--line)}
+  .d-sess:first-of-type{border-top:none}
+  .d-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex:0 0 auto}
+  .d-sess .tm{margin-left:auto;color:var(--muted)}
+  .ring{width:78px;height:78px;border-radius:50%;background:conic-gradient(var(--blue) 0 72%, #e6e9ee 72% 100%);display:flex;align-items:center;justify-content:center;margin:4px auto 0}
+  .ring i{width:54px;height:54px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-style:normal}
+  .dcard .cc{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+  .dash-pay{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px;margin-top:14px}
+  .payrow{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:12px;border-top:1px solid var(--line)}
+  .payrow:first-of-type{border-top:none}
+  .payrow .nm{flex:1;font-weight:500}
+  .pbar{width:84px;height:5px;border-radius:100px;background:#eef2f7;overflow:hidden}
+  .pbar i{display:block;height:100%;background:var(--blue)}
+  .paid{color:var(--green);font-weight:600}
+  .due{color:#d97706;font-weight:600}
+
+  /* PRICING */
+  .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto;align-items:start}
+  .plan{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px 26px}
+  .plan.pro{background:var(--blue);color:#fff;box-shadow:0 26px 46px -20px rgba(37,99,235,.6);transform:translateY(-10px);position:relative}
+  .plan h4{font-size:18px;margin-bottom:4px}
+  .plan .desc{font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+  .plan.pro .desc{color:rgba(255,255,255,.82)}
+  .plan .amt{font-size:42px;font-weight:800;letter-spacing:-.02em;margin-bottom:14px}
+  .plan .amt small{font-size:16px;font-weight:600;color:var(--muted)}
+  .plan.pro .amt small{color:rgba(255,255,255,.78)}
+  .planbtn{display:block;text-align:center;width:100%;padding:12px;border-radius:11px;font-weight:600;font-size:14px;margin-bottom:20px;border:none;cursor:pointer;background:var(--blue);color:#fff}
+  .plan.pro .planbtn{background:#fff;color:var(--blue)}
+  .plan.basic .planbtn{background:#eff4ff;color:var(--blue)}
+  .plan ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .plan li{font-size:13.5px;display:flex;gap:9px;align-items:center;color:var(--ink-soft)}
+  .plan.pro li{color:rgba(255,255,255,.92)}
+  .plan li svg{width:16px;height:16px;flex:0 0 auto;color:var(--blue)}
+  .plan.pro li svg{color:#fff}
+  .badge-pop{position:absolute;top:-16px;right:22px;background:var(--amber);color:#5b4708;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;box-shadow:var(--shadow-sm)}
+  .price-note{text-align:center;font-size:12px;color:var(--muted);margin-top:26px}
+
+  /* FOOTER CTA + ICONS */
+  .foot-icons{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:34px 0 8px}
+  .foot-icons .fi{width:54px;height:54px;border-radius:15px;background:#fff;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;color:var(--blue)}
+  .foot-icons .fi svg{width:24px;height:24px}
+  .scard .si svg{width:20px;height:20px}
+  .foot-cols{display:flex;justify-content:center;gap:46px;flex-wrap:wrap;margin:22px 0 30px}
+  .foot-cols a{color:var(--ink-soft);font-size:14px}
+  .foot-cols a:hover{color:var(--ink)}
+
+  @media(max-width:920px){
+    .dash-body{grid-template-columns:1fr}
+    .dash-side{display:none}
+    .dash-cards{grid-template-columns:1fr}
+    .sol-cols{grid-template-columns:1fr;gap:24px}
+    .price-grid{grid-template-columns:1fr;max-width:420px}
+    .plan.pro{transform:none}
+    .bill-grid{grid-template-columns:1fr 1fr!important}
+    .bill-callout{flex-direction:column}
+    .float{display:none}
+    h1{font-size:44px}
+    .grid,.soongrid{grid-template-columns:1fr 1fr}
+    section.block{padding:60px 28px}
+    nav{padding:18px 22px}
+    .navlinks{display:none}
+    .cta{margin:0 24px 40px}
+    footer{padding:28px}
+  }
+  @media(max-width:600px){.grid,.soongrid{grid-template-columns:1fr}.bill-grid{grid-template-columns:1fr!important}h1{font-size:36px}h2{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- NAV -->
+  <nav>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5.4" y="18" width="4.3" height="9" rx="2.15" fill="#fff" fill-opacity=".6"/><rect x="13.85" y="12.5" width="4.3" height="14.5" rx="2.15" fill="#fff" fill-opacity=".8"/><rect x="22.3" y="7" width="4.3" height="20" rx="2.15" fill="#fff"/><circle cx="24.45" cy="4.3" r="2.7" fill="#fff"/></svg></div>
+      TeachBase
+    </div>
+    <div class="navlinks">
+      <a href="#solutions">Solutions</a>
+      <a href="#features">Features</a>
+      <a href="#billing">Billing</a>
+      <a href="#soon">Coming soon</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <div class="navcta">
+      <a class="signin" href="#">Sign in</a>
+      <button class="btn btn-ghost">Book a demo</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <!-- floating cards -->
+    <div class="float f-note"><span class="pin"></span>Take notes to keep track of each client, and stay on top of sessions and payments with ease.</div>
+    <div class="float f-check"><div>✓</div></div>
+
+    <div class="float f-remind">
+      <h4>Reminders</h4>
+      <div class="row"><span>Today's lesson</span></div>
+      <div class="row"><span>Guitar · Emma R.</span><span class="tag">16:00</span></div>
+    </div>
+
+    <div class="float f-tasks">
+      <h4>This month</h4>
+      <div class="task">
+        <div class="ic">£</div>
+        <div class="body"><div class="t1">Emma R. — smooth monthly</div><div class="t2">£80 / month · paid</div><div class="bar"><i style="width:100%"></i></div></div>
+      </div>
+      <div class="task">
+        <div class="ic">£</div>
+        <div class="body"><div class="t1">Jack P. — smooth monthly</div><div class="t2">£64 / month · outstanding</div><div class="bar"><i style="width:40%"></i></div></div>
+      </div>
+    </div>
+
+    <div class="float f-int">
+      <h4>Works with your tools</h4>
+      <div class="apps">
+        <div class="app" style="color:#ea4335">M</div>
+        <div class="app" style="color:#0f9d58">Cal</div>
+        <div class="app" style="color:#635bff">S</div>
+      </div>
+    </div>
+
+    <div class="cube"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5.4" y="18" width="4.3" height="9" rx="2.15" fill="#fff" fill-opacity=".6"/><rect x="13.85" y="12.5" width="4.3" height="14.5" rx="2.15" fill="#fff" fill-opacity=".8"/><rect x="22.3" y="7" width="4.3" height="20" rx="2.15" fill="#fff"/><circle cx="24.45" cy="4.3" r="2.7" fill="#fff"/></svg></div>
+    <div class="eyebrow"><span class="dot"></span>Built for self-employed teachers, instructors and coaches</div>
+    <h1>Clients, sessions and pay<br><span class="grey">all in one place</span></h1>
+    <p class="sub">Keep every client, payer and payment contact organised — and turn your working weeks into a clear monthly amount, without the spreadsheet juggling.</p>
+    <button class="btn btn-blue">Book a free demo</button>
+    <div class="microcopy">Two-week trial · no card required</div>
+  </header>
+
+  <!-- SOLUTIONS + DASHBOARD -->
+  <section class="block" id="solutions">
+    <div class="center">
+      <div class="kicker">Solutions</div>
+      <h2>Solve your biggest admin headaches</h2>
+    </div>
+    <div class="sol-cols">
+      <div class="sol-col">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+        <h4>Steady income, not a rollercoaster</h4>
+        <p>Turn a year of sessions into equal monthly amounts so you&apos;re paid the same in August as in September.</p>
+      </div>
+      <div class="sol-col">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>
+        <h4>Stop chasing payments</h4>
+        <p>Every client&apos;s running balance is always up to date, so you can see who&apos;s paid at a glance.</p>
+      </div>
+      <div class="sol-col">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4H4zM4 12h10v8H4zM17 12h3v8h-3z"/></svg>
+        <h4>One place, no spreadsheets</h4>
+        <p>Clients, sessions, locations, invoices and income — organised together instead of scattered across tabs.</p>
+      </div>
+    </div>
+
+    <div class="dash" role="img" aria-label="TeachBase dashboard mockup">
+      <div class="dash-bar">
+        <div class="l"><span class="m"></span>TeachBase</div>
+        <div class="r"><span>Monday, 14 September</span><span>◍</span><span>Amanda P.</span></div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-side">
+          <div class="item active">◉ Today</div>
+          <div class="item">◎ Clients</div>
+          <div class="item">◎ Timetable</div>
+          <div class="item">◎ Invoices</div>
+          <div class="item">◎ Payments</div>
+          <div class="cap">Setup</div>
+          <div class="item">◦ Locations</div>
+          <div class="item">◦ Term calendar</div>
+          <div class="item">◦ Lesson types</div>
+        </div>
+        <div class="dash-main">
+          <div class="dash-hi">Good morning, <span>Amanda</span></div>
+          <div class="dash-cards">
+            <div class="dcard">
+              <h5>Today&apos;s sessions <span>4</span></h5>
+              <div class="d-sess"><span class="d-dot"></span>Amelia Carter — 30 min<span class="tm">09:00</span></div>
+              <div class="d-sess"><span class="d-dot"></span>Oliver James — 45 min<span class="tm">10:30</span></div>
+              <div class="d-sess"><span class="d-dot"></span>Priya Shah — 30 min<span class="tm">16:00</span></div>
+              <div class="d-sess"><span class="d-dot"></span>Group class — 6 in<span class="tm">17:30</span></div>
+            </div>
+            <div class="dcard">
+              <h5>This month</h5>
+              <div class="ring"><i>72%</i></div>
+              <div class="cc">£2,080 of £2,880 received</div>
+            </div>
+          </div>
+          <div class="dash-pay">
+            <div class="payrow"><span class="nm">Carter family</span><span class="pbar"><i style="width:100%"></i></span><span class="paid">Paid</span></div>
+            <div class="payrow"><span class="nm">O. James</span><span class="pbar"><i style="width:100%"></i></span><span class="paid">Paid</span></div>
+            <div class="payrow"><span class="nm">Shah family</span><span class="pbar"><i style="width:40%"></i></span><span class="due">Due</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:16px">Illustrative dashboard — figures are examples.</p>
+  </section>
+
+  <!-- FEATURES (verified claims) -->
+  <section class="block" id="features">
+    <div class="center">
+      <div class="kicker">What TeachBase does today</div>
+      <h2>Everything a teaching business needs to stay organised</h2>
+      <p>The essentials for running a self-employed teaching or coaching practice — clients, payers, locations and money — ready to use now.</p>
+    </div>
+    <div class="grid">
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Clients &amp; payers in one place</h3>
+        <p>Keep clients, their guardians and payment contacts together, with several clients linked to a single payer for family or group billing.</p>
+      </div>
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <h3>Locations &amp; term calendars</h3>
+        <p>Set up teaching locations, rooms and term calendars — schools, home visits, your studio or online.</p>
+      </div>
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        </div>
+        <h3>Invoice &amp; statement PDFs</h3>
+        <p>Download a clear PDF statement or invoice for any client, built from their ledger entries.</p>
+      </div>
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+        </div>
+        <h3>Record payments</h3>
+        <p>Record manual payments against a client's subscription and watch the running balance update automatically.</p>
+      </div>
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+        </div>
+        <h3>Make-up credits &amp; cancellations</h3>
+        <p>Track make-up credits and cancellation outcomes so missed sessions are handled fairly and transparently.</p>
+      </div>
+
+      <div class="feat">
+        <div class="icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        </div>
+        <h3>Accounting export</h3>
+        <p>Export your ledger data as a CSV, ready to hand to your accountant or drop into your own books.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FLEXIBLE BILLING -->
+  <section class="block" id="billing-models">
+    <div class="center">
+      <div class="kicker">Flexible billing</div>
+      <h2>Bill however you and your clients prefer</h2>
+      <p>TeachBase isn&apos;t only for monthly plans. Charge each client the way that fits them — and switch model whenever you need to.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:960px;margin:0 auto 34px" class="bill-grid">
+      <div class="feat">
+        <div class="icon" style="background:#f1f5f9;color:var(--ink-soft)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9l2 2 4-4"/></svg></div>
+        <h3>Pay as you go</h3>
+        <p>Individually booked lessons, charged and paid one at a time.</p>
+      </div>
+      <div class="feat">
+        <div class="icon" style="background:#f1f5f9;color:var(--ink-soft)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+        <h3>Weekly</h3>
+        <p>Regular weekly charges for standing lesson slots.</p>
+      </div>
+      <div class="feat">
+        <div class="icon" style="background:#f1f5f9;color:var(--ink-soft)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></div>
+        <h3>Termly</h3>
+        <p>One invoice per term, based on the lessons in that term.</p>
+      </div>
+      <div class="feat" style="border:2px solid var(--blue);background:#eff4ff;position:relative">
+        <span style="position:absolute;top:-11px;left:20px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px">The clever bit</span>
+        <div class="icon" style="background:var(--blue);color:#fff"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 14l3-3 3 3 4-5"/></svg></div>
+        <h3>Smooth monthly</h3>
+        <p>A year of lessons spread into equal monthly payments.</p>
+      </div>
+    </div>
+    <div style="max-width:960px;margin:0 auto;background:#0f172a;color:#fff;border-radius:22px;padding:34px 36px;display:flex;gap:22px;align-items:flex-start" class="bill-callout">
+      <div style="width:48px;height:48px;border-radius:14px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <div>
+        <h3 style="font-size:22px;letter-spacing:-.01em;margin-bottom:10px">Smooth monthly is the fairest plan — and the biggest headache to set up</h3>
+        <p style="color:#cbd5e1;line-height:1.6;font-size:15px">Working out a year of lessons, dividing it evenly, handling term breaks and mid-year starts, then convincing every parent it&apos;s fair — most teachers give up and go back to lumpy termly invoices. TeachBase does the maths for you, spreads the year into equal payments, and hands you clear, transparent figures to share, so it&apos;s an easy &ldquo;yes&rdquo; for families. <span style="color:#94a3b8">The guided smooth-payment calculator is in preview for the trial.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BILLING SPOTLIGHT -->
+  <section class="block" id="billing" style="background:#f8fafc;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="center">
+      <div class="kicker">The heart of TeachBase</div>
+      <h2>Smooth monthly payments, made clear</h2>
+      <p>Set up subscription billing for each client and preview the smooth-payment calculator we're bringing to trial — so a year of sessions becomes one steady monthly figure.</p>
+    </div>
+    <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-sm);padding:30px 34px">
+      <div style="display:flex;justify-content:space-between;font-size:15px;color:var(--ink-soft);padding:12px 0;border-bottom:1px solid var(--line)"><span>Sessions this year</span><span style="font-weight:600;color:var(--ink)">30</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;color:var(--ink-soft);padding:12px 0;border-bottom:1px solid var(--line)"><span>Price per session</span><span style="font-weight:600;color:var(--ink)">£32</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;color:var(--ink-soft);padding:12px 0;border-bottom:1px solid var(--line)"><span>Annual total</span><span style="font-weight:600;color:var(--ink)">£960</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;color:var(--ink-soft);padding:12px 0;border-bottom:1px solid var(--line)"><span>Spread across</span><span style="font-weight:600;color:var(--ink)">12 months</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:18px"><span style="font-size:16px;font-weight:600">Smooth monthly payment</span><span style="font-size:30px;font-weight:800;color:var(--blue);letter-spacing:-.02em">£80</span></div>
+    </div>
+    <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:18px">Example calculation. The guided calculator is in preview for the trial.</p>
+  </section>
+
+  <!-- COMING SOON -->
+  <section class="block soon" id="soon">
+    <div class="center">
+      <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:inline-block;vertical-align:-1px;margin-right:5px"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>On the roadmap</div>
+      <h2>Coming soon — and we want your vote</h2>
+      <p>These features are in development. Try the trial, tell us which ones matter most, and help shape what we build next.</p>
+    </div>
+    <div class="soongrid">
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h4>Client portal</h4><p>One secure place for clients and parents to view invoices, balances and sessions.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><h4>Online card payments</h4><p>Let clients pay by card, with money going straight to you. (Manual tracking is available now.)</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 15l2 2 4-4"/></svg></div><h4>Calendar sync</h4><p>Two-way Google &amp; Outlook sync. Individual session calendar files work today.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><h4>Payment reminders</h4><p>Gentle automatic nudges when a payment is due or overdue.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div><h4>Session notes &amp; resources</h4><p>Keep notes and share materials with your clients.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 11h.01M15 11h.01"/></svg></div><h4>School timetables</h4><p>Manage terms, rooms, travel and pupil timetables across schools.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h4>Group &amp; shared sessions</h4><p>Small-group sessions with shared billing built in.</p></div>
+      <div class="scard"><div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12l8.73-5.04M12 22V12"/></svg></div><h4>Equipment tracking</h4><p>Track loaned equipment, instruments and books with due-back dates.</p></div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="block" id="pricing" style="background:#f8fafc;border-top:1px solid var(--line)">
+    <div class="center">
+      <div class="kicker">Pricing</div>
+      <h2>Simple, honest pricing</h2>
+      <p>Start free for two weeks. No card required. Prices below are illustrative for the trial.</p>
+    </div>
+    <div class="price-grid">
+      <div class="plan basic">
+        <h4>Solo</h4>
+        <div class="desc">For a teacher just getting started.</div>
+        <div class="amt">£9<small>/mo</small></div>
+        <button class="planbtn">Start free trial</button>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Up to 25 clients</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Clients, payers &amp; locations</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Invoice PDFs &amp; payment tracking</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>CSV export</li>
+        </ul>
+      </div>
+      <div class="plan pro">
+        <div class="badge-pop">Best value</div>
+        <h4>Studio</h4>
+        <div class="desc">For a busy independent practice.</div>
+        <div class="amt">£19<small>/mo</small></div>
+        <button class="planbtn">Start free trial</button>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Unlimited clients</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Everything in Solo</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Term calendars &amp; timetabling</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Make-up credits &amp; income forecast</li>
+        </ul>
+      </div>
+      <div class="plan basic">
+        <h4>Team</h4>
+        <div class="desc">For multi-instructor setups.</div>
+        <div class="amt">£39<small>/mo</small></div>
+        <button class="planbtn">Talk to us</button>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Everything in Studio</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Multiple instructors</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Cover assignments</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Priority support</li>
+        </ul>
+      </div>
+    </div>
+    <p class="price-note">Coming-soon features (online payments, parent portal, calendar sync) are included as they ship — no price change during your trial.</p>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta" id="get-started">
+    <h2>Spend less time on admin,<br>more time teaching</h2>
+    <p>Join the two-week trial and set up your clients, payers and monthly billing in under fifteen minutes.</p>
+    <button class="btn btn-blue">Book a free demo</button>
+  </div>
+
+  <!-- honesty note -->
+  <div style="padding:0 60px 40px">
+    <div class="honest">TeachBase is in active development. Features under “What TeachBase does today” are available now; “Coming soon” features are planned and shown here for feedback. We describe online payments, invoice sending, calendar sync and the parent portal only where they are ready — and clearly label everything that isn't.</div>
+  </div>
+
+  <!-- footer icon band -->
+  <div style="padding:10px 60px 6px">
+    <div class="foot-icons">
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+      <span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></span>
+    </div>
+    <div class="foot-cols">
+      <a href="#solutions">Solutions</a>
+      <a href="#features">Features</a>
+      <a href="#billing">Billing</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#soon">Roadmap</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="brand" style="font-size:17px">
+      <div class="logo" style="width:26px;height:26px"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:17px;height:17px"><rect x="5.4" y="18" width="4.3" height="9" rx="2.15" fill="#fff" fill-opacity=".6"/><rect x="13.85" y="12.5" width="4.3" height="14.5" rx="2.15" fill="#fff" fill-opacity=".8"/><rect x="22.3" y="7" width="4.3" height="20" rx="2.15" fill="#fff"/><circle cx="24.45" cy="4.3" r="2.7" fill="#fff"/></svg></div>
+      TeachBase
+    </div>
+    <div>© 2026 TeachBase · For self-employed teachers, instructors and coaches</div>
+  </footer>
+
+</div>
+</body>
+</html>

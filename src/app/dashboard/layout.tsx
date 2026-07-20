@@ -53,6 +53,7 @@ export default async function DashboardLayout({
       archetype={teacher?.archetype ?? null}
       earnedPhase3Keys={earnedPhase3Keys}
       enabledModules={enabledModules}
+      isPaidTier={teacher?.isPaidTier ?? false}
     >
       {children}
     </DashboardChrome>
