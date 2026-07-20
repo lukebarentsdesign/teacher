@@ -7,8 +7,8 @@ Use this as a standalone prompt to fully test everything built across the two ro
 
 ## Prompt
 
-You are testing the Learnio app after a large feature push (25 commits implementing the full
-`learnio-roadmap-v2.md` doc and its later revision). Nothing in this list has been manually
+You are testing the TeachBase app after a large feature push (25 commits implementing the full
+`teachbase-roadmap-v2.md` doc and its later revision). Nothing in this list has been manually
 verified in a browser yet — only `tsc`/`eslint`/`jest`/`next build`, plus an authenticated-curl
 smoke test of every new route, have passed. Your job is to actually exercise these flows in a
 browser and report back concrete pass/fail per item, not just "looks fine."

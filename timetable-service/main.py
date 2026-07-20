@@ -16,7 +16,7 @@ from fastapi import FastAPI, HTTPException
 from models import TimetableRequest, TimetableResponse
 from solver import solve_timetable
 
-app = FastAPI(title="Learnio Timetable Service", version="0.1.0")
+app = FastAPI(title="TeachBase Timetable Service", version="0.1.0")
 
 
 @app.get("/health")

@@ -1,4 +1,4 @@
-# Learnio Timetable Service
+# TeachBase Timetable Service
 
 A separate Python microservice for timetable generation, using Google OR-Tools' CP-SAT
 constraint solver. Kept out of the main Next.js/TypeScript app deliberately — see

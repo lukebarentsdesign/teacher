@@ -1,13 +1,13 @@
-# Learnio Design System & Database Guide
+# TeachBase Design System & Database Guide
 
-Three companion documents for building Learnio with intention and performance.
+Three companion documents for building TeachBase with intention and performance.
 
 ---
 
 ## The Three Documents
 
 ### 1. [design-system.md](design-system.md)
-**What**: Complete visual design language for Learnio.
+**What**: Complete visual design language for TeachBase.
 
 **Read this to**: Understand the aesthetic direction, typography choices, color system, spacing, motion, accessibility standards, and component patterns.
 
@@ -28,7 +28,7 @@ Three companion documents for building Learnio with intention and performance.
 ---
 
 ### 2. [supabase-best-practices.md](supabase-best-practices.md)
-**What**: Performance, safety, and maintainability guide for Learnio's PostgreSQL database via Supabase + Prisma.
+**What**: Performance, safety, and maintainability guide for TeachBase's PostgreSQL database via Supabase + Prisma.
 
 **Read this to**: Understand multi-tenant query patterns, N+1 problem prevention, ledger optimization, indexing strategy, backup procedures, and monitoring.
 
@@ -211,7 +211,7 @@ Three companion documents for building Learnio with intention and performance.
 - [ ] **Motion**: Does this animate with purpose? No scattered micro-interactions?
 - [ ] **Accessibility**: WCAG AA? Contrast 4.5:1? Focus rings visible? Keyboard nav works?
 - [ ] **Responsive**: Tested on 390px (mobile) and 1400px (desktop)?
-- [ ] **Consistency**: Does this feel like Learnio, not a generic template?
+- [ ] **Consistency**: Does this feel like TeachBase, not a generic template?
 
 ---
 
@@ -233,7 +233,7 @@ Three companion documents for building Learnio with intention and performance.
 - **Database Best Practices**: [supabase-best-practices.md](supabase-best-practices.md)
 - **Design Tokens (CSS)**: [../src/styles/design-tokens.css](../src/styles/design-tokens.css)
 - **Build Order & Status**: [../CLAUDE.md](../CLAUDE.md)
-- **Full Roadmap**: [../learnio-roadmap-v2.md](../learnio-roadmap-v2.md)
+- **Full Roadmap**: [../teachbase-roadmap-v2.md](../teachbase-roadmap-v2.md)
 
 ---
 

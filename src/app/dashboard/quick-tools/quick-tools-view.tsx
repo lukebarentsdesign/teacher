@@ -118,6 +118,7 @@ export function QuickToolsView({
   recentLessons,
   unpaidInvoices,
   payers,
+  hasInvoicing = false,
 }: {
   students: StudentRow[];
   locations: LocationRow[];
@@ -125,6 +126,7 @@ export function QuickToolsView({
   recentLessons: LessonRow[];
   unpaidInvoices: InvoiceRow[];
   payers: PayerRow[];
+  hasInvoicing?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -234,9 +236,11 @@ export function QuickToolsView({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/dashboard/quick-invoice" className="rounded-lg bg-neutral-900 px-3 py-2 text-xs font-black text-white">
-            Quick Invoice
-          </Link>
+          {hasInvoicing && (
+            <Link href="/dashboard/quick-invoice" className="rounded-lg bg-neutral-900 px-3 py-2 text-xs font-black text-white">
+              Quick Invoice
+            </Link>
+          )}
           <Link href="/dashboard/timetable/new" className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-black text-neutral-700">
             Timetable Builder
           </Link>
@@ -310,23 +314,25 @@ export function QuickToolsView({
           </div>
         </Panel>
 
-        <Panel title="Quick Payment Tracker" icon={Banknote}>
-          <div className="max-h-80 overflow-y-auto rounded-lg border border-neutral-200">
-            {unpaidInvoices.length === 0 ? (
-              <p className="p-4 text-sm font-semibold text-neutral-400">No unpaid quick invoices.</p>
-            ) : unpaidInvoices.map((invoice) => (
-              <div key={invoice.id} className="grid gap-2 border-b border-neutral-100 p-3 last:border-0 md:grid-cols-[1fr_90px_100px_auto] md:items-center">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-neutral-900">{invoice.studentName}</p>
-                  <p className="text-[10px] font-bold uppercase text-neutral-400">{invoice.invoiceRef} due {new Date(invoice.dueDate).toLocaleDateString("en-GB")}</p>
+        {hasInvoicing && (
+          <Panel title="Quick Payment Tracker" icon={Banknote}>
+            <div className="max-h-80 overflow-y-auto rounded-lg border border-neutral-200">
+              {unpaidInvoices.length === 0 ? (
+                <p className="p-4 text-sm font-semibold text-neutral-400">No unpaid quick invoices.</p>
+              ) : unpaidInvoices.map((invoice) => (
+                <div key={invoice.id} className="grid gap-2 border-b border-neutral-100 p-3 last:border-0 md:grid-cols-[1fr_90px_100px_auto] md:items-center">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-neutral-900">{invoice.studentName}</p>
+                    <p className="text-[10px] font-bold uppercase text-neutral-400">{invoice.invoiceRef} due {new Date(invoice.dueDate).toLocaleDateString("en-GB")}</p>
+                  </div>
+                  <p className="text-sm font-black text-neutral-900">{formatMoney(invoice.totalAmount)}</p>
+                  <input type="number" min="0" className="rounded-lg border border-neutral-200 px-2 py-2 text-sm font-black" value={invoiceAmounts[invoice.id] ?? invoice.totalAmount} onChange={(e) => setInvoiceAmounts({ ...invoiceAmounts, [invoice.id]: Number(e.target.value) })} />
+                  <button type="button" onClick={() => markPaid(invoice)} className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-black text-white">Paid</button>
                 </div>
-                <p className="text-sm font-black text-neutral-900">{formatMoney(invoice.totalAmount)}</p>
-                <input type="number" min="0" className="rounded-lg border border-neutral-200 px-2 py-2 text-sm font-black" value={invoiceAmounts[invoice.id] ?? invoice.totalAmount} onChange={(e) => setInvoiceAmounts({ ...invoiceAmounts, [invoice.id]: Number(e.target.value) })} />
-                <button type="button" onClick={() => markPaid(invoice)} className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-black text-white">Paid</button>
-              </div>
-            ))}
-          </div>
-        </Panel>
+              ))}
+            </div>
+          </Panel>
+        )}
 
         <Panel title="Quick Message Centre" icon={MessageSquare}>
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
@@ -383,10 +389,12 @@ export function QuickToolsView({
         </Panel>
 
         <Panel title="Quick Term Setup" icon={Settings2}>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className={`grid gap-2 ${hasInvoicing ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
             <Link href="/dashboard/term-calendars" className="rounded-lg border border-neutral-200 px-3 py-3 text-xs font-black text-neutral-800 hover:bg-neutral-50">Term Dates</Link>
             <Link href="/dashboard/timetable/new" className="rounded-lg border border-neutral-200 px-3 py-3 text-xs font-black text-neutral-800 hover:bg-neutral-50">Generate Timetable</Link>
-            <Link href="/dashboard/quick-invoice" className="rounded-lg border border-neutral-200 px-3 py-3 text-xs font-black text-neutral-800 hover:bg-neutral-50">Invoice Periods</Link>
+            {hasInvoicing && (
+              <Link href="/dashboard/quick-invoice" className="rounded-lg border border-neutral-200 px-3 py-3 text-xs font-black text-neutral-800 hover:bg-neutral-50">Invoice Periods</Link>
+            )}
           </div>
         </Panel>
       </div>

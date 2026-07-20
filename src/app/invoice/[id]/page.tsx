@@ -48,7 +48,7 @@ export default async function HostedQuickInvoicePage({
       <div className="mx-auto max-w-3xl rounded-2xl border border-neutral-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-neutral-200 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-neutral-400">Learnio Invoice</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-neutral-400">TeachBase Invoice</p>
             <h1 className="mt-1 text-2xl font-black tracking-tight text-neutral-950">{invoice.invoiceRef}</h1>
             <p className="mt-1 text-sm font-semibold text-neutral-500">For {invoice.student.name}</p>
           </div>

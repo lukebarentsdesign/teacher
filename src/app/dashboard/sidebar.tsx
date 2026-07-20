@@ -83,6 +83,7 @@ const CAT_SETUP_LIST: NavLink[] = [
 const MODULE_GATED_HREFS: Record<string, string> = {
   "/dashboard/term-calendars": "TERM_CALENDARS",
   "/dashboard/organisation": "ORGANISATION",
+  "/dashboard/quick-invoice": "INVOICING",
 };
 
 const CAT_BUSINESS_LIST: NavLink[] = [

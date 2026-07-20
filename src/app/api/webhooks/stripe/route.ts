@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { postPayment } from "@/lib/ledger";
 
 /**
- * Single webhook endpoint for both Learnio's own platform billing (this teacher paying us) and
+ * Single webhook endpoint for both TeachBase's own platform billing (this teacher paying us) and
  * Stripe Connect events (their connected account status). Connect events arrive with `event.account`
  * set to the connected account ID; platform events don't have it.
  */

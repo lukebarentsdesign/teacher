@@ -1,4 +1,4 @@
-# Learnio — Peripatetic Teacher App
+# TeachBase — Peripatetic Teacher App
 
 This file is the source of truth for any AI assistant working on this codebase. Read this before making decisions.
 
@@ -36,7 +36,7 @@ Core jobs to be done: track schools/students/payers, generate timetables (fixed/
 | Offline (view-only) | `@serwist/next` service worker ([src/app/sw.ts](src/app/sw.ts)), scoped to just `/dashboard/today` — see below |
 
 **Multi-tenant, not single-teacher:** originally scoped as one solo teacher's private tool, but
-Stripe requiring per-teacher payment collection (parents pay the teacher directly, not Learnio)
+Stripe requiring per-teacher payment collection (parents pay the teacher directly, not TeachBase)
 made this a real multi-tenant SaaS product instead — any teacher can register (`/register`) and
 gets isolated data. `Student.teacherId` and `Payer.teacherId` are the tenancy boundary;
 `TeachingLocation` is shared reference data, scoped per-teacher via `TeacherLocationLink`. Every
@@ -81,7 +81,7 @@ Supabase connectivity note: the direct database host for this project can resolv
 8. [x] Room booking, GroupClass, Assessment, LoanableItem/Loan modules
 9. [x] Teacher income forecasting dashboard + expense tracking
 
-**Roadmap v2 (phased after v1, as documented in [learnio-roadmap-v2.md](learnio-roadmap-v2.md)):**
+**Roadmap v2 (phased after v1, as documented in [teachbase-roadmap-v2.md](teachbase-roadmap-v2.md)):**
 
 | Part | Status | What |
 |------|--------|------|
@@ -110,7 +110,7 @@ Supabase connectivity note: the direct database host for this project can resolv
 | **Part 9c: Growing the business** | [x] Done | `TimetableWaitlist` (manual pipeline), `Student.referredBy` (free text), termly progress summary (generated, emails via Gmail). |
 | **Part 9d: Multi-location route feasibility** | [x] Done | `LocationTravelTime` (manual, directional). `checkDayFeasibility` (`src/lib/route-check.ts`, unit-tested) flags unrealistic travel windows. |
 | **Part 10: Onboarding UX & dynamic nav** | [x] Done | `Teacher.archetype`/`teachesGroups`/`controlsOwnSchedule` (derived). Registration → `/onboarding` (new). Screens 3-5 one wizard. Dynamic nav per archetype + Phase 3 triggers. |
-| **Part 11: Venue/space-hire** | Spun out | Decided as a separate product, not a Learnio mode. Only connection: calendar-only `.ics` free/busy sharing (pulled forward to build order #19). Research preserved as reference. |
+| **Part 11: Venue/space-hire** | Spun out | Decided as a separate product, not a TeachBase mode. Only connection: calendar-only `.ics` free/busy sharing (pulled forward to build order #19). Research preserved as reference. |
 | **Part 12: Concerts/events** | [x] Done | `Event` (with `equipment` requirements), `EventParticipant`. Linked to rehearsal lessons. |
 | **Part 12.2: Document storage** | [x] Done | `DocumentRecord` (entity type, doc type, file URL, expiry). `InstructorCertification` integrable as a specific docType. |
 | **Part 12.3: GoCardless** | Deferred | Stripe-only currently; direct debit integration low-priority despite common for UK subscriptions. |
@@ -299,7 +299,7 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **`LocationType` gained `ONLINE`**, added to the enum after the fact (this line previously said the enum was `SCHOOL`/`STUDENT_HOME`/`TEACHER_BASE`/`HIRED_VENUE`/`OTHER` — that was accurate when written but is now stale; `ONLINE` exists). `TeachingLocation.address` was already nullable from the original schema, so no change was needed there for "not meaningful for ONLINE."
 - **`Lesson.meetingUrl` is a teacher-supplied link, not an API-created meeting** — deliberately skips Zoom/Meet/Teams API integration for the MVP (no OAuth/API setup overhead until there's real usage to justify it, same reasoning as Gmail/Stripe's "still needs real credentials to verify end-to-end" caveats). Edited per-lesson on the Lesson detail page ([src/app/dashboard/lessons/[id]/meeting-url-form.tsx](src/app/dashboard/lessons/[id]/meeting-url-form.tsx)), not set at bulk-creation time — the bulk timetable generator and fixed/fluid generators don't ask for it, since only a subset of lessons need one.
 - **`.ics` export is one-off and one-way** (`src/lib/ics.ts`, pure/unit-tested; served via `GET /api/lessons/[id]/ics`) — an "add to calendar" convenience, never a two-way sync. The in-app calendar remains the single source of truth, consistent with the existing Google Calendar/Drive sync deferral. The endpoint checks either owning-teacher auth or microsite (guardian/student) access to the lesson's student — same dual-audience pattern as everywhere else a lesson is visible from both sides.
-- **Safeguarding guidance is policy text, not an enforced control** — a callout on the Lesson detail page for `ONLINE`-location lessons (waiting room, "host must be present," recording-with-retention recommendations), explicitly framed as guidance Learnio can't control given the MVP uses the teacher's own meeting link rather than a platform-created one. Revisit once (if) Zoom/Meet API integration is built — a platform-created meeting under the platform's own account would make these actually enforceable rather than just displayed.
+- **Safeguarding guidance is policy text, not an enforced control** — a callout on the Lesson detail page for `ONLINE`-location lessons (waiting room, "host must be present," recording-with-retention recommendations), explicitly framed as guidance TeachBase can't control given the MVP uses the teacher's own meeting link rather than a platform-created one. Revisit once (if) Zoom/Meet API integration is built — a platform-created meeting under the platform's own account would make these actually enforceable rather than just displayed.
 
 ## Sellable Course Content (roadmap v2 Part 5a)
 
@@ -348,7 +348,7 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 - **Distinct from the existing scheduling-conflict detection** — `splitConflicts` in `src/lib/timetable.ts` catches double-booking overlaps; `checkDayFeasibility` (`src/lib/route-check.ts`, pure, unit-tested) catches the opposite problem: two non-overlapping bookings scheduled too close together given known travel time between their locations. Both are real, different failure modes worth checking independently.
 - **`checkDayFeasibility` takes a lookup function, not a resolved map, as its second argument** — keeps the pure function decoupled from how the caller sources travel times (a `Map` built from `LocationTravelTime` rows in the real page, a plain object literal in tests) while still being trivially unit-testable.
 
-## Onboarding & Dynamic Nav (learnio-onboarding-ux-spec.md)
+## Onboarding & Dynamic Nav (teachbase-onboarding-ux-spec.md)
 
 - **Onboarding migration is applied in Supabase** — `prisma/migrations/20260713100000_add_onboarding_ux_fields` was hand-written (not generated via `prisma migrate diff`) and was applied successfully on 2026-07-14 using the Supabase Shared Pooler plus the local Prisma CLI (`node_modules\.bin\prisma.cmd migrate deploy`). `node_modules\.bin\prisma.cmd migrate status` reported "Database schema is up to date!" afterward. If a fresh/rotated database is used later, re-run the local Prisma CLI form rather than relying on `npx.cmd`, which previously printed a blank `Schema engine error` even though the pooler connection itself worked.
 - **`Teacher.archetype` is derived, never asked directly** (`deriveArchetype` in `src/lib/onboarding.ts`, pure/unit-tested) — 1:1 always folds to `SOLO` regardless of who controls the schedule; groups+venue-controlled has no archetype value at all (returns `null`), routing to the `OutOfScopeSignup` capture path instead of forcing a bad-fit archetype onto someone the product doesn't serve.
@@ -369,13 +369,13 @@ Full stage-by-stage record in [docs/onboarding-timetabling-progress.md](docs/onb
 
 ## Venue/Space-Hire is a Separate Product (roadmap v2 Part 11 — decided)
 
-**Decision: not a mode of Learnio.** The design work to integrate venue/space-hire matching into Learnio (a `Venue` tenant type, `VenueTeacherLink`, `initiatedBy` on `Lesson`, revenue-split logic) was thorough and coherent but rejected in favour of building two independent products connected only by calendar availability. Reasoning: (1) the businesses are genuinely different (solo teacher practice vs. venue room-hire coordination); (2) the hard parts of integrated design (relationship protection, revenue-split) are business/legal problems, not technical ones, and shouldn't drive architecture before the need is proven with a real venue customer; (3) consistent with other "prove it first" deferrals (Google/Zoom API, WhatsApp).
+**Decision: not a mode of TeachBase.** The design work to integrate venue/space-hire matching into TeachBase (a `Venue` tenant type, `VenueTeacherLink`, `initiatedBy` on `Lesson`, revenue-split logic) was thorough and coherent but rejected in favour of building two independent products connected only by calendar availability. Reasoning: (1) the businesses are genuinely different (solo teacher practice vs. venue room-hire coordination); (2) the hard parts of integrated design (relationship protection, revenue-split) are business/legal problems, not technical ones, and shouldn't drive architecture before the need is proven with a real venue customer; (3) consistent with other "prove it first" deferrals (Google/Zoom API, WhatsApp).
 
-**What connects them: calendar-only free/busy sharing.** Each side exposes an `.ics` feed for busy times (reuses the lightweight mechanism from Part 1b's online-lesson calendar export) — a teacher registered with an external venue shares their Learnio busy-time feed with the venue's system, and vice versa, so neither double-books the other. No shared student data, no shared billing, no identity resolution beyond "this calendar belongs to this teacher." Genuinely useful on its own and costs almost nothing — pulled forward to item 19 in the build order as a real near-term feature, separate from the venue product discussion.
+**What connects them: calendar-only free/busy sharing.** Each side exposes an `.ics` feed for busy times (reuses the lightweight mechanism from Part 1b's online-lesson calendar export) — a teacher registered with an external venue shares their TeachBase busy-time feed with the venue's system, and vice versa, so neither double-books the other. No shared student data, no shared billing, no identity resolution beyond "this calendar belongs to this teacher." Genuinely useful on its own and costs almost nothing — pulled forward to item 19 in the build order as a real near-term feature, separate from the venue product discussion.
 
 **Research preserved for future use:** Competitive analysis (Slate, AllBooked, Orbit), the `VenueTeacherLink`/matching-engine design thinking, Slate's qualification-gating and preferred-provider ranking, Part 12's equipment/workflow-board/unified-messaging ideas — all filed under "reusable reference for the future venue product" rather than wasted. When/if a real venue (Absolute Music or another) confirms they'd want this, it gets its own dedicated product spec, own name, own codebase.
 
-**Trigger to actually scope the venue product:** a direct conversation with an actual venue customer confirming they need provider-matching specifically (distinct from AllBooked's own room-booking, which they already solve). Until then, Learnio stays focused on solo freelance teachers, and the venue product idea stays dormant.
+**Trigger to actually scope the venue product:** a direct conversation with an actual venue customer confirming they need provider-matching specifically (distinct from AllBooked's own room-booking, which they already solve). Until then, TeachBase stays focused on solo freelance teachers, and the venue product idea stays dormant.
 
 ## Dev Server / Tailwind cwd Bug (fixed, but know why)
 

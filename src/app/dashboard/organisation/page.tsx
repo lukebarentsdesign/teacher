@@ -31,7 +31,7 @@ export default async function OrganisationPage() {
           <h1 className="text-2xl font-semibold text-neutral-900">Organisation</h1>
           <p className="text-sm text-neutral-500">
             The Organisation module isn&apos;t enabled on this account. It lets you invite other
-            Learnio teacher accounts as instructors and log cover assignments between you — get
+            TeachBase teacher accounts as instructors and log cover assignments between you — get
             in touch if you&apos;d like it switched on.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default async function OrganisationPage() {
           <h1 className="text-2xl font-semibold text-neutral-900">Organisation</h1>
           <p className="mt-1 text-sm text-neutral-500">
             You&apos;re a standalone account today — exactly as before. Starting an organisation
-            lets you invite other Learnio teacher accounts as instructors and log cover
+            lets you invite other TeachBase teacher accounts as instructors and log cover
             assignments between you. It doesn&apos;t change who owns any existing student, payer,
             or subscription record — those stay with whichever teacher account created them.
           </p>
@@ -82,7 +82,7 @@ export default async function OrganisationPage() {
         <section>
           <h2 className="mb-3 text-lg font-medium text-neutral-900">Invite an instructor</h2>
           <p className="mb-3 text-xs text-neutral-500">
-            Share the link with another Learnio teacher — they accept it from their own account,
+            Share the link with another TeachBase teacher — they accept it from their own account,
             you can&apos;t pull someone in without their consent. Only works while they aren&apos;t
             already part of an organisation.
           </p>

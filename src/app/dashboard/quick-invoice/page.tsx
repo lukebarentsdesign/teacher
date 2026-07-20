@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { QuickInvoiceView } from "./quick-invoice-view";
+import { requireModule } from "@/lib/modules";
 
 export default async function QuickInvoicePage() {
   const session = await auth();
@@ -10,6 +11,7 @@ export default async function QuickInvoicePage() {
   }
 
   const teacherId = session.user.id;
+  await requireModule(teacherId, "INVOICING");
 
   // Fetch teacher details
   const teacher = await prisma.teacher.findUniqueOrThrow({

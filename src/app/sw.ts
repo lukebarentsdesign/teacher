@@ -15,15 +15,15 @@ declare const self: ServiceWorkerGlobalScope;
 const runtimeCaching: RuntimeCaching[] = [
   {
     matcher: ({ request }) => request.mode === "navigate",
-    handler: new NetworkFirst({ cacheName: "learnio-pages", networkTimeoutSeconds: 3 }),
+    handler: new NetworkFirst({ cacheName: "teachbase-pages", networkTimeoutSeconds: 3 }),
   },
   {
     matcher: ({ url }) => url.pathname === "/api/today",
-    handler: new NetworkFirst({ cacheName: "learnio-today-api", networkTimeoutSeconds: 3 }),
+    handler: new NetworkFirst({ cacheName: "teachbase-today-api", networkTimeoutSeconds: 3 }),
   },
   {
     matcher: ({ request }) => ["style", "script", "worker", "font"].includes(request.destination),
-    handler: new StaleWhileRevalidate({ cacheName: "learnio-static-assets" }),
+    handler: new StaleWhileRevalidate({ cacheName: "teachbase-static-assets" }),
   },
 ];
 

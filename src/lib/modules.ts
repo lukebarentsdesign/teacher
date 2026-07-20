@@ -21,7 +21,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
     key: "ORGANISATION",
     label: "Organisation",
     description:
-      "Invite other Learnio teacher accounts as instructors and log cover assignments between them.",
+      "Invite other TeachBase teacher accounts as instructors and log cover assignments between them.",
   },
   TERM_CALENDARS: {
     key: "TERM_CALENDARS",
@@ -110,6 +110,12 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
       "generateDisplayTokenAction (in session-plans/actions.ts, oddly) only sets a field on " +
       "TeachingLocation and isn't tied to any GroupClass/SessionPlan — left ungated as Foundation-" +
       "adjacent, not module-specific.",
+  },
+  INVOICING: {
+    key: "INVOICING",
+    label: "Quick invoicing",
+    description:
+      "Generate professional quick invoices, track payment history, log attendance, and email PDF invoices directly to parents.",
   },
 };
 

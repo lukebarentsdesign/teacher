@@ -63,7 +63,7 @@ export default async function ComingSoonPage() {
       <div>
         <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Future Features Roadmap</h1>
         <p className="mt-1.5 text-sm text-neutral-500 max-w-xl leading-relaxed">
-          Help us prioritize the development of Learnio. Vote on the features that would make the biggest difference to your teaching business.
+          Help us prioritize the development of TeachBase. Vote on the features that would make the biggest difference to your teaching business.
         </p>
       </div>
 

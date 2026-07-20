@@ -69,7 +69,7 @@ export default async function BillingPage({
                 type="submit"
                 className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-neutral-700"
               >
-                Subscribe to Learnio
+                Subscribe to TeachBase
               </button>
             </form>
           )}

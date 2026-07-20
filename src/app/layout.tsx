@@ -22,7 +22,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Learnio",
+  title: "TeachBase",
   description: "Scheduling, billing and student management for peripatetic teachers.",
   manifest: "/manifest.json",
 };

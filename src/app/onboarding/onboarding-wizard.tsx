@@ -93,7 +93,7 @@ export function OnboardingWizard({
       <Card>
         <h1 className="text-lg font-semibold text-neutral-900">Thanks for the honesty check</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Learnio isn&apos;t built for a venue-controlled group teaching setup yet, but we&apos;ve
+          TeachBase isn&apos;t built for a venue-controlled group teaching setup yet, but we&apos;ve
           noted what you told us — it genuinely helps decide what to build next.
         </p>
         <div className="mt-6">
@@ -224,7 +224,7 @@ function OutOfScopeForm({ onDone }: { onDone: () => void }) {
     >
       <h1 className="text-lg font-semibold text-neutral-900">This one&apos;s not quite built for you yet</h1>
       <p className="mt-2 text-sm text-neutral-600">
-        Learnio is built for teachers who control their own schedule — a venue-run group class
+        TeachBase is built for teachers who control their own schedule — a venue-run group class
         setup (a gym, studio, or school controlling the timetable) isn&apos;t what this fits today.
         Tell us a bit about what you&apos;d actually want, and we&apos;ll keep it in mind.
       </p>

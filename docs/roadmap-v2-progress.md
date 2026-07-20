@@ -1,13 +1,13 @@
 # Roadmap v2 — Build Progress
 
-Tracks implementation of **`learnio-roadmap-v2.md`** ("Learnio — Roadmap (v1 status + v2 build
+Tracks implementation of **`teachbase-roadmap-v2.md`** ("TeachBase — Roadmap (v1 status + v2 build
 spec)"), supplied 2026-07-12 as a follow-up to the completed onboarding/timetabling spec (see
 [docs/onboarding-timetabling-progress.md](onboarding-timetabling-progress.md)). Parts 1–3 of that
 roadmap doc (location generalization, lesson catalog, term calendars) and the questionnaire half
 of Part 4 (self-serve onboarding) were already built in the prior spec pass — this doc picks up
 from there.
 
-A revised version of the doc (`learnio-roadmap-v2(1).md`) arrived later the same day, adding two
+A revised version of the doc (`teachbase-roadmap-v2(1).md`) arrived later the same day, adding two
 new parts on top of the original 7: **Part 8** (invoice PDFs + accounting export — the CSV export
 half was already done as the original Part 7) and **Part 9** (freelancer-specific pain points: tax
 pack, mileage, batch-cancel, lone-worker safety, waitlist, referral tracking, progress summaries,

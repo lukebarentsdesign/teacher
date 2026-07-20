@@ -70,7 +70,7 @@ export function NextLessonCard({ className = "" }: { className?: string }) {
       <div>
         <div className="font-semibold text-neutral-900 text-sm">Oliver James</div>
         <div className="text-xs text-neutral-500 mt-0.5">4:30 pm</div>
-        <div className="text-xs text-neutral-500 truncate">St Mary's School</div>
+        <div className="text-xs text-neutral-500 truncate">St Mary&apos;s School</div>
       </div>
     </div>
   );

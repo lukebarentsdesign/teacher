@@ -46,7 +46,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .join("\n");
 
   const ics = generateLessonIcs({
-    uid: `lesson-${lesson.id}@learnio`,
+    uid: `lesson-${lesson.id}@teachbase`,
     title: "Lesson",
     description,
     start: lesson.scheduledAt,

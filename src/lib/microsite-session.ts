@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
-const COOKIE_NAME = "learnio_microsite_session";
+const COOKIE_NAME = "teachbase_microsite_session";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — spec: re-enter code only on a new device or after expiry
 
 /**

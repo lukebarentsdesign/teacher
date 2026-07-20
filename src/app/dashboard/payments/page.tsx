@@ -16,7 +16,7 @@ export default async function PaymentsPage({
     <div className="max-w-lg space-y-6">
       <h1 className="text-2xl font-semibold text-neutral-900">Getting paid by parents</h1>
       <p className="text-sm text-neutral-500">
-        Connect a Stripe account so parent payments land directly with you — Learnio never holds
+        Connect a Stripe account so parent payments land directly with you — TeachBase never holds
         or takes a cut of lesson payments.
       </p>
 

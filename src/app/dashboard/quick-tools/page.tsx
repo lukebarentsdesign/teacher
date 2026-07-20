@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { QuickToolsView } from "./quick-tools-view";
+import { hasModule } from "@/lib/modules";
 
 function startOfDay(date: Date) {
   const d = new Date(date);
@@ -19,6 +20,7 @@ export default async function QuickToolsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const teacherId = session.user.id;
+  const hasInvoicing = await hasModule(teacherId, "INVOICING");
   const now = new Date();
   const recentStart = new Date(now);
   recentStart.setDate(recentStart.getDate() - 14);
@@ -118,6 +120,7 @@ export default async function QuickToolsPage() {
       recentLessons={recentLessonsRaw.map(mapLesson)}
       unpaidInvoices={unpaidInvoices}
       payers={payers}
+      hasInvoicing={hasInvoicing}
     />
   );
 }

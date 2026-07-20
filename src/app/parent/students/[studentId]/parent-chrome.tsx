@@ -132,7 +132,7 @@ export function ParentChrome({
               <Menu className="h-5 w-5 text-neutral-600" />
             </button>
             <div className="min-w-0 md:block hidden">
-              <span className="text-sm font-bold text-neutral-800">Learnio Student Portal</span>
+              <span className="text-sm font-bold text-neutral-800">TeachBase Student Portal</span>
             </div>
           </div>
 

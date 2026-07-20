@@ -1,6 +1,6 @@
-# Learnio Design System & Frontend Guidelines
+# TeachBase Design System & Frontend Guidelines
 
-Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specific context.
+Based on `frontend-design` skill + LibreUIUX global standards + TeachBase's specific context.
 
 ---
 
@@ -60,7 +60,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 
 ## Part 3: Color System
 
-### Base Palette (Learnio-specific, not generic)
+### Base Palette (TeachBase-specific, not generic)
 
 **Primary Brand Color**:
 - **Teal/Slate blend** (not the blue-from-bootstrap everyone uses)
@@ -85,7 +85,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 | **Neutral (text)** | `#1f2937` (gray-800) | `#f3f4f6` (gray-100) | Body copy |
 | **Neutral (bg)** | `#f9fafb` (gray-50) | `#111827` (gray-900) | Card backgrounds |
 
-### Learnio-Specific Semantic Use
+### TeachBase-Specific Semantic Use
 
 **Lesson Status**:
 - SCHEDULED = gray (neutral)
@@ -148,7 +148,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 
 **Radius Scale**:
 - `rounded-sm`: 2px (buttons, tight UI)
-- `rounded-md`: 6px (cards, inputs - **Learnio default**)
+- `rounded-md`: 6px (cards, inputs - **TeachBase default**)
 - `rounded-lg`: 8px (modals, larger cards)
 - `rounded-xl`: 12px (hero sections, featured content)
 - `rounded-full`: 9999px (avatars, badges, pills)
@@ -160,7 +160,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 - `shadow-lg`: `0 10px 15px rgba(0,0,0,0.1)` - cards on hover, modals
 - `shadow-xl`: `0 20px 25px rgba(0,0,0,0.15)` - dropdowns, elevated overlays
 
-**Learnio specific**:
+**TeachBase specific**:
 - Lesson cards: `shadow-md` at rest to `shadow-lg` on hover
 - Ledger entries: `shadow-xs` (minimal visual weight)
 - Modals: `shadow-xl` (clear layering)
@@ -311,7 +311,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 | xl | 1280px | Desktop (2-column) |
 | 2xl | 1536px | Large monitors |
 
-**Learnio specific**:
+**TeachBase specific**:
 - Dashboard sidebar: collapse to icons at `<lg` (< 1024px)
 - Lesson cards: 1 column at sm, 2 columns at md, 3 at lg
 - Ledger table: horizontal scroll at sm, fixed at md+
@@ -346,7 +346,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 }
 ```
 
-**Learnio dark mode**:
+**TeachBase dark mode**:
 - Surfaces: gray-900 (not black - easier on eyes)
 - Text: gray-100 (not white - less contrast fatigue)
 - Accents: bright (teal, emerald) - they punch through dark better
@@ -392,7 +392,7 @@ Based on `frontend-design` skill + LibreUIUX global standards + Learnio's specif
 
 ---
 
-## Part 11: Learnio-Specific UI Patterns
+## Part 11: TeachBase-Specific UI Patterns
 
 ### Dashboard Header
 
@@ -443,7 +443,7 @@ Before shipping any UI update:
 - [ ] Accessibility: WCAG AA? Focus rings visible? Contrast 4.5:1?
 - [ ] Responsive: Tested on 390px (mobile) and 1400px (desktop)?
 - [ ] Dark mode: Readable and intentional (not just inverted)?
-- [ ] Consistency: Does this feel like Learnio, not a generic template?
+- [ ] Consistency: Does this feel like TeachBase, not a generic template?
 
 ---
 

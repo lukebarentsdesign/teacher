@@ -42,7 +42,7 @@ export default async function LoginPage({
             </div>
           </div>
           <p className="mt-6 text-center text-sm text-neutral-500">
-            New to Learnio?{" "}
+            New to TeachBase?{" "}
             <Link href="/register" className="font-medium text-brand-700 hover:underline">
               Create an account
             </Link>

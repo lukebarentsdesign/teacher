@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { generateUniqueAccessCode } from "@/lib/access-code";
 import { renderInvoicePdf } from "@/lib/invoice-pdf";
 import { sendEmailWithAttachmentAsTeacher } from "@/lib/gmail";
+import { requireModule } from "@/lib/modules";
 
 
 export type QuickInvoiceLessonDateInput = {
@@ -61,6 +62,7 @@ export async function saveTeacherInvoiceSettingsAction(
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     await prisma.teacher.update({
       where: { id: session.user.id },
       data: {
@@ -104,6 +106,7 @@ export async function quickAddStudentAction(
   if (!data.payerEmail.trim()) return { success: false, error: "Parent/Payer email is required" };
 
   try {
+    await requireModule(teacherId, "INVOICING");
     const studentId = await prisma.$transaction(async (tx) => {
       let finalLocationId: string | null = null;
       let studentSource: "HOME" | "SCHOOL_INQUIRY" | "COLLEGE" = "HOME";
@@ -204,6 +207,7 @@ export async function sendQuickInvoiceEmailAction(
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, teacherId: session.user.id },
       include: {
@@ -288,6 +292,8 @@ export async function sendBatchQuickInvoicesAction(
 ): Promise<{ success: boolean; results: { studentId: string; studentName: string; success: boolean; error?: string }[] }> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Not authenticated");
+
+  await requireModule(session.user.id, "INVOICING");
 
   const teacher = await prisma.teacher.findUniqueOrThrow({
     where: { id: session.user.id },
@@ -386,6 +392,7 @@ export async function recordQuickInvoiceSentAction(
   const teacherId = session.user.id;
 
   try {
+    await requireModule(teacherId, "INVOICING");
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, teacherId },
       select: {
@@ -439,6 +446,7 @@ export async function markQuickInvoicesSentAction(
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     await prisma.quickInvoice.updateMany({
       where: {
         teacherId: session.user.id,
@@ -462,6 +470,7 @@ export async function createQuickInvoiceAction(
   const teacherId = session.user.id;
 
   try {
+    await requireModule(teacherId, "INVOICING");
     const student = await prisma.student.findFirst({
       where: { id: data.studentId, teacherId },
       select: { id: true },
@@ -512,6 +521,7 @@ export async function markInvoicePaidAction(params: {
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     const invoice = await prisma.quickInvoice.findUniqueOrThrow({
       where: { id: params.invoiceId },
       select: { teacherId: true, totalAmount: true },
@@ -545,6 +555,7 @@ export async function updateLessonAttendanceAction(params: {
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     const invoice = await prisma.quickInvoice.findUniqueOrThrow({
       where: { id: params.invoiceId },
       select: { teacherId: true, costPerLesson: true, lessonDates: true },
@@ -581,6 +592,7 @@ export async function getStudentInvoicesAction(
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    await requireModule(session.user.id, "INVOICING");
     const invoices = await prisma.quickInvoice.findMany({
       where: { teacherId: session.user.id, studentId },
       include: {
@@ -635,6 +647,8 @@ export async function getUnpaidInvoicesReminderAction(): Promise<{
 }> {
   const session = await auth();
   if (!session?.user?.id) return { count: 0, overdueCount: 0, studentNames: [] };
+
+  await requireModule(session.user.id, "INVOICING");
 
   const now = new Date();
   const invoices = await prisma.quickInvoice.findMany({

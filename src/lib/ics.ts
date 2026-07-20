@@ -22,7 +22,7 @@ export function generateLessonIcs(event: IcsEvent): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Learnio//Lesson Export//EN",
+    "PRODID:-//TeachBase//Lesson Export//EN",
     "BEGIN:VEVENT",
     `UID:${event.uid}`,
     `DTSTAMP:${formatIcsDate(new Date())}`,

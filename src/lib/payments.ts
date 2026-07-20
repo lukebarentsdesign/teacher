@@ -5,7 +5,7 @@ import { hasAcceptedCurrentContract } from "@/lib/contracts";
 /**
  * Creates a Checkout Session for a parent to pay a Subscription directly, using a destination
  * charge so the money lands with the teacher's connected account (minus Stripe's processing
- * fees) rather than Learnio's platform account. No application fee is taken — see CLAUDE.md.
+ * fees) rather than TeachBase's platform account. No application fee is taken — see CLAUDE.md.
  *
  * There's no full parent microsite yet (calendar/ledger view is a later build step), so this
  * returns a shareable URL for the teacher to send the parent themselves, rather than emailing it

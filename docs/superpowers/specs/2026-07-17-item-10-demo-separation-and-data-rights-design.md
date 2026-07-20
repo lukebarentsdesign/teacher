@@ -9,7 +9,7 @@
 Before real pupil/parent data goes into the trial, make three things true:
 
 1. **Demo data is visibly distinct** from real trial data and never mixed into a real account.
-2. **A teacher can export** the data Learnio holds about their pupils/payers, and **delete** it.
+2. **A teacher can export** the data TeachBase holds about their pupils/payers, and **delete** it.
 3. **A short privacy checklist** documents that the surfaces holding real data are tenant-safe.
 
 This adds no product breadth — it's a trust/safety layer on the existing data.
@@ -54,12 +54,12 @@ No badge for real accounts — zero visual change for trial teachers.
 
 ## 2. Data export — `GET /api/account/export`
 
-A read-only endpoint that returns everything Learnio holds under the authenticated teacher.
+A read-only endpoint that returns everything TeachBase holds under the authenticated teacher.
 
 - **Auth:** same pattern as `/api/accounting-export` — resolves `session.user.id`, 401 if absent.
   Strictly tenant-scoped: every query filters by the teacher's own id.
 - **Format:** a single JSON document (relational/nested data doesn't fit one CSV table cleanly).
-  `Content-Disposition: attachment; filename="learnio-export-<date>.json"`.
+  `Content-Disposition: attachment; filename="teachbase-export-<date>.json"`.
 - **Contents:** the teacher's own profile (non-secret fields only — never `passwordHash`, Stripe
   secrets, or the encrypted Gmail token), plus arrays of their payers, students, subscriptions,
   invoices, ledger entries, and lessons. This is the "here's everything about your pupils" dump the

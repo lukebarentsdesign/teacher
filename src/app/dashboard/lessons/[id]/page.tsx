@@ -71,7 +71,7 @@ export default async function LessonDetailPage({
           <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
             Online lesson with an under-18 student: enable your video platform&apos;s own waiting
             room and &quot;host must be present&quot; setting, and consider recording to your own
-            storage with a sensible retention period. This is guidance only — Learnio doesn&apos;t
+            storage with a sensible retention period. This is guidance only — TeachBase doesn&apos;t
             control or enforce it (MVP uses your own meeting link, not a platform-created one).
           </p>
         )}

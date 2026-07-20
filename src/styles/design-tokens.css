@@ -1,5 +1,5 @@
 /**
- * Learnio Design Tokens
+ * TeachBase Design Tokens
  *
  * CSS variables for consistent theming across light/dark modes.
  * Based on design-system.md + LibreUIUX standards.
@@ -118,7 +118,7 @@
 
   --radius-none: 0;
   --radius-sm: 2px;
-  --radius-md: 6px;      /* Learnio default */
+  --radius-md: 6px;      /* TeachBase default */
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 16px;

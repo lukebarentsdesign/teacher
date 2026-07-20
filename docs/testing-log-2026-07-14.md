@@ -1,4 +1,4 @@
-# Learnio Testing Log - 2026-07-14
+# TeachBase Testing Log - 2026-07-14
 
 ## Scope
 

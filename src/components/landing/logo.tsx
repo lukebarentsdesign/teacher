@@ -3,7 +3,7 @@ import React from "react";
 interface LogoProps {
   /** Pixel size of the square badge mark. */
   size?: number;
-  /** Show the "Learnio" wordmark next to the badge. */
+  /** Show the "TeachBase" wordmark next to the badge. */
   showWordmark?: boolean;
   /** Extra classes on the wordmark (e.g. text size / colour). */
   wordmarkClassName?: string;
@@ -12,7 +12,7 @@ interface LogoProps {
 }
 
 /**
- * Learnio brand mark.
+ * TeachBase brand mark.
  *
  * The badge is a rounded "squircle" holding three rising bars and a spark node —
  * a field-neutral symbol of steady, smoothed growth (income that climbs evenly
@@ -39,16 +39,17 @@ export function Logo({
           xmlns="http://www.w3.org/2000/svg"
           style={{ width: size * 0.7, height: size * 0.7 }}
         >
-          {/* rising bars — steady, smoothed growth */}
-          <rect x="5.4" y="18" width="4.3" height="9" rx="2.15" fill="#ffffff" fillOpacity="0.6" />
-          <rect x="13.85" y="12.5" width="4.3" height="14.5" rx="2.15" fill="#ffffff" fillOpacity="0.8" />
-          <rect x="22.3" y="7" width="4.3" height="20" rx="2.15" fill="#ffffff" />
-          {/* spark node — the next lesson / the learner reaching further */}
-          <circle cx="24.45" cy="4.3" r="2.7" fill="#ffffff" />
+          {/* TeachBase Logo: A stylized 'T' rising from a solid base platform */}
+          {/* Base platform */}
+          <rect x="5" y="23" width="22" height="3.5" rx="1.75" fill="#ffffff" />
+          {/* Stem of the T */}
+          <rect x="14.25" y="10.5" width="3.5" height="12.5" rx="1" fill="#ffffff" fillOpacity="0.8" />
+          {/* Top bar of the T (Open Book / Roof shape) */}
+          <path d="M 6 10 L 16 5 L 26 10 L 16 13 Z" fill="#ffffff" />
         </svg>
       </span>
       {showWordmark && (
-        <span className={`font-bold tracking-tight ${wordmarkClassName}`}>Learnio</span>
+        <span className={`font-bold tracking-tight ${wordmarkClassName}`}>TeachBase</span>
       )}
     </div>
   );

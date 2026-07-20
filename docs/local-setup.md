@@ -1,13 +1,13 @@
 # Local setup (new machine / home machine)
 
-Steps to get Learnio running on a machine that doesn't have it yet — e.g. picking up work at home
+Steps to get TeachBase running on a machine that doesn't have it yet — e.g. picking up work at home
 after developing on another computer. No secrets are in this file; you carry `.env` over separately.
 
 ## 1. Get the code
 
 ```
-git clone https://github.com/lukebarentsdesign/teacher.git learnio
-cd learnio
+git clone https://github.com/lukebarentsdesign/teacher.git teachbase
+cd teachbase
 npm install
 ```
 
@@ -20,7 +20,7 @@ This file holds real secrets (DB password, `AUTH_SECRET`, Stripe keys) and is de
 never email or chat) from the other machine's project root into this one's:
 
 ```
-<other machine>\learnio\.env  →  <this machine>\learnio\.env
+<other machine>\teachbase\.env  →  <this machine>\teachbase\.env
 ```
 
 `.env.example` in the repo documents every variable's purpose if you ever need to rebuild it from

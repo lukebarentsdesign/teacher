@@ -1,8 +1,8 @@
-# Learnio MVP Feature Audit
+# TeachBase MVP Feature Audit
 
 ## Executive summary
 
-Learnio is a large Next.js application with many teacher, parent, timetable, billing, learning-resource and organisation features already represented in code. The repository is much broader than the original MVP promise: helping a self-employed music teacher organise pupils, lessons and smooth monthly invoicing.
+TeachBase is a large Next.js application with many teacher, parent, timetable, billing, learning-resource and organisation features already represented in code. The repository is much broader than the original MVP promise: helping a self-employed music teacher organise pupils, lessons and smooth monthly invoicing.
 
 The strongest built areas are pupil and payer records, lesson/timetable data, ledger-based balances, manual payment recording, PDF invoice download from ledger entries, teacher dashboard pages, parent microsite access codes, and a good set of unit/integration tests around calculations and access boundaries.
 
@@ -10,7 +10,7 @@ The weakest area is also the central MVP promise: the product does not yet guide
 
 The application is not ready for a genuine two-week trial with real pupil and parent data without narrowing the visible scope. It can be trialled as an early prototype if incomplete areas are hidden and the trial is framed around pupil/payer setup, simple subscription records, PDF invoice download, manual payment recording, and feedback on planned features.
 
-## What Learnio can genuinely do today
+## What TeachBase can genuinely do today
 
 - Let a teacher register, log in, and reach a dashboard.
 - Add and edit payers with contact details and parent access codes.
@@ -629,7 +629,7 @@ Example using current behaviour: a teacher can manually enter `annualFee = 960` 
 
 # Part 4: Test and reliability audit
 
-Jest configuration discovers `**/__tests__/**/*.test.ts`. The verified green run was against disposable migrated schema `learnio_verify_20260716171747`.
+Jest configuration discovers `**/__tests__/**/*.test.ts`. The verified green run was against disposable migrated schema `teachbase_verify_20260716171747`.
 
 | Suite | Tests | Feature covered | Type | Real routes or mocked logic | Passing? | Does not prove |
 |---|---:|---|---|---|---|---|
@@ -717,9 +717,9 @@ Central MVP journey assessment:
 | Adds payer | Yes | Household/invoice recipient UX can improve. |
 | Adds pupil | Yes | Many advanced fields may confuse. |
 | Defines lesson price/duration/frequency | Partial | Lesson types exist; frequency/calculation connection unclear. |
-| Learnio calculates smooth monthly payment | No | Teacher manually enters fee; no transparent calculator. |
+| TeachBase calculates smooth monthly payment | No | Teacher manually enters fee; no transparent calculator. |
 | Teacher reviews/approves calculation | No | No review object or audit trail. |
-| Learnio creates invoice | Partial | PDF statement generated from ledger; no invoice record. |
+| TeachBase creates invoice | Partial | PDF statement generated from ledger; no invoice record. |
 | Teacher downloads/sends invoice | Partial | Download exists; sending not proven. |
 | Teacher records payment | Yes | Manual ledger credit works. |
 | Teacher sees expected/received/outstanding | Partial | Ledger/forecast exists; invoice states missing. |
@@ -760,7 +760,7 @@ Core MVP feature counts used for summary:
 
 ## 3. Google and Outlook calendar sync
 
-**Description:** Sync Learnio lessons with the calendar the teacher already uses.
+**Description:** Sync TeachBase lessons with the calendar the teacher already uses.
 
 **Why relevant:** Teachers live by calendars and need conflict awareness.
 

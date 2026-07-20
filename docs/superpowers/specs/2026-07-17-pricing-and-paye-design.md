@@ -12,7 +12,7 @@ the teacher invoicing a parent.
 Two genuinely different income relationships exist and the app currently only models one of them:
 
 - **Self-employed at this location** (private students, hired venues, most home visits): the
-  teacher bills the parent/payer. This is everything Learnio already does — `Subscription`,
+  teacher bills the parent/payer. This is everything TeachBase already does — `Subscription`,
   `LedgerEntry`, `Invoice`, the payment calculator.
 - **PAYE via the school**: the school pays the teacher a wage for hours taught, like payroll. There
   is **no parent invoice** — the parent's arrangement (if any) is the school's business, not the

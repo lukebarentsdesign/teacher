@@ -19,7 +19,7 @@ async function getOrCreateStripeCustomer(teacherId: string): Promise<string> {
   return customer.id;
 }
 
-/** Checkout Session for the teacher's own flat monthly/annual Learnio subscription. */
+/** Checkout Session for the teacher's own flat monthly/annual TeachBase subscription. */
 export async function createPlatformCheckoutSession(teacherId: string): Promise<string> {
   const priceId = process.env.STRIPE_PLATFORM_PRICE_ID;
   if (!priceId) throw new Error("STRIPE_PLATFORM_PRICE_ID is not configured");

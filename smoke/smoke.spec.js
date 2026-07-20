@@ -31,7 +31,7 @@ async function parentLogin(page) {
   await page.waitForURL(/\/parent\/students\//, { timeout: 30000 });
 }
 
-test.describe("Learnio seeded-account smoke", () => {
+test.describe("TeachBase seeded-account smoke", () => {
   test("teacher dashboard surfaces load", async ({ page }) => {
     await teacherLogin(page);
 

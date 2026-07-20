@@ -118,7 +118,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
-/// Teacher's own platform (SaaS) subscription status — Learnio billing them, not lesson billing.
+/// Teacher's own platform (SaaS) subscription status — TeachBase billing them, not lesson billing.
 enum PlatformSubscriptionStatus {
   TRIALING
   ACTIVE
@@ -212,6 +212,7 @@ enum ModuleKey {
   EMBEDS
   COMMERCE
   GROUP_TEACHING
+  INVOICING
 }
 
 /// ENABLED = teacher can use the module. TRIAL = enabled but time/usage-limited (reserved for
@@ -328,12 +329,12 @@ model Teacher {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  /// Learnio's own SaaS billing of the teacher — separate from lesson/ledger billing.
+  /// TeachBase's own SaaS billing of the teacher — separate from lesson/ledger billing.
   stripeCustomerId       String?                    @unique
   platformSubscriptionId String?                    @unique
   platformStatus         PlatformSubscriptionStatus @default(TRIALING)
 
-  /// Stripe Connect Express account so parent payments land with the teacher, not Learnio.
+  /// Stripe Connect Express account so parent payments land with the teacher, not TeachBase.
   stripeConnectAccountId String? @unique
   stripeConnectOnboarded Boolean @default(false)
 
@@ -830,7 +831,7 @@ model PrivateTuitionRequest {
 
 model Payer {
   id        String   @id @default(cuid())
-  /// Owning teacher — same tenancy boundary as Student. A family with two Learnio teachers
+  /// Owning teacher — same tenancy boundary as Student. A family with two TeachBase teachers
   /// (e.g. piano + yoga) gets one Payer record per teacher relationship, not one shared globally.
   teacherId String
   name      String

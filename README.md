@@ -1,4 +1,4 @@
-# Learnio
+# TeachBase
 
 A standalone platform for self-employed peripatetic instructors (music teachers, yoga instructors,
 personal trainers) working across multiple locations — home visits, private students, and

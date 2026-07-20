@@ -112,11 +112,11 @@ export default function LandingPage() {
       <section className="py-24 bg-white border-t border-neutral-200/50" id="modules">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14 max-w-2xl mx-auto">
-            <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">How Learnio is built</span>
+            <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">How TeachBase is built</span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">One foundation, switch on what you need</h2>
-            <p className="text-lg text-neutral-600">Every account starts with the same core — students, payers, locations and invoicing. Everything else is a module you can turn on only when your practice actually needs it.</p>
+            <p className="text-lg text-neutral-600">Every account starts with the same core — students, payers, locations and agreements. Everything else is a module you can turn on only when your practice actually needs it.</p>
           </div>
-
+ 
           {/* Foundation — always included */}
           <div className="bg-neutral-900 text-white rounded-3xl p-8 md:p-10 mb-8">
             <div className="flex items-start gap-5">
@@ -129,14 +129,21 @@ export default function LandingPage() {
                   <span className="bg-brand-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">Always included</span>
                 </div>
                 <p className="text-neutral-300 leading-relaxed">
-                  Students, guardians &amp; payers, teaching locations, lesson types and your teaching agreement — plus Quick Invoice, payment tracking and the parent portal. This never sits behind a toggle: it&apos;s what makes every module below actually connect to the same students and the same records, instead of feeling like separate apps bolted together.
+                  Students, guardians &amp; payers, teaching locations, lesson types and your teaching agreement — plus the parent portal. This never sits behind a toggle: it&apos;s what makes every module below actually connect to the same students and the same records, instead of feeling like separate apps bolted together.
                 </p>
               </div>
             </div>
           </div>
-
-          {/* The 8 modules */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+ 
+          {/* The 9 modules */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <h3 className="font-semibold text-neutral-900 mb-1.5">Quick Invoicing</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">Generate professional quick invoices, track payment history, log attendance, and email PDF invoices directly to parents.</p>
+            </div>
             <div className="p-6 rounded-2xl border border-neutral-200 bg-white">
               <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -216,7 +223,7 @@ export default function LandingPage() {
             <div className="flex-1">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">A calmer week of teaching</h2>
               <p className="text-lg text-neutral-600 leading-relaxed mb-8">
-                Learnio is designed around the small operational moments that pile up: checking today&apos;s schedule, finding a parent contact, recording attendance, creating an invoice and keeping a clean record for later.
+                TeachBase is designed around the small operational moments that pile up: checking today&apos;s schedule, finding a parent contact, recording attendance, creating an invoice and keeping a clean record for later.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-4 text-neutral-900 font-medium">
@@ -266,12 +273,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. Four-step explanation of how Learnio works */}
+      {/* 3. Four-step explanation of how TeachBase works */}
       <section className="py-24 bg-white" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How Learnio works</h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">Add the real shape of your practice once, then use Learnio as the working hub for lessons, records, admin and payments.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How TeachBase works</h2>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">Add the real shape of your practice once, then use TeachBase as the working hub for lessons, records, admin and payments.</p>
           </div>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="relative">
@@ -298,7 +305,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3b. Everything Learnio can do today (audit-verified features) */}
+      {/* 3b. Everything TeachBase can do today (audit-verified features) */}
       <section className="py-24 bg-neutral-50 border-t border-neutral-200/50" id="features">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16 max-w-2xl mx-auto">
@@ -408,7 +415,7 @@ export default function LandingPage() {
               <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-b from-brand-50 to-white border-b border-neutral-200">
                 <div className="flex items-center gap-2 text-neutral-900 font-bold text-sm">
                   <span className="w-5 h-5 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 inline-block" />
-                  Learnio
+                  TeachBase
                 </div>
                 <div className="hidden sm:flex items-center gap-4 text-neutral-500 text-xs">
                   <span>Monday, 14 September</span>
@@ -483,10 +490,10 @@ export default function LandingPage() {
             <div className="flex-1">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Built for self-employed teachers, instructors and coaches</h2>
               <p className="text-lg text-neutral-600 leading-relaxed mb-6">
-                Generic admin tools do not understand lessons, terms, venues, guardians, make-up credits, shared resources or the way teaching work moves between places. Learnio does.
+                Generic admin tools do not understand lessons, terms, venues, guardians, make-up credits, shared resources or the way teaching work moves between places. TeachBase does.
               </p>
               <p className="text-lg text-neutral-600 leading-relaxed mb-8">
-                Learnio is built from the ground up for peripatetic teachers, private studio and gym owners, tutors, personal trainers and online instructors who need a system tailored to their workflow.
+                TeachBase is built from the ground up for peripatetic teachers, private studio and gym owners, tutors, personal trainers and online instructors who need a system tailored to their workflow.
               </p>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-neutral-800 font-medium">
@@ -505,7 +512,7 @@ export default function LandingPage() {
             </div>
             <div className="flex-1 w-full bg-neutral-50 rounded-3xl p-8 border border-neutral-200">
               <blockquote className="text-xl font-medium leading-relaxed text-neutral-900 mb-6 italic">
-                &ldquo;Before Learnio, my week lived across a paper diary, a notes app, bank transfers and messages from parents. Now I can see who I&apos;m teaching, what happened last time, what needs sending and what has been paid.&rdquo;
+                &ldquo;Before TeachBase, my week lived across a paper diary, a notes app, bank transfers and messages from parents. Now I can see who I&apos;m teaching, what happened last time, what needs sending and what has been paid.&rdquo;
               </blockquote>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-neutral-300 rounded-full overflow-hidden">
@@ -526,7 +533,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="inline-block py-1 px-3 rounded-full bg-brand-100 text-brand-700 text-xs font-bold tracking-wider uppercase mb-4">Roadmap</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Shape the future of Learnio</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Shape the future of TeachBase</h2>
             <p className="text-lg text-neutral-600">Vote on the features you want us to build next. We&apos;re actively developing based on community feedback.</p>
           </div>
           
@@ -571,8 +578,8 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
           <div className="space-y-8">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Is Learnio only for payment plans?</h3>
-              <p className="text-neutral-600 leading-relaxed">No. Learnio supports practical payment tracking, but the product is broader: timetables, students, payers, locations, attendance, lesson notes, resources, invoices and admin workflows.</p>
+              <h3 className="text-xl font-semibold mb-2">Is TeachBase only for payment plans?</h3>
+              <p className="text-neutral-600 leading-relaxed">No. TeachBase supports practical payment tracking, but the product is broader: timetables, students, payers, locations, attendance, lesson notes, resources, invoices and admin workflows.</p>
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-2">Can I still use my normal email and bank transfer process?</h3>
@@ -580,7 +587,7 @@ export default function LandingPage() {
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-2">Does it work for schools, homes, studios and online lessons?</h3>
-              <p className="text-neutral-600 leading-relaxed">Yes. Learnio is built for mixed teaching patterns: school timetables, private students, home visits, hired venues, studios, online lessons and small groups.</p>
+              <p className="text-neutral-600 leading-relaxed">Yes. TeachBase is built for mixed teaching patterns: school timetables, private students, home visits, hired venues, studios, online lessons and small groups.</p>
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-2">Is there a contract?</h3>
@@ -607,7 +614,7 @@ export default function LandingPage() {
               <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;9<span className="text-base font-semibold text-neutral-400">/mo</span></div>
               <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors">Start free trial</Link>
               <ul className="space-y-3">
-                {["Foundation: students, payers & locations", "Quick Invoice, PDFs & payment tracking", "Scheduling & Timetable module", "Certifications & safeguarding, always free"].map((f) => (
+                {["Foundation: students, payers & locations", "Quick Invoicing module", "Scheduling & Timetable module", "Certifications & safeguarding, always free"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-neutral-600">
                     <svg className="w-4 h-4 text-brand-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -621,7 +628,7 @@ export default function LandingPage() {
               <span className="absolute -top-3 right-6 bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">Best value</span>
               <h3 className="text-lg font-bold mb-1">Studio</h3>
               <p className="text-sm text-white/80 mb-5">For a busy independent practice.</p>
-              <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;19<span className="text-base font-semibold text-white/75">/mo</span></div>
+              <div className="text-4xl font-extrabold tracking-tight mb-5">&pound;19<span className="text-white/75 font-semibold text-base">/mo</span></div>
               <Link href="/register" className="block text-center w-full py-3 rounded-xl font-semibold text-sm mb-6 bg-white text-brand-600 hover:bg-neutral-50 transition-colors">Start free trial</Link>
               <ul className="space-y-3">
                 {["Everything in Solo", "Term Calendars & Curriculum modules", "Compliance policies & Commerce add-ons", "Embeds, booking widget & Group Teaching"].map((f) => (
@@ -650,7 +657,7 @@ export default function LandingPage() {
             </div>
 
           </div>
-          <p className="text-center text-sm text-neutral-500 mt-8 max-w-2xl mx-auto">Every plan includes the Foundation and Quick Invoice with no extra charge — you&apos;re only ever paying for the modules your practice actually uses. Certifications, incident logs and safeguarding records are always free, on every plan, with no exceptions.</p>
+          <p className="text-center text-sm text-neutral-500 mt-8 max-w-2xl mx-auto">Every plan includes the Foundation with no extra charge — you&apos;re only ever paying for the modules (like Scheduling, Curriculum, or Quick Invoicing) that your practice actually uses. Certifications, incident logs and safeguarding records are always free, on every plan, with no exceptions.</p>
         </div>
       </section>
 
@@ -659,7 +666,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to run your practice from one place?</h2>
           <p className="text-xl text-brand-100 mb-10 max-w-2xl mx-auto">
-            Join independent teachers, tutors, instructors and coaches replacing scattered admin with one practical workspace. Try Learnio completely free for 14 days.
+            Join independent teachers, tutors, instructors and coaches replacing scattered admin with one practical workspace. Try TeachBase completely free for 14 days.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup" className="px-8 py-4 bg-white text-brand-600 rounded-full text-lg font-bold hover:bg-neutral-50 transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600">
@@ -681,7 +688,7 @@ export default function LandingPage() {
             <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-white transition-colors">Contact Support</Link>
           </div>
-          <p>© {new Date().getFullYear()} Learnio. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} TeachBase. All rights reserved.</p>
         </div>
       </footer>
     </div>

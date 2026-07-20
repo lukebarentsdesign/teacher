@@ -404,7 +404,7 @@ async function main() {
   });
 
   const organisation = await prisma.organisation.create({
-    data: { name: "Learnio Collective" },
+    data: { name: "TeachBase Collective" },
   });
 
   await prisma.teacher.update({

@@ -1,6 +1,6 @@
-# Supabase/PostgreSQL Best Practices for Learnio
+# Supabase/PostgreSQL Best Practices for TeachBase
 
-Learnio-specific guidance for performance, safety, and maintainability on Supabase + PostgreSQL + Prisma.
+TeachBase-specific guidance for performance, safety, and maintainability on Supabase + PostgreSQL + Prisma.
 
 ---
 
@@ -361,7 +361,7 @@ const payers = await prisma.$queryRaw`
 
 ## Part 7: Backup & Disaster Recovery
 
-Learnio holds sensitive data: student records, payment history, payer contacts.
+TeachBase holds sensitive data: student records, payment history, payer contacts.
 
 **Supabase automated backups**:
 - Daily backups included in Pro plan

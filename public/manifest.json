@@ -1,6 +1,6 @@
 {
-  "name": "Learnio",
-  "short_name": "Learnio",
+  "name": "TeachBase",
+  "short_name": "TeachBase",
   "description": "Scheduling, billing and student management for peripatetic teachers.",
   "start_url": "/dashboard/today",
   "display": "standalone",

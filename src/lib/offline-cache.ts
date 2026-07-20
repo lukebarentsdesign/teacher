@@ -7,7 +7,7 @@
  * retain guardian contact info after logout.
  */
 
-const DB_NAME = "learnio-offline";
+const DB_NAME = "teachbase-offline";
 const STORE = "today-snapshot";
 const DB_VERSION = 1;
 
