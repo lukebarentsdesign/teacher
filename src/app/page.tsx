@@ -28,7 +28,7 @@ export default function LandingPage() {
             <Link href="#modules" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Modules</Link>
             <Link href="#features" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Features</Link>
             <Link href="#for-teachers" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Who it&apos;s for</Link>
-            <Link href="#pricing" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Pricing</Link>
+            <Link href="#modules" className="hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-sm">Modules</Link>
           </div>
 
           <div className="flex items-center gap-4 text-sm font-medium">
@@ -39,7 +39,7 @@ export default function LandingPage() {
               Sign in
             </Link>
             <Link href="/register" className="px-5 py-2.5 bg-brand-600 text-white rounded-full hover:bg-brand-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50">
-              Start free trial
+              Create free account
             </Link>
           </div>
         </div>
@@ -58,10 +58,10 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col items-center justify-center gap-4 mt-4">
             <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-brand-600 text-white rounded-full text-lg font-semibold hover:bg-brand-700 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50">
-              Start your free two-week trial
+              Create free account
             </Link>
             <p className="text-sm text-neutral-500 text-center">
-              No card required. Built for independent teachers, tutors, instructors, coaches and small studios.
+              No card required. Foundation tier is free forever.
             </p>
           </div>
         </div>
