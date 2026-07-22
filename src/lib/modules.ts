@@ -115,9 +115,22 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDefinition> = {
 
 export const PRICE_POINT_GBP_MONTHLY = 25;
 
+/**
+ * PAYWALL_ENFORCED: the isPaidTier/grandfather-cutoff/TeacherModuleAccess logic below is the
+ * real paywall, ready to go live — but until this env var is explicitly set to "true", both
+ * functions skip straight to full access for every teacher. This is the pre-launch equivalent
+ * of the old DEFAULT_OPEN_UNTIL_PAYWALL flag: one switch, flipped in one place, rather than
+ * commenting out the real logic or special-casing individual accounts. Set
+ * PAYWALL_ENFORCED=true (e.g. in production env vars) when the product is ready to actually
+ * charge for modules.
+ */
+const PAYWALL_ENFORCED = process.env.PAYWALL_ENFORCED === "true";
+
 /** Whether `teacherId` currently has access to `moduleKey`. This is the only check any route,
  * server action, or nav item should use — never query TeacherModuleAccess directly. */
 export async function hasModule(teacherId: string, moduleKey: ModuleKey): Promise<boolean> {
+  if (!PAYWALL_ENFORCED) return true;
+
   const teacher = await prisma.teacher.findUnique({
     where: { id: teacherId },
     select: { isPaidTier: true, createdAt: true },
@@ -141,6 +154,10 @@ export async function hasModule(teacherId: string, moduleKey: ModuleKey): Promis
 
 /** Bulk variant for gating a full nav render in one query instead of one round-trip per module. */
 export async function getEnabledModules(teacherId: string): Promise<Set<ModuleKey>> {
+  const allKeys = Object.keys(MODULE_REGISTRY) as ModuleKey[];
+
+  if (!PAYWALL_ENFORCED) return new Set(allKeys);
+
   const teacher = await prisma.teacher.findUnique({
     where: { id: teacherId },
     select: { isPaidTier: true, createdAt: true },
@@ -153,16 +170,14 @@ export async function getEnabledModules(teacherId: string): Promise<Set<ModuleKe
   const hasFullAccess = teacher.isPaidTier || teacher.createdAt < GRANDFATHER_CUTOFF;
 
   if (hasFullAccess) {
-    for (const key of Object.keys(MODULE_REGISTRY) as ModuleKey[]) {
-      enabled.add(key);
-    }
+    for (const key of allKeys) enabled.add(key);
     return enabled;
   }
 
   const rows = await prisma.teacherModuleAccess.findMany({ where: { teacherId } });
   const byKey = new Map(rows.map((r) => [r.moduleKey, r.status]));
 
-  for (const key of Object.keys(MODULE_REGISTRY) as ModuleKey[]) {
+  for (const key of allKeys) {
     const status = byKey.get(key);
     const isEnabled = status ? status === "ENABLED" || status === "TRIAL" : false;
     if (isEnabled) enabled.add(key);

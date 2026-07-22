@@ -1,12 +1,18 @@
 import type { Config } from "tailwindcss";
 import path from "path";
+import { fileURLToPath } from "url";
 
 // Absolute paths, anchored to this config file's own directory — not relative to
 // process.cwd(). The dev server is launched with an explicit project-directory argument
 // (see the launch config workaround for npm/spaces issues on Windows) rather than by having
 // its cwd set to this project, and Tailwind resolves relative `content` globs against cwd, not
 // against the config file's location — so relative globs silently matched zero files here.
-const root = __dirname;
+//
+// Resolved via import.meta.url rather than __dirname: Tailwind's own config loader (jiti)
+// sometimes loads this file through Node's native require(esm) interop path, under which this
+// is a genuine ES module and __dirname is undefined — import.meta.url is always available and
+// correct there, same fix already applied to postcss.config.mjs for the identical problem.
+const root = path.dirname(fileURLToPath(import.meta.url));
 
 const config: Config = {
   content: [
