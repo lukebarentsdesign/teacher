@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "teachbase_microsite_session",
+      "value": "guardian.cmrwj21my0015p0cvxovmhv5k.1787350493641.I0XVuIbL05CgR43ppNWzcv-Ikl_ZLwtx7jQxBSvc3cs",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1787350493.957427,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
