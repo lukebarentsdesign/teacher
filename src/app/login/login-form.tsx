@@ -43,7 +43,6 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           type="email"
           required
           autoComplete="email"
-          defaultValue="teacher@example.com"
           className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
       </div>
@@ -57,7 +56,6 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           name="password"
           type="password"
           required
-          defaultValue="changeme123"
           autoComplete="current-password"
           className="mt-1 w-full rounded-full border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
         />
